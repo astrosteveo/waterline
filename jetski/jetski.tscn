@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://jetski/model/jetski_model.tscn" id="3"]
 [ext_resource type="Script" path="res://effects/wake.gd" id="4"]
 [ext_resource type="Script" path="res://effects/spray.gd" id="5"]
+[ext_resource type="Script" path="res://effects/engine_sound.gd" id="6"]
 
 [sub_resource type="BoxShape3D" id="hull_shape"]
 size = Vector3(1.0, 0.55, 2.7)
@@ -58,4 +59,8 @@ craft = NodePath("..")
 
 [node name="Spray" type="Node3D" parent="." node_paths=PackedStringArray("craft")]
 script = ExtResource("5")
+craft = NodePath("..")
+
+[node name="EngineSound" type="Node3D" parent="." node_paths=PackedStringArray("craft")]
+script = ExtResource("6")
 craft = NodePath("..")
