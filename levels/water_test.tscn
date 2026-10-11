@@ -1,0 +1,89 @@
+[gd_scene format=3 uid="uid://bxw0shs2vyifm"]
+
+[ext_resource type="Environment" uid="uid://cawbju5i13ao3" path="res://environment/day_environment.tres" id="1"]
+[ext_resource type="Script" uid="uid://dgigf0hgbvipf" path="res://environment/sun.gd" id="2"]
+[ext_resource type="Script" uid="uid://d06411e38uuyr" path="res://water/ocean_surface.gd" id="3"]
+[ext_resource type="Resource" uid="uid://mv1a7ejljdt5" path="res://water/presets/open_sea.tres" id="4"]
+[ext_resource type="Material" uid="uid://bunw1lcowsudv" path="res://water/ocean_material.tres" id="5"]
+[ext_resource type="Script" uid="uid://bo7a60tu3w6q8" path="res://environment/terrain.gd" id="6"]
+[ext_resource type="Script" uid="uid://dr6pnqnlnv2o" path="res://cameras/free_camera.gd" id="7"]
+[ext_resource type="Script" uid="uid://c8f2da2mcbhuk" path="res://environment/rock.gd" id="8"]
+[ext_resource type="Script" uid="uid://dp4rc8ryu4r2o" path="res://debug/water_probe.gd" id="9"]
+
+[node name="WaterTest" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("1")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-38, 155, 0)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 1.25
+shadow_enabled = true
+directional_shadow_max_distance = 220.0
+script = ExtResource("2")
+
+[node name="OceanSurface" type="MeshInstance3D" parent="."]
+script = ExtResource("3")
+wave_set = ExtResource("4")
+water_material = ExtResource("5")
+
+[node name="Terrain" type="MeshInstance3D" parent="."]
+script = ExtResource("6")
+size = 700.0
+cells = 175
+islands = Array[Vector4]([Vector4(70, -150, 70, 11), Vector4(-35, -55, 38, -1.4), Vector4(-150, -110, 32, 6), Vector4(150, 20, 45, -3.5)])
+
+[node name="Rocks" type="Node3D" parent="."]
+
+[node name="Rock1" type="StaticBody3D" parent="Rocks"]
+position = Vector3(18, -1, -42)
+script = ExtResource("8")
+radius = 3.2
+height_scale = 1.4
+rock_seed = 3
+
+[node name="Rock2" type="StaticBody3D" parent="Rocks"]
+position = Vector3(27, -1.5, -47)
+script = ExtResource("8")
+radius = 2.2
+height_scale = 2.4
+rock_seed = 11
+
+[node name="Rock3" type="StaticBody3D" parent="Rocks"]
+position = Vector3(-14, -1, -78)
+script = ExtResource("8")
+radius = 4.5
+height_scale = 0.8
+rock_seed = 5
+
+[node name="Probes" type="Node3D" parent="."]
+
+[node name="Probe1" type="Node3D" parent="Probes"]
+position = Vector3(-3, 0, -5)
+script = ExtResource("9")
+
+[node name="Probe2" type="Node3D" parent="Probes"]
+position = Vector3(-1.5, 0, -5)
+script = ExtResource("9")
+
+[node name="Probe3" type="Node3D" parent="Probes"]
+position = Vector3(0, 0, -5)
+script = ExtResource("9")
+
+[node name="Probe4" type="Node3D" parent="Probes"]
+position = Vector3(1.5, 0, -5)
+script = ExtResource("9")
+
+[node name="Probe5" type="Node3D" parent="Probes"]
+position = Vector3(3, 0, -5)
+script = ExtResource("9")
+
+[node name="FreeCamera" type="Camera3D" parent="."]
+position = Vector3(0, 3.5, 6)
+rotation_degrees = Vector3(-12, 0, 0)
+current = true
+fov = 70.0
+near = 0.05
+far = 6000.0
+script = ExtResource("7")

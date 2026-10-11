@@ -1,0 +1,35 @@
+[gd_resource type="ShaderMaterial" load_steps=6 format=3 uid="uid://bunw1lcowsudv"]
+
+[ext_resource type="Shader" uid="uid://bjq4e7f3nfwsu" path="res://water/ocean.gdshader" id="1"]
+
+[sub_resource type="FastNoiseLite" id="ripple_noise"]
+frequency = 0.012
+fractal_octaves = 4
+fractal_gain = 0.55
+
+[sub_resource type="NoiseTexture2D" id="ripple_normals"]
+width = 512
+height = 512
+seamless = true
+as_normal_map = true
+bump_strength = 5.0
+noise = SubResource("ripple_noise")
+
+[sub_resource type="FastNoiseLite" id="foam_noise"]
+noise_type = 2
+frequency = 0.02
+fractal_octaves = 3
+cellular_return_type = 4
+
+[sub_resource type="NoiseTexture2D" id="foam_texture"]
+width = 512
+height = 512
+seamless = true
+invert = true
+noise = SubResource("foam_noise")
+
+[resource]
+render_priority = 0
+shader = ExtResource("1")
+shader_parameter/ripple_normals = SubResource("ripple_normals")
+shader_parameter/foam_texture = SubResource("foam_texture")

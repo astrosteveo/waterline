@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://ccbwjknmmm4ly"]
+
+[ext_resource type="Script" uid="uid://cbckeurixutt" path="res://test/water_match.gd" id="1"]
+[ext_resource type="Script" uid="uid://d06411e38uuyr" path="res://water/ocean_surface.gd" id="2"]
+[ext_resource type="Resource" uid="uid://mv1a7ejljdt5" path="res://water/presets/open_sea.tres" id="3"]
+[ext_resource type="Shader" uid="uid://bgeyff31ihd67" path="res://test/ocean_height_debug.gdshader" id="4"]
+
+[sub_resource type="Environment" id="flat_environment"]
+background_mode = 1
+
+[sub_resource type="ShaderMaterial" id="height_material"]
+render_priority = 0
+shader = ExtResource("4")
+shader_parameter/height_range = 4.0
+
+[node name="WaterMatch" type="Node3D"]
+script = ExtResource("1")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("flat_environment")
+
+[node name="Camera" type="Camera3D" parent="."]
+projection = 1
+size = 36.0
+near = 0.5
+far = 100.0
+current = true
+
+[node name="OceanSurface" type="MeshInstance3D" parent="."]
+script = ExtResource("2")
+wave_set = ExtResource("3")
+water_material = SubResource("height_material")

@@ -1,0 +1,7 @@
+# Godot's cache and imported files
+.godot/
+# gdh output (screenshots, live sessions, recordings)
+captures/
+# Exports
+build/
+*.tmp

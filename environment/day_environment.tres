@@ -1,0 +1,41 @@
+[gd_resource type="Environment" format=3 uid="uid://cawbju5i13ao3"]
+
+[ext_resource type="Shader" uid="uid://bhv0inh1tyjkq" path="res://environment/sky.gdshader" id="1"]
+
+[sub_resource type="FastNoiseLite" id="cloud_noise"]
+frequency = 0.006
+fractal_octaves = 6
+fractal_gain = 0.52
+
+[sub_resource type="NoiseTexture2D" id="cloud_texture"]
+width = 1024
+height = 1024
+noise = SubResource("cloud_noise")
+seamless = true
+
+[sub_resource type="ShaderMaterial" id="sky_material"]
+shader = ExtResource("1")
+shader_parameter/cloud_noise = SubResource("cloud_texture")
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_material")
+
+[resource]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+reflected_light_source = 2
+tonemap_mode = 2
+tonemap_white = 6.0
+glow_enabled = true
+glow_intensity = 0.25
+glow_bloom = 0.02
+glow_hdr_threshold = 1.2
+fog_enabled = true
+fog_light_color = Color(0.62, 0.78, 0.92, 1)
+fog_sun_scatter = 0.08
+fog_density = 0.00045
+fog_aerial_perspective = 0.4
+fog_sky_affect = 0.0
+adjustment_enabled = true
+adjustment_saturation = 1.12

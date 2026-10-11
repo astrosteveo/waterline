@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="WaveSet" format=3 uid="uid://mv1a7ejljdt5"]
+
+[ext_resource type="Script" uid="uid://dry3yilcflmvd" path="res://water/wave_set.gd" id="1"]
+[ext_resource type="Script" uid="uid://bskr5lfupqnvn" path="res://water/gerstner_wave.gd" id="2"]
+
+[sub_resource type="Resource" id="swell_main"]
+script = ExtResource("2")
+direction_degrees = 15.0
+wavelength = 42.0
+amplitude = 0.7
+sharpness = 0.85
+
+[sub_resource type="Resource" id="swell_cross"]
+script = ExtResource("2")
+direction_degrees = 345.0
+wavelength = 27.0
+amplitude = 0.42
+sharpness = 0.85
+phase_degrees = 70.0
+
+[sub_resource type="Resource" id="swell_third"]
+script = ExtResource("2")
+direction_degrees = 60.0
+wavelength = 19.0
+amplitude = 0.25
+sharpness = 0.75
+phase_degrees = 160.0
+
+[sub_resource type="Resource" id="chop_a"]
+script = ExtResource("2")
+direction_degrees = 105.0
+wavelength = 11.5
+amplitude = 0.12
+phase_degrees = 40.0
+
+[sub_resource type="Resource" id="chop_b"]
+script = ExtResource("2")
+direction_degrees = 325.0
+wavelength = 8.2
+amplitude = 0.08
+sharpness = 0.6
+phase_degrees = 230.0
+
+[sub_resource type="Resource" id="chop_c"]
+script = ExtResource("2")
+direction_degrees = 160.0
+wavelength = 5.6
+amplitude = 0.045
+sharpness = 0.5
+phase_degrees = 300.0
+
+[sub_resource type="Resource" id="chop_d"]
+script = ExtResource("2")
+direction_degrees = 75.0
+wavelength = 4.0
+amplitude = 0.028
+sharpness = 0.5
+phase_degrees = 120.0
+
+[sub_resource type="Resource" id="chop_e"]
+script = ExtResource("2")
+direction_degrees = 250.0
+wavelength = 3.1
+amplitude = 0.018
+sharpness = 0.4
+phase_degrees = 10.0
+
+[resource]
+script = ExtResource("1")
+waves = Array[ExtResource("2")]([SubResource("swell_main"), SubResource("swell_cross"), SubResource("swell_third"), SubResource("chop_a"), SubResource("chop_b"), SubResource("chop_c"), SubResource("chop_d"), SubResource("chop_e")])
