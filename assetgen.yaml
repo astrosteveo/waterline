@@ -1,0 +1,54 @@
+# assetgen spec: run `assetgen run` in this folder to generate everything below.
+# Generated files go to `output`. Asset ids become file names.
+
+output: assets/generated
+seed: 0            # change to re-roll every asset that has no seed of its own
+
+style:
+  prompt: "bright sunny tropical arcade racing game art, clean stylized shapes, saturated colours, soft simple shading, simple readable forms rather than detailed or realistic"
+
+assets:
+  - id: marina_portrait
+    type: icon
+    size: 256
+    background: black   # white helmet would get eaten by a white-background cut-out
+    prompt: "head-and-shoulders portrait of Marina, a cheerful young woman jet ski racer, white racing helmet with a clear visor pushed up, red wetsuit, bright yellow life vest, head turned slightly to the side, confident smile"
+    notes: "Rider-select screen portrait."
+
+  - id: koa_portrait
+    type: icon
+    size: 256
+    background: black
+    reference: [marina_portrait]
+    prompt: "head-and-shoulders portrait of Koa, a different character: a big burly adult man in his thirties with a broad square jaw, thick neck, wide shoulders, tanned brown skin, thick dark eyebrows and a short black beard, red racing helmet with a clear visor pushed up, royal-blue wetsuit, orange life vest, head turned slightly to the side, big warm friendly grin"
+    notes: "Rider-select screen portrait, matches marina_portrait."
+
+  - id: race_buoy
+    type: model
+    prompt: "one red inflatable racing marker buoy shaped like a fat tall plain straight tube about half as wide as it is tall, the same width all the way down with no base, no collar and no ring at the bottom, the top end simply rounded off with no rim, one wide white band around the middle, smooth glossy vinyl"
+    height_m: 1.2
+    faces: 4000
+    texture_size: 1024
+
+  - id: cargo_crate
+    type: model
+    prompt: "a sturdy closed cargo crate with thick black iron bands along every edge, black iron corner plates with rivets, flat wooden plank panels between the iron bands, a closed flat lid"
+    seed: 404           # picked from six reference images; the iron bands read best on this one
+    height_m: 0.8
+    faces: 3000
+    texture_size: 1024
+    crease_angle: 40
+
+  - id: beach_sand
+    type: texture
+    size: 1024
+    seed: 11            # attempt 3; blend erased the shells, inpaint at 0.6 and 0.5 left a grainier band
+    seam_denoise: 0.5
+    prompt: "warm golden beach sand with fine visible sand grains evenly over the whole surface, about six soft wind ripples across, three or four tiny seashells scattered far apart"
+
+  - id: menu_backdrop
+    type: concept
+    width: 1344
+    height: 768
+    prompt: "two jet skis racing side by side across vivid turquoise water on the left of the picture, white spray and long foamy wakes, a low-poly tropical island with palm trees behind them, sunny blue sky with a few soft clouds, the right third of the picture is calm open water and clear sky with nothing in it"
+    notes: "Main menu background; right third kept calm for menu buttons."

@@ -7,3 +7,5 @@ build/
 *.tmp
 # Python bytecode
 __pycache__/
+# assetgen working files (raw generations, seam passes, previews, earlier model versions)
+assets/generated/.assetgen/
