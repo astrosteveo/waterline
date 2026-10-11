@@ -1,0 +1,23 @@
+{
+  "description": "Steering right turns and banks right; a forward lean makes the same turn tighter.",
+  "start": {"seed": 1},
+  "steps": [
+    {"eval": "scene.get_node('JetSki').respawn(Transform3D(Basis(Vector3(0,1,0), PI), Vector3(0,0,0)))"},
+    "step 2",
+    {"step": 220, "hold": "throttle"},
+    {"eval": "scene.get_node('RideRecorder').reset()"},
+    {"step": 45, "hold": ["throttle", "steer_right"]},
+    {"expect": "scene.get_node('JetSki').angular_velocity.y < -0.5", "name": "turning clockwise seen from above"},
+    {"expect": "scene.get_node('JetSki').telemetry().roll_degrees < -5", "name": "banked right"},
+    {"step": 45, "hold": ["throttle", "steer_right"]},
+    {"eval": "scene.set_meta('neutral_turn', scene.get_node('RideRecorder').report().turned_degrees)"},
+    {"expect": "scene.get_meta('neutral_turn') > 60 and scene.get_meta('neutral_turn') < 120", "name": "1.5 s of full lock turns 60 to 120 degrees"},
+    {"eval": "scene.get_node('JetSki').respawn(Transform3D(Basis(Vector3(0,1,0), PI), Vector3(0,0,0)))"},
+    "step 2",
+    {"step": 220, "hold": "throttle"},
+    {"eval": "scene.get_node('RideRecorder').reset()"},
+    {"step": 90, "hold": ["throttle", "steer_right", "lean_forward"]},
+    {"expect": "scene.get_node('RideRecorder').report().turned_degrees > scene.get_meta('neutral_turn') + 20", "name": "forward lean turns at least 20 degrees further"},
+    {"expect": "scene.get_node('RideRecorder').report().carving_share > 0.3", "name": "carving while leaning into the turn"}
+  ]
+}

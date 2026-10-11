@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://water/floater.gd" id="1"]
+
+[sub_resource type="BoxShape3D" id="crate_shape"]
+size = Vector3(1, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="crate_material"]
+albedo_color = Color(0.72, 0.48, 0.24, 1)
+roughness = 0.8
+
+[sub_resource type="BoxMesh" id="crate_mesh"]
+material = SubResource("crate_material")
+size = Vector3(1, 1, 1)
+
+[node name="Crate" type="RigidBody3D"]
+mass = 120.0
+script = ExtResource("1")
+rest_draft = 0.45
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("crate_shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("crate_mesh")

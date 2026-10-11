@@ -1,0 +1,14 @@
+{
+  "description": "Riding head-on into the steepest swell at full throttle catches air off the crests.",
+  "start": {"seed": 1},
+  "steps": [
+    {"eval": "scene.get_node('JetSki').respawn(Transform3D(Basis(Vector3(0,1,0), 2.008), Vector3(0,0,0)))"},
+    "step 2",
+    {"eval": "scene.get_node('RideRecorder').reset()"},
+    {"step": 1200, "hold": "throttle"},
+    {"expect": "scene.get_node('RideRecorder').report().jumps_over_0_4s >= 3", "name": "at least 3 jumps of 0.4 s or more"},
+    {"expect": "scene.get_node('RideRecorder').report().highest_clearance_m > 0.5", "name": "at least 0.5 m under the hull"},
+    {"expect": "scene.get_node('RideRecorder').report().airborne_share < 0.5", "name": "on the water most of the time"},
+    {"expect": "scene.get_node('RideRecorder').report().min_camera_gap_m >= 0.89", "name": "camera stays above the water"}
+  ]
+}

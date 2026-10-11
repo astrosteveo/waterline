@@ -45,6 +45,19 @@ void gerstner_sum(vec2 p0, float spacing, out vec3 offset, out vec3 tangent_x, o
 	}
 }
 
+// Slope variance of the waves that gerstner_fade() removes at this spacing. Shading adds
+// it back as roughness, so distant water keeps the same average brightness instead of
+// turning into a mirror once its small waves are too fine to draw.
+float gerstner_lost_slope_variance(float spacing) {
+	float variance = 0.0;
+	for (int i = 0; i < wave_count; i++) {
+		float slope = wave_dir_k[i].z * wave_shape[i].x;
+		float fade = gerstner_fade(wave_dir_k[i].w, spacing);
+		variance += 0.5 * slope * slope * (1.0 - fade * fade);
+	}
+	return variance;
+}
+
 // Maps a vertex of the 2 x 2 grid mesh (local x and z in [-1, 1]) to a horizontal offset
 // in meters from the mesh centre. The middle of the grid (|x|, |z| < inner_fraction)
 // keeps a uniform spacing of inner_spacing meters, so its vertices sit on a fixed world

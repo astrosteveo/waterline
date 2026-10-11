@@ -1,0 +1,11 @@
+{
+  "description": "With no input the jet ski floats upright on the rolling swell and drifts slowly.",
+  "start": {"seed": 1},
+  "steps": [
+    "step 600",
+    {"expect": "abs(scene.get_node('JetSki').telemetry().roll_degrees) < 25", "name": "roll within 25 degrees"},
+    {"expect": "abs(scene.get_node('JetSki').telemetry().pitch_degrees) < 25", "name": "pitch within 25 degrees"},
+    {"expect": "scene.get_node('JetSki').contact > 0.3", "name": "hull in the water"},
+    {"expect": "scene.get_node('JetSki').speed < 2.0", "name": "drifts under 2 m/s"}
+  ]
+}

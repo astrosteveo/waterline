@@ -1,0 +1,116 @@
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="Environment" path="res://environment/day_environment.tres" id="1"]
+[ext_resource type="Script" path="res://environment/sun.gd" id="2"]
+[ext_resource type="Script" path="res://water/ocean_surface.gd" id="3"]
+[ext_resource type="Resource" path="res://water/presets/rolling_swell.tres" id="4"]
+[ext_resource type="Material" path="res://water/ocean_material.tres" id="5"]
+[ext_resource type="Script" path="res://environment/terrain.gd" id="6"]
+[ext_resource type="Script" path="res://cameras/free_camera.gd" id="7"]
+[ext_resource type="Script" path="res://environment/rock.gd" id="8"]
+[ext_resource type="PackedScene" path="res://jetski/jetski.tscn" id="9"]
+[ext_resource type="Script" path="res://jetski/player_input.gd" id="10"]
+[ext_resource type="Script" path="res://cameras/chase_camera.gd" id="11"]
+[ext_resource type="Script" path="res://cameras/camera_switcher.gd" id="12"]
+[ext_resource type="Script" path="res://debug/debug_hud.gd" id="13"]
+[ext_resource type="PackedScene" path="res://props/crate.tscn" id="14"]
+[ext_resource type="Script" path="res://debug/ride_recorder.gd" id="15"]
+[ext_resource type="Script" path="res://debug/demo_driver.gd" id="16"]
+
+[node name="OpenWater" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("1")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-50, 205, 0)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 1.25
+shadow_enabled = true
+directional_shadow_max_distance = 220.0
+script = ExtResource("2")
+
+[node name="OceanSurface" type="MeshInstance3D" parent="."]
+script = ExtResource("3")
+wave_set = ExtResource("4")
+water_material = ExtResource("5")
+
+[node name="Terrain" type="MeshInstance3D" parent="."]
+script = ExtResource("6")
+size = 700.0
+cells = 175
+islands = Array[Vector4]([Vector4(70, -150, 70, 11), Vector4(-35, -55, 38, -1.4), Vector4(-150, -110, 32, 6), Vector4(150, 20, 45, -3.5)])
+
+[node name="Rocks" type="Node3D" parent="."]
+
+[node name="Rock1" type="StaticBody3D" parent="Rocks"]
+position = Vector3(18, -1, -42)
+script = ExtResource("8")
+radius = 3.2
+height_scale = 1.4
+rock_seed = 3
+
+[node name="Rock2" type="StaticBody3D" parent="Rocks"]
+position = Vector3(27, -1.5, -47)
+script = ExtResource("8")
+radius = 2.2
+height_scale = 2.4
+rock_seed = 11
+
+[node name="Rock3" type="StaticBody3D" parent="Rocks"]
+position = Vector3(-14, -1, -78)
+script = ExtResource("8")
+radius = 4.5
+height_scale = 0.8
+rock_seed = 5
+
+[node name="JetSki" parent="." instance=ExtResource("9")]
+
+[node name="PlayerInput" type="Node" parent="JetSki"]
+script = ExtResource("10")
+
+[node name="Crates" type="Node3D" parent="."]
+
+[node name="Crate1" parent="Crates" instance=ExtResource("14")]
+position = Vector3(14, 0, -30)
+
+[node name="Crate2" parent="Crates" instance=ExtResource("14")]
+position = Vector3(-18, 0, -45)
+
+[node name="Crate3" parent="Crates" instance=ExtResource("14")]
+position = Vector3(22, 0, -75)
+
+[node name="ChaseCamera" type="Camera3D" parent="."]
+current = true
+fov = 70.0
+near = 0.05
+far = 6000.0
+script = ExtResource("11")
+target_path = NodePath("../JetSki")
+
+[node name="FreeCamera" type="Camera3D" parent="."]
+position = Vector3(0, 4, 8)
+fov = 70.0
+near = 0.05
+far = 6000.0
+script = ExtResource("7")
+
+[node name="CameraSwitcher" type="Node" parent="." node_paths=PackedStringArray("chase_camera", "free_camera", "player_input")]
+script = ExtResource("12")
+chase_camera = NodePath("../ChaseCamera")
+free_camera = NodePath("../FreeCamera")
+player_input = NodePath("../JetSki/PlayerInput")
+
+[node name="DebugHud" type="CanvasLayer" parent="." node_paths=PackedStringArray("craft", "chase_camera")]
+script = ExtResource("13")
+craft = NodePath("../JetSki")
+chase_camera = NodePath("../ChaseCamera")
+
+[node name="RideRecorder" type="Node" parent="." node_paths=PackedStringArray("craft", "chase_camera")]
+script = ExtResource("15")
+craft = NodePath("../JetSki")
+chase_camera = NodePath("../ChaseCamera")
+
+[node name="DemoDriver" type="Node" parent="." node_paths=PackedStringArray("craft")]
+script = ExtResource("16")
+craft = NodePath("../JetSki")

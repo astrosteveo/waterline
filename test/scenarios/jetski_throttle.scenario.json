@@ -1,0 +1,13 @@
+{
+  "description": "Holding the throttle from rest reaches racing speed within 6 seconds.",
+  "start": {"seed": 1},
+  "steps": [
+    {"eval": "scene.get_node('JetSki').respawn(Transform3D(Basis(Vector3(0,1,0), PI), Vector3(0,0,0)))"},
+    "step 2",
+    {"eval": "scene.get_node('RideRecorder').reset()"},
+    {"step": 360, "hold": "throttle"},
+    {"expect": "scene.get_node('JetSki').telemetry().speed_kmh > 45", "name": "over 45 km/h after 6 s"},
+    {"expect": "scene.get_node('RideRecorder').report().top_speed_kmh < 70", "name": "top speed under 70 km/h"},
+    {"expect": "scene.get_node('RideRecorder').report().min_camera_gap_m >= 0.89", "name": "camera stays above the water"}
+  ]
+}

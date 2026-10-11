@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Waterline"
 config/description="A jet ski racer on rolling Gerstner swells."
-run/main_scene="res://levels/water_test.tscn"
+run/main_scene="res://levels/open_water.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 

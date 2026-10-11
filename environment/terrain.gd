@@ -44,6 +44,12 @@ extends MeshInstance3D
 		_queue_build()
 ## Build a StaticBody3D with a trimesh shape when the game runs.
 @export var with_collision: bool = true
+## Seabed lower than this doesn't receive shadows: a craft's shadow 15 m down would show
+## through the water as a dark smudge. Shallows and beaches still do.
+@export var shadow_cutoff_height: float = -2.0:
+	set(value):
+		shadow_cutoff_height = value
+		_queue_build()
 
 @export_group("Colours")
 @export var seabed_color: Color = Color(0.78, 0.72, 0.52)
@@ -119,13 +125,10 @@ func _build() -> void:
 		for i in n:
 			heights[j * n + i] = _height(-size * 0.5 + i * step, -size * 0.5 + j * step)
 
-	var vertices := PackedVector3Array()
-	var normals := PackedVector3Array()
-	var colors := PackedColorArray()
-	vertices.resize(cells * cells * 6)
-	normals.resize(cells * cells * 6)
-	colors.resize(cells * cells * 6)
-	var v := 0
+	# Two surfaces: [0] receives shadows, [1] (deep seabed) doesn't.
+	var vertices: Array[PackedVector3Array] = [PackedVector3Array(), PackedVector3Array()]
+	var normals: Array[PackedVector3Array] = [PackedVector3Array(), PackedVector3Array()]
+	var colors: Array[PackedColorArray] = [PackedColorArray(), PackedColorArray()]
 	for j in cells:
 		for i in cells:
 			var x0 := -size * 0.5 + i * step
@@ -144,23 +147,27 @@ func _build() -> void:
 				var normal := (tri[2] - tri[0]).cross(tri[1] - tri[0]).normalized()
 				var centre_height := (tri[0].y + tri[1].y + tri[2].y) / 3.0
 				var color := _color(centre_height, 1.0 - normal.y)
-				for corner in 3:
-					vertices[v] = tri[corner]
-					normals[v] = normal
-					colors[v] = color
-					v += 1
+				var top := maxf(tri[0].y, maxf(tri[1].y, tri[2].y))
+				var surface := 1 if top < shadow_cutoff_height else 0
+				vertices[surface].append_array(tri)
+				normals[surface].append_array(PackedVector3Array([normal, normal, normal]))
+				colors[surface].append_array(PackedColorArray([color, color, color]))
 
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = vertices
-	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_COLOR] = colors
 	var built := ArrayMesh.new()
-	built.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var material := StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.roughness = 0.95
-	built.surface_set_material(0, material)
+	for surface in 2:
+		if vertices[surface].is_empty():
+			continue
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = vertices[surface]
+		arrays[Mesh.ARRAY_NORMAL] = normals[surface]
+		arrays[Mesh.ARRAY_COLOR] = colors[surface]
+		built.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		var material := StandardMaterial3D.new()
+		material.vertex_color_use_as_albedo = true
+		material.roughness = 0.95
+		material.disable_receive_shadows = surface == 1
+		built.surface_set_material(built.get_surface_count() - 1, material)
 	mesh = built
 
 

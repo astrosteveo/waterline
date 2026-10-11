@@ -1,0 +1,49 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://jetski/jetski.gd" id="1"]
+[ext_resource type="Resource" path="res://jetski/tuning/default.tres" id="2"]
+[ext_resource type="PackedScene" path="res://jetski/model/jetski_model.tscn" id="3"]
+
+[sub_resource type="BoxShape3D" id="hull_shape"]
+size = Vector3(1.0, 0.55, 2.7)
+
+[sub_resource type="PhysicsMaterial" id="hull_physics"]
+friction = 0.25
+bounce = 0.1
+
+[node name="JetSki" type="RigidBody3D"]
+physics_material_override = SubResource("hull_physics")
+script = ExtResource("1")
+tuning = ExtResource("2")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.32, 0)
+shape = SubResource("hull_shape")
+
+[node name="Model" parent="." instance=ExtResource("3")]
+
+[node name="HullPoints" type="Node3D" parent="."]
+
+[node name="Bow" type="Marker3D" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, -1.25)
+
+[node name="FrontLeft" type="Marker3D" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.36, 0.12, -0.8)
+
+[node name="FrontRight" type="Marker3D" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.36, 0.12, -0.8)
+
+[node name="MidLeft" type="Marker3D" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.42, 0.11, 0)
+
+[node name="MidRight" type="Marker3D" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 0.11, 0)
+
+[node name="RearLeft" type="Marker3D" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.12, 0.85)
+
+[node name="RearRight" type="Marker3D" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.12, 0.85)
+
+[node name="Stern" type="Marker3D" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 1.3)

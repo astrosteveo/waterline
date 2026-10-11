@@ -25,7 +25,7 @@ uniform vec3 shallow_color : source_color = vec3(0.06, 0.55, 0.55);
 // Depth in meters over which the colour goes from shallow to deep.
 uniform float depth_color_range = 7.0;
 // How quickly light is absorbed per meter of water, for red, green and blue.
-uniform vec3 absorption = vec3(0.45, 0.12, 0.08);
+uniform vec3 absorption = vec3(0.5, 0.16, 0.11);
 // Light passing through thin crests toward the camera.
 uniform vec3 crest_color : source_color = vec3(0.08, 0.55, 0.45);
 uniform float crest_strength = 0.35;
@@ -119,6 +119,12 @@ void fragment() {
 	vec3 floor_world = world_from_depth(refract_uv, floor_depth, INV_PROJECTION_MATRIX, INV_VIEW_MATRIX);
 	float vertical_depth = max(world_position.y - floor_world.y, 0.0);
 	float path_length = min(distance(world_position, floor_world), 200.0);
+	// Nothing drawn behind the water (reverse Z clears to 0): open sea, not a shore at the
+	// far plane.
+	if (floor_depth <= 0.0) {
+		vertical_depth = 1000.0;
+		path_length = 200.0;
+	}
 	vec3 transmittance = exp(-absorption * path_length);
 
 	// The water's own colour shades from shallow to deep with its depth.
@@ -146,7 +152,13 @@ void fragment() {
 	// already lit, so it goes in as emission. Godot adds the reflection on top.
 	ALBEDO = mix(water_color * (vec3(1.0) - transmittance), foam_color, foam);
 	EMISSION = (refracted * transmittance * (1.0 - fresnel) + crest_glow) * (1.0 - foam);
-	ROUGHNESS = mix(roughness, 0.7, foam);
+	// Detail too fine to draw becomes roughness (GGX alpha is roughness squared, and adds
+	// twice the slope variance). The ripple maps count as a slope of about ripple_strength.
+	float lost_variance = gerstner_lost_slope_variance(pixel_size * 0.5)
+			+ 0.5 * ripple_strength * ripple_strength * (1.0 - ripple_fade * ripple_fade);
+	float alpha = roughness * roughness;
+	float far_roughness = sqrt(sqrt(alpha * alpha + 2.0 * lost_variance));
+	ROUGHNESS = mix(far_roughness, 0.7, foam);
 	SPECULAR = mix(specular, 0.1, foam);
 	METALLIC = 0.0;
 	NORMAL = normalize((VIEW_MATRIX * vec4(normal_world, 0.0)).xyz);

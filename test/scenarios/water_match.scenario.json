@@ -1,0 +1,11 @@
+{
+  "description": "The CPU wave height matches the height the GPU draws, pixel by pixel.",
+  "start": {"scene": "res://test/water_match.tscn", "seed": 1},
+  "steps": [
+    "step 30",
+    {"expect": "scene.check().mean_error_m < 0.002", "name": "mean error under 2 mm"},
+    {"expect": "scene.check().max_error_m < 0.01", "name": "largest error under 1 cm"},
+    "step 571",
+    {"expect": "scene.check().max_error_m < 0.01", "name": "largest error under 1 cm after 10 s"}
+  ]
+}
