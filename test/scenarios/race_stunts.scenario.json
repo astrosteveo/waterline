@@ -1,0 +1,236 @@
+{
+  "description": "Air stunts: the held direction picks the stunt; a stunt started early lands clean and scores (and adds a power level), one still under way at touchdown throws the rider off; a nose-down landing short of a crash is untidy and costs speed.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1,
+    "args": [
+      "--no-opponents"
+    ]
+  },
+  "steps": [
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "eval": "rules.set('misses_to_disqualify', 0)",
+      "name": "no disqualification: this test skips buoys"
+    },
+    {
+      "eval": "place_racer(player, 394, -1, 15)"
+    },
+    "step 3",
+    {
+      "until": "player.craft.airborne",
+      "hold": "throttle",
+      "max": 240
+    },
+    {
+      "step": 4,
+      "hold": "throttle"
+    },
+    {
+      "step": 1,
+      "hold": [
+        "throttle",
+        "steer_right"
+      ],
+      "tap": "stunt"
+    },
+    {
+      "step": 6,
+      "hold": "throttle"
+    },
+    {
+      "expect": "[player.craft.stunt, player.craft.stunt_side]",
+      "equals": [
+        "barrel_roll",
+        1.0
+      ],
+      "name": "stunt + right starts a barrel roll to the right"
+    },
+    {
+      "until": "not player.craft.airborne",
+      "hold": "throttle",
+      "max": 180
+    },
+    "step 2",
+    {
+      "expect": "player.craft.last_landing_quality",
+      "equals": "clean",
+      "name": "a roll started early lands clean"
+    },
+    {
+      "expect": "[player.stunts_landed, player.stunt_points]",
+      "equals": [
+        1,
+        100
+      ],
+      "name": "the roll scores 100"
+    },
+    {
+      "expect": "player.power",
+      "equals": 1,
+      "name": "a landed stunt adds a power level"
+    },
+    {
+      "expect": "player.craft.last_landing_loss",
+      "equals": 0.0,
+      "name": "a clean landing keeps its speed"
+    },
+    {
+      "step": 120,
+      "hold": "throttle"
+    },
+    {
+      "eval": "place_racer(player, 394, -1, 15)"
+    },
+    "step 3",
+    {
+      "until": "player.craft.airborne",
+      "hold": "throttle",
+      "max": 240
+    },
+    {
+      "step": 4,
+      "hold": "throttle"
+    },
+    {
+      "step": 1,
+      "hold": [
+        "throttle",
+        "lean_forward"
+      ],
+      "tap": "stunt"
+    },
+    {
+      "step": 6,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.craft.stunt",
+      "equals": "handstand",
+      "name": "stunt + lean forward starts a handstand"
+    },
+    {
+      "until": "not player.craft.airborne",
+      "hold": "throttle",
+      "max": 180
+    },
+    "step 2",
+    {
+      "expect": "player.craft.last_landing_quality",
+      "equals": "clean"
+    },
+    {
+      "expect": "player.stunt_points",
+      "equals": 220,
+      "name": "the handstand scores 120 more"
+    },
+    {
+      "step": 120,
+      "hold": "throttle"
+    },
+    {
+      "step": 1,
+      "hold": [
+        "throttle",
+        "steer_left"
+      ],
+      "tap": "stunt"
+    },
+    {
+      "step": 2,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.craft.stunt",
+      "equals": "",
+      "name": "no stunt on the water"
+    },
+    {
+      "eval": "place_racer(player, 394, -1, 15)"
+    },
+    "step 3",
+    {
+      "until": "player.craft.airborne",
+      "hold": "throttle",
+      "max": 240
+    },
+    {
+      "step": 30,
+      "hold": "throttle"
+    },
+    {
+      "step": 1,
+      "hold": [
+        "throttle",
+        "lean_back"
+      ],
+      "tap": "stunt"
+    },
+    {
+      "until": "not player.craft.airborne",
+      "hold": "throttle",
+      "max": 180
+    },
+    "step 2",
+    {
+      "expect": "player.craft.last_landing_quality",
+      "equals": "failed"
+    },
+    {
+      "expect": "player.craft.last_crash_reason",
+      "equals": "stunt_failed",
+      "name": "a backflip started late throws the rider off"
+    },
+    {
+      "expect": "player.stunt_points",
+      "equals": 220,
+      "name": "a failed stunt scores nothing"
+    },
+    {
+      "until": "player.craft.is_rider_aboard()",
+      "max": 600,
+      "name": "the rider climbs back on"
+    },
+    {
+      "step": 60
+    },
+    {
+      "eval": "place_racer(player, 394, -1, 15)"
+    },
+    "step 3",
+    {
+      "until": "player.craft.airborne",
+      "hold": "throttle",
+      "max": 240
+    },
+    {
+      "step": 30,
+      "hold": [
+        "throttle",
+        "lean_forward"
+      ]
+    },
+    {
+      "until": "not player.craft.airborne",
+      "hold": "throttle",
+      "max": 180
+    },
+    "step 2",
+    {
+      "expect": "player.craft.last_landing_quality",
+      "equals": "untidy",
+      "name": "landing about 20 degrees nose down is untidy"
+    },
+    {
+      "expect": "player.craft.last_landing_loss > 0.05 and player.craft.last_landing_loss < 0.36",
+      "name": "an untidy landing costs 5 to 36% of the speed"
+    },
+    {
+      "expect": "player.craft.is_rider_aboard()",
+      "name": "and keeps the rider on"
+    }
+  ]
+}

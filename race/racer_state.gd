@@ -35,6 +35,9 @@ var power: int = 0
 var disqualified: bool = false
 ## Times the rider was thrown off.
 var crashes: int = 0
+## Stunts landed and the points they scored.
+var stunts_landed: int = 0
+var stunt_points: int = 0
 ## True while the racer has been heading against the course for a while.
 var wrong_way: bool = false
 ## The rider, or null.

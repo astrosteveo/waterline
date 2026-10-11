@@ -12,6 +12,8 @@ extends Resource
 @export var miss_resets_power: bool = true
 ## Missing this many buoys in one race disqualifies a racer. 0 turns disqualification off.
 @export_range(0, 50, 1) var misses_to_disqualify: int = 5
+## Power levels added for each stunt landed (clean or untidy) in a race. 0 turns it off.
+@export_range(0, 5, 1) var stunt_power: int = 1
 ## Computer riders get up to this much more thrust when far behind the player, and this
 ## much less when far ahead, so races stay close. 0 turns it off.
 @export_range(0.0, 0.5, 0.01) var catch_up: float = 0.05

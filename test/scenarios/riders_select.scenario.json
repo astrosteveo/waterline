@@ -1,0 +1,109 @@
+{
+  "description": "Riders: the rider select screen shows each rider's stats; choosing one races as that rider, on a craft tuned by its stats, against the other three.",
+  "start": {
+    "scene": "res://menus/rider_select.tscn",
+    "seed": 1
+  },
+  "steps": [
+    "step 10",
+    {
+      "expect": "scene.selected.display_name",
+      "equals": "Marina",
+      "name": "Marina is chosen first"
+    },
+    {
+      "expect": "[scene._bars[0].value, scene._bars[1].value, scene._bars[2].value, scene._bars[3].value]",
+      "equals": [
+        3.0,
+        3.0,
+        3.0,
+        3.0
+      ],
+      "name": "Marina's stats are all even"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 5",
+    {
+      "expect": "scene.selected.display_name",
+      "equals": "Koa"
+    },
+    {
+      "expect": "scene._bars[0].value > 3 and scene._bars[1].value < 3 and scene._bars[2].value < 3",
+      "name": "Koa: more top speed, less acceleration and handling"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 5",
+    {
+      "expect": "scene.selected.display_name",
+      "equals": "Dax"
+    },
+    {
+      "expect": "scene._bars[1].value > 3 and scene._bars[3].value < 3",
+      "name": "Dax: more acceleration, less grip"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 5",
+    {
+      "expect": "scene.selected.display_name",
+      "equals": "Marina",
+      "name": "the list wraps round"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 60,
+      "name": "confirming starts the race"
+    },
+    "step 5",
+    {
+      "expect": "scene.player.display_name",
+      "equals": "Ines",
+      "name": "as the chosen rider"
+    },
+    {
+      "expect": "[scene.racers[1].display_name, scene.racers[2].display_name, scene.racers[3].display_name]",
+      "equals": [
+        "Marina",
+        "Koa",
+        "Dax"
+      ],
+      "name": "against the other three"
+    },
+    {
+      "expect": "abs(scene.player.craft.tuning.turn_rate_low - 1.6 * 1.12) < 0.001",
+      "name": "the craft has Ines's handling"
+    },
+    {
+      "expect": "abs(scene.player.craft.mass - 280.0) < 0.01",
+      "name": "and Ines's weight"
+    },
+    {
+      "expect": "abs(scene.racers[2].craft.tuning.grip_g - 1.9) < 0.001 and abs(scene.racers[3].craft.tuning.grip_g - 1.9 * 0.88) < 0.001",
+      "name": "the computer riders have their own stats"
+    }
+  ]
+}
