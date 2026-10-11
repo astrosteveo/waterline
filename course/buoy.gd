@@ -1,14 +1,15 @@
 @tool
 class_name Buoy
-extends AnimatableBody3D
+extends RigidBody3D
 ## A course buoy that bobs on the waves. Its colour tells racers which side to pass it on:
 ## keep a red buoy on your right (pass to its left) and a yellow buoy on your left (pass to
 ## its right). [Course] collects the buoys under its Buoys node, in order, as gates.
 ##
-## The node's origin sits at the water line; the float hangs below it. The body follows the
-## water height and tilts with the surface every physics tick, so racers bump into it where
-## it is drawn. The meshes are built from code and can be replaced by any child scene named
-## "Model".
+## The node's origin sits at the water line; the float hangs below it. The buoy is moored:
+## springs pull it to its anchor, to the water height and upright along the waves, so a
+## craft that hits it knocks it aside and loses some speed, and it swings back. Gates use
+## the anchor, not where the buoy has been pushed. The meshes are built from code and can be
+## replaced by any child scene named "Model".
 
 enum Kind {
 	## Keep on the racer's right: pass to its left.
@@ -37,6 +38,15 @@ const STRIPE_COLOR := Color(0.97, 0.97, 0.95)
 		_queue_build()
 ## How much the buoy tilts with the wave slope: 0 stays upright, 1 stands along the normal.
 @export_range(0.0, 1.0, 0.01) var tilt_follow: float = 0.6
+## How stiffly the mooring holds the buoy at its anchor, per second squared (and the
+## damping, per second). A hit at racing speed pushes it about a meter.
+@export_range(0.0, 200.0, 0.1) var mooring_stiffness: float = 30.0
+@export_range(0.0, 50.0, 0.1) var mooring_damping: float = 7.0
+## The same for its height on the water, and for standing upright.
+@export_range(0.0, 500.0, 0.1) var float_stiffness: float = 60.0
+@export_range(0.0, 50.0, 0.1) var float_damping: float = 10.0
+@export_range(0.0, 500.0, 0.1) var upright_stiffness: float = 40.0
+@export_range(0.0, 50.0, 0.1) var upright_damping: float = 8.0
 
 var _main_material: StandardMaterial3D
 var _flash_color := Color.WHITE
@@ -52,9 +62,17 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	collision_layer = PhysicsLayers.FLOATING
-	collision_mask = 0
+	collision_mask = PhysicsLayers.CRAFT
+	mass = 80.0
+	gravity_scale = 0.0
+	can_sleep = false
+	linear_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
+	linear_damp = 0.0
+	angular_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
+	angular_damp = 0.0
 	_rest = global_position
-	_follow_water(Ocean.time)
+	Ocean.sample_at_time(_rest, Ocean.time, _sample)
+	global_position = Vector3(_rest.x, _sample.height, _rest.z)
 	reset_physics_interpolation()
 
 
@@ -80,10 +98,20 @@ func flash(flash_color: Color, duration: float = 0.6) -> void:
 	_flash_time = _flash_duration
 
 
-func _physics_process(_delta: float) -> void:
+func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	if Engine.is_editor_hint():
 		return
-	_follow_water(Ocean.end_time)
+	var at := state.transform.origin
+	Ocean.sample_at_time(Vector3(at.x, 0.0, at.z), Ocean.time, _sample)
+	var velocity := state.linear_velocity
+	var force := Vector3.ZERO
+	force.x = (_rest.x - at.x) * mooring_stiffness - (velocity.x - _sample.velocity.x) * mooring_damping
+	force.z = (_rest.z - at.z) * mooring_stiffness - (velocity.z - _sample.velocity.z) * mooring_damping
+	force.y = (_sample.height - at.y) * float_stiffness - (velocity.y - _sample.velocity.y) * float_damping
+	state.apply_central_force(force * mass)
+	var up := Vector3.UP.lerp(_sample.normal, tilt_follow).normalized()
+	var axis := state.transform.basis.y.cross(up)
+	state.apply_torque((axis * upright_stiffness - state.angular_velocity * upright_damping) * mass * 0.5)
 
 
 func _process(delta: float) -> void:
@@ -94,13 +122,6 @@ func _process(delta: float) -> void:
 	_main_material.emission_enabled = strength > 0.0
 	_main_material.emission = _flash_color
 	_main_material.emission_energy_multiplier = 2.5 * strength
-
-
-func _follow_water(t: float) -> void:
-	Ocean.sample_at_time(_rest, t, _sample)
-	var up := Vector3.UP.lerp(_sample.normal, tilt_follow).normalized()
-	var tilt := Basis(Quaternion(Vector3.UP, up))
-	global_transform = Transform3D(tilt, Vector3(_rest.x, _sample.height, _rest.z))
 
 
 func _queue_build() -> void:

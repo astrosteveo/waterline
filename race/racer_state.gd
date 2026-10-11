@@ -28,6 +28,13 @@ var buoys_passed: int = 0
 var buoys_missed: int = 0
 ## Place in the race, 1 for the leader. [Race] refreshes it every tick.
 var place: int = 1
+## Level of the power meter: one more for each buoy passed on the correct side, back to 0
+## on a miss. Each level raises the craft's thrust.
+var power: int = 0
+## True once the racer has missed too many buoys; it races no more.
+var disqualified: bool = false
+## Times the rider was thrown off.
+var crashes: int = 0
 ## True while the racer has been heading against the course for a while.
 var wrong_way: bool = false
 
@@ -55,6 +62,6 @@ func best_lap() -> float:
 	return best
 
 
-## True while the racer still races (not finished).
+## True while the racer still races (not finished or disqualified).
 func is_racing() -> bool:
-	return not finished
+	return not finished and not disqualified

@@ -121,7 +121,8 @@ def main(game):
     result = game.eval(
         f"{{'laps_done': {R}.player.laps_done, 'lap_times': {R}.player.lap_times, "
         f"'passed': {R}.player.buoys_passed, 'missed': {R}.player.buoys_missed, "
-        f"'race_time': {R}.race_time, 'phase': {R}.phase, 'distance': {R}.player.progress.distance}}")
+        f"'race_time': {R}.race_time, 'phase': {R}.phase, 'distance': {R}.player.progress.distance, "
+        f"'power': {R}.player.power, 'crashes': {R}.player.crashes, 'place': {R}.player.place}}")
     print(json.dumps(result))
     if args.out:
         with open(args.out, "w") as f:

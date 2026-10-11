@@ -1,0 +1,85 @@
+{
+  "description": "The power meter: each buoy passed on its marked side adds a level and more thrust; a missed buoy empties it.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1
+  },
+  "steps": [
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "expect": "player.power",
+      "equals": 0,
+      "name": "the meter starts empty"
+    },
+    {
+      "expect": "abs(player.craft.power_multiplier - rules.thrust_for(0)) < 0.001"
+    },
+    {
+      "eval": "place_racer(player, 126, 9, 15)"
+    },
+    "step 3",
+    {
+      "step": 90,
+      "hold": "throttle"
+    },
+    {
+      "expect": "[player.buoys_passed, player.buoys_missed]",
+      "equals": [
+        1,
+        1
+      ],
+      "name": "first buoy skipped, second (yellow) passed on its right"
+    },
+    {
+      "expect": "player.power",
+      "equals": 1,
+      "name": "a pass after the miss: level 1"
+    },
+    {
+      "expect": "abs(player.craft.power_multiplier - rules.thrust_for(1)) < 0.001",
+      "name": "level 1 thrust"
+    },
+    {
+      "eval": "place_racer(player, 160, -10, 15)"
+    },
+    "step 3",
+    {
+      "step": 90,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.power",
+      "equals": 2,
+      "name": "red buoy kept on the right: level 2"
+    },
+    {
+      "expect": "abs(player.craft.power_multiplier - rules.thrust_for(2)) < 0.001",
+      "name": "level 2 thrust"
+    },
+    {
+      "eval": "place_racer(player, 192, -1, 15)"
+    },
+    "step 3",
+    {
+      "step": 90,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.buoys_missed",
+      "equals": 2,
+      "name": "yellow buoy passed on its left: missed"
+    },
+    {
+      "expect": "player.power",
+      "equals": 0,
+      "name": "the miss empties the meter"
+    },
+    {
+      "expect": "abs(player.craft.power_multiplier - rules.thrust_for(0)) < 0.001",
+      "name": "back to base thrust"
+    }
+  ]
+}

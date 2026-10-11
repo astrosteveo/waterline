@@ -53,6 +53,7 @@ func _process(_delta: float) -> void:
 	lines.append("air        %s %4.2f s" % ["AIRBORNE" if t["airborne"] else "on water", t["air_time"]])
 	lines.append("pitch      %5.1f deg   roll %5.1f deg" % [t["pitch_degrees"], t["roll_degrees"]])
 	lines.append("throttle   %4.2f  thrust %4.2f  steer %5.2f  lean %5.2f" % [craft.controls.throttle, t["thrust"], craft.controls.steer, craft.controls.lean])
+	lines.append("rider      %s   crashes %d %s  power x%4.2f" % [t["rider"], craft.crash_count, craft.last_crash_reason, craft.power_multiplier])
 	if chase_camera != null:
 		lines.append("camera gap %5.2f m above water (lowest)" % chase_camera.min_water_gap)
 	_label.text = "\n".join(lines)

@@ -26,6 +26,7 @@ var _distance := 0.0
 var _last_position := Vector3.ZERO
 var _yaw_turned := 0.0
 var _last_yaw := 0.0
+var _crashes_at_reset := 0
 
 
 func _ready() -> void:
@@ -50,6 +51,7 @@ func reset() -> void:
 	_distance = 0.0
 	_yaw_turned = 0.0
 	if craft != null:
+		_crashes_at_reset = craft.crash_count
 		_start_position = craft.global_position
 		_last_position = craft.global_position
 		_last_yaw = craft.global_rotation.y
@@ -119,4 +121,5 @@ func report() -> Dictionary:
 		"turned_degrees": rad_to_deg(_yaw_turned),
 		"min_camera_gap_m": _min_camera_gap,
 		"displacement": craft.global_position - _start_position if craft != null else Vector3.ZERO,
+		"crashes": craft.crash_count - _crashes_at_reset if craft != null else 0,
 	}

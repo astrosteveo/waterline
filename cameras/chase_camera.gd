@@ -50,6 +50,7 @@ var _reference_height := 0.0
 var _smoothed := Vector3.ZERO
 var _fov_speed := 0.0
 var _snap_next := true
+var _focus_offset := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -83,7 +84,12 @@ func _process(delta: float) -> void:
 	if _target == null:
 		return
 	var xform := _target.get_global_transform_interpolated()
-	var focus := xform.origin + Vector3.UP * 0.4
+	# A target can ask to be framed off its origin (a jet ski with its rider in the water).
+	var wanted_offset := Vector3.ZERO
+	if _target.has_method(&"camera_focus"):
+		wanted_offset = (_target.call(&"camera_focus") as Vector3) - xform.origin
+	_focus_offset = wanted_offset if _snap_next else _focus_offset.lerp(wanted_offset, 1.0 - exp(-3.0 * delta))
+	var focus := xform.origin + _focus_offset + Vector3.UP * 0.4
 
 	var nose := -xform.basis.z
 	nose.y = 0.0

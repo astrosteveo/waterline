@@ -1,30 +1,89 @@
 {
   "description": "A lap counts only after going round the course and crossing the finish line forward; its time is the race time at the crossing. Riding against the course shows the wrong-way warning.",
-  "start": {"scene": "res://race/race.tscn", "seed": 1},
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1
+  },
   "steps": [
-    {"until": "phase == 1", "max": 400},
-    {"eval": "place_racer(player, 40, 0, 0, true)"},
-    {"step": 150, "hold": "throttle"},
-    {"expect": "player.wrong_way", "name": "riding backwards shows the warning"},
-    {"expect": "player.laps_done", "equals": 0, "name": "crossing the line backwards is not a lap"},
-    {"eval": "place_racer(player, 100, 0, 0)"},
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "eval": "rules.set('misses_to_disqualify', 0)",
+      "name": "no disqualification: this test skips every buoy"
+    },
+    {
+      "eval": "place_racer(player, 40, 0, 0, true)"
+    },
+    {
+      "step": 150,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.wrong_way",
+      "name": "riding backwards shows the warning"
+    },
+    {
+      "expect": "player.laps_done",
+      "equals": 0,
+      "name": "crossing the line backwards is not a lap"
+    },
+    {
+      "eval": "place_racer(player, 100, 0, 0)"
+    },
     "step 3",
-    {"expect": "not player.wrong_way", "name": "the warning clears"},
-    {"eval": "place_racer(player, 220, 0, 0)"},
+    {
+      "expect": "not player.wrong_way",
+      "name": "the warning clears"
+    },
+    {
+      "eval": "place_racer(player, 220, 0, 0)"
+    },
     "step 3",
-    {"eval": "place_racer(player, 340, 0, 0)"},
+    {
+      "eval": "place_racer(player, 340, 0, 0)"
+    },
     "step 3",
-    {"eval": "place_racer(player, 460, 0, 0)"},
+    {
+      "eval": "place_racer(player, 460, 0, 0)"
+    },
     "step 3",
-    {"eval": "place_racer(player, 580, 0, 0)"},
+    {
+      "eval": "place_racer(player, 580, 0, 0)"
+    },
     "step 3",
-    {"eval": "place_racer(player, 620, 0, 15)"},
+    {
+      "eval": "place_racer(player, 620, 0, 15)"
+    },
     "step 3",
-    {"expect": "player.laps_done", "equals": 0},
-    {"until": "player.laps_done == 1", "hold": "throttle", "max": 180, "name": "crossing the finish line ends lap 1"},
-    {"expect": "player.lap_times.size()", "equals": 1},
-    {"expect": "abs(player.lap_times[0] - race_time) < 0.05", "name": "the lap time is the race time at the line"},
-    {"expect": "player.buoys_missed", "equals": 9, "name": "every skipped buoy counts as missed"},
-    {"expect": "player.next_gate", "equals": 0, "name": "lap 2 starts at the first buoy"}
+    {
+      "expect": "player.laps_done",
+      "equals": 0
+    },
+    {
+      "until": "player.laps_done == 1",
+      "hold": "throttle",
+      "max": 180,
+      "name": "crossing the finish line ends lap 1"
+    },
+    {
+      "expect": "player.lap_times.size()",
+      "equals": 1
+    },
+    {
+      "expect": "abs(player.lap_times[0] - race_time) < 0.05",
+      "name": "the lap time is the race time at the line"
+    },
+    {
+      "expect": "player.buoys_missed",
+      "equals": 9,
+      "name": "every skipped buoy counts as missed"
+    },
+    {
+      "expect": "player.next_gate",
+      "equals": 0,
+      "name": "lap 2 starts at the first buoy"
+    }
   ]
 }

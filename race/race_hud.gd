@@ -1,8 +1,9 @@
 class_name RaceHud
 extends CanvasLayer
-## The heads-up display during a race: lap, race time and lap times, speed, the countdown
-## and short messages for buoys, laps and going the wrong way. It reads the player's
-## [RacerState] from [member race] and listens to the race's signals.
+## The heads-up display during a race: place, lap, race time and lap times, speed, the
+## power meter, missed buoys, the countdown and short messages for buoys, laps, going the
+## wrong way and disqualification. It reads the player's [RacerState] from [member race]
+## and listens to the race's signals.
 
 @export var race: Race
 
@@ -12,7 +13,11 @@ const WHITE := Color(1.0, 1.0, 1.0)
 const CYAN := Color(0.45, 0.92, 1.0)
 
 var _font: FontVariation
+var _place_value: Label
+var _place_total: Label
 var _lap_value: Label
+var _power: PowerMeter
+var _misses: PowerMeter
 var _time_value: Label
 var _lap_list: Label
 var _speed_value: Label
@@ -20,6 +25,7 @@ var _message: Label
 var _sub_message: Label
 var _wrong_way: Label
 var _message_tween: Tween
+var _shown_power := 0
 var _sub_tween: Tween
 
 
@@ -36,6 +42,7 @@ func _ready() -> void:
 		race.gate_judged.connect(_on_gate_judged)
 		race.lap_completed.connect(_on_lap_completed)
 		race.finished.connect(_on_finished)
+		race.racer_disqualified.connect(_on_disqualified)
 
 
 func _build() -> void:
@@ -44,11 +51,52 @@ func _build() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
-	# Top left: lap.
-	var lap_box := _column(root, Control.PRESET_TOP_LEFT, Vector2(48.0, 32.0))
-	lap_box.add_child(_label("LAP", 30, YELLOW))
-	_lap_value = _label("1/3", 72, WHITE)
-	lap_box.add_child(_lap_value)
+	# Top left: place and lap.
+	var left_box := _column(root, Control.PRESET_TOP_LEFT, Vector2(48.0, 24.0))
+	var place_row := HBoxContainer.new()
+	place_row.add_theme_constant_override(&"separation", 4)
+	place_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place_value = _label("1st", 104, YELLOW)
+	place_row.add_child(_place_value)
+	_place_total = _label("/1", 44, WHITE)
+	_place_total.size_flags_vertical = Control.SIZE_SHRINK_END
+	place_row.add_child(_place_total)
+	left_box.add_child(place_row)
+	var lap_row := HBoxContainer.new()
+	lap_row.add_theme_constant_override(&"separation", 14)
+	lap_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var lap_title := _label("LAP", 30, YELLOW)
+	lap_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	lap_row.add_child(lap_title)
+	_lap_value = _label("1/3", 60, WHITE)
+	lap_row.add_child(_lap_value)
+	left_box.add_child(lap_row)
+
+	# Bottom left: power meter and missed buoys.
+	var rules := race.rules if race != null and race.rules != null else RaceRules.new()
+	var meter_box := _column(root, Control.PRESET_BOTTOM_LEFT, Vector2(48.0, -40.0))
+	meter_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	meter_box.add_theme_constant_override(&"separation", 6)
+	meter_box.add_child(_label("POWER", 30, YELLOW))
+	_power = PowerMeter.new()
+	_power.custom_minimum_size = Vector2(330.0, 46.0)
+	_power.levels = rules.power_levels
+	meter_box.add_child(_power)
+	var miss_row := HBoxContainer.new()
+	miss_row.add_theme_constant_override(&"separation", 12)
+	miss_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var miss_title := _label("MISS", 26, RED)
+	miss_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	miss_row.add_child(miss_title)
+	_misses = PowerMeter.new()
+	_misses.custom_minimum_size = Vector2(170.0, 22.0)
+	_misses.levels = maxi(rules.misses_to_disqualify, 1)
+	_misses.low_color = RED
+	_misses.high_color = RED.darkened(0.2)
+	_misses.gap = 5.0
+	_misses.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	miss_row.add_child(_misses)
+	meter_box.add_child(miss_row)
 
 	# Top right: race time and lap times.
 	var time_box := _column(root, Control.PRESET_TOP_RIGHT, Vector2(-48.0, 32.0))
@@ -126,11 +174,15 @@ func _process(_delta: float) -> void:
 	if race == null or race.player == null:
 		return
 	var racer := race.player
+	_place_value.text = Race.ordinal(racer.place) if not racer.disqualified else "DQ"
+	_place_total.text = "/%d" % race.racers.size()
 	_lap_value.text = "%d/%d" % [mini(racer.laps_done + 1, race.laps), race.laps]
-	var shown_time := racer.finish_time if racer.finished else race.race_time
+	_power.value = racer.power
+	_misses.value = racer.buoys_missed
+	var shown_time := racer.finish_time if not racer.is_racing() else race.race_time
 	_time_value.text = Race.format_time(shown_time)
 	_speed_value.text = "%d" % roundi(racer.craft.speed * 3.6)
-	_wrong_way.visible = racer.wrong_way and not racer.finished and race.phase == Race.Phase.RACING
+	_wrong_way.visible = racer.wrong_way and racer.is_racing() and race.phase == Race.Phase.RACING
 	var lines := PackedStringArray()
 	var best := racer.best_lap()
 	for i in racer.lap_times.size():
@@ -143,10 +195,12 @@ func _process(_delta: float) -> void:
 func show_message(text: String, color: Color = WHITE, duration: float = 1.2) -> void:
 	_message.text = text
 	_message.add_theme_color_override(&"font_color", color)
+	# Long words get a smaller font and a smaller pop, so they stay clear of the corners.
+	_message.add_theme_font_size_override(&"font_size", 150 if text.length() <= 6 else 104)
 	if _message_tween != null:
 		_message_tween.kill()
 	_message.modulate.a = 1.0
-	_message.scale = Vector2(1.6, 1.6)
+	_message.scale = Vector2(1.6, 1.6) if text.length() <= 6 else Vector2(1.15, 1.15)
 	_message_tween = create_tween()
 	_message_tween.tween_property(_message, ^"scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_message_tween.tween_interval(maxf(duration - 0.5, 0.0))
@@ -179,10 +233,17 @@ func _on_started() -> void:
 func _on_gate_judged(racer: RacerState, gate: CourseGate, correct: bool) -> void:
 	if not racer.is_player:
 		return
+	var power_before := _shown_power
+	_shown_power = racer.power
 	if correct:
-		show_sub_message("NICE", gate.buoy.color().lightened(0.3) if gate.buoy != null else WHITE, 0.7)
-	else:
-		show_sub_message("MISSED BUOY", RED, 1.2)
+		if racer.power >= race.rules.power_levels and power_before < racer.power:
+			show_sub_message("MAX POWER", YELLOW, 1.0)
+		else:
+			show_sub_message("NICE", CYAN, 0.7)
+	elif racer.is_racing():
+		var left := race.rules.misses_to_disqualify - racer.buoys_missed
+		var warning := "  %d LEFT" % left if left > 0 and left <= 2 else ""
+		show_sub_message("MISSED BUOY" + warning, RED, 1.2)
 
 
 func _on_lap_completed(racer: RacerState, lap: int, lap_time: float) -> void:
@@ -194,5 +255,13 @@ func _on_lap_completed(racer: RacerState, lap: int, lap_time: float) -> void:
 
 
 func _on_finished() -> void:
+	if race.player.disqualified:
+		return
 	show_message("FINISH", YELLOW, 3.0)
 	show_sub_message(Race.format_time(race.player.finish_time), WHITE, 3.0)
+
+
+func _on_disqualified(racer: RacerState) -> void:
+	if racer.is_player:
+		show_message("DISQUALIFIED", RED, 4.0)
+		show_sub_message("%d BUOYS MISSED" % racer.buoys_missed, WHITE, 4.0)

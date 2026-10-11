@@ -18,7 +18,13 @@ signal gate_judged(racer: RacerState, gate: CourseGate, correct: bool)
 signal lap_completed(racer: RacerState, lap: int, lap_time: float)
 ## A racer finished the race.
 signal racer_finished(racer: RacerState)
-## The player finished; the race is over for them.
+## A racer's power meter changed.
+signal power_changed(racer: RacerState, level: int)
+## A racer missed too many buoys and is out of the race.
+signal racer_disqualified(racer: RacerState)
+## A racer's rider was thrown off.
+signal racer_crashed(racer: RacerState, reason: StringName)
+## The player finished or was disqualified; the race is over for them.
 signal finished
 
 enum Phase {
@@ -34,6 +40,8 @@ enum Phase {
 @export var course_scene: PackedScene
 ## The craft every racer rides.
 @export var craft_scene: PackedScene = preload("res://jetski/jetski.tscn")
+## The power meter and disqualification rules.
+@export var rules: RaceRules
 ## Laps to race; 0 uses the course's own number.
 @export_range(0, 9, 1) var laps_override: int = 0
 ## Seconds of countdown before the start.
@@ -68,6 +76,8 @@ var _last_countdown_second := -1
 func _ready() -> void:
 	# After the racers' input (priority 0), before the ride recorder (100).
 	process_physics_priority = 50
+	if rules == null:
+		rules = RaceRules.new()
 	if course_scene == null:
 		push_error("Race needs a course scene.")
 		return
@@ -122,6 +132,8 @@ func _add_racer(craft: JetSki, display_name: String, slot: int) -> RacerState:
 	racer.display_name = display_name
 	racers.append(racer)
 	craft.reset_handler = rescue.bind(racer)
+	craft.power_multiplier = rules.thrust_for(0)
+	craft.crashed.connect(_on_crashed.bind(racer))
 	return racer
 
 
@@ -177,7 +189,7 @@ func _update_racer(racer: RacerState, delta: float) -> void:
 		return
 	course.track(racer.progress, here)
 	_update_wrong_way(racer, before, here, delta)
-	if racer.finished:
+	if not racer.is_racing():
 		return
 	var gates := course.gates
 	# Buoy gates: the next one, or a later one if the racer skipped some.
@@ -209,13 +221,43 @@ func _update_racer(racer: RacerState, delta: float) -> void:
 
 
 func _judge(racer: RacerState, gate: CourseGate, correct: bool) -> void:
+	if not racer.is_racing():
+		return
 	if correct:
 		racer.buoys_passed += 1
+		_set_power(racer, mini(racer.power + 1, rules.power_levels))
 	else:
 		racer.buoys_missed += 1
+		if rules.miss_resets_power:
+			_set_power(racer, 0)
 	if racer.is_player and gate.buoy != null:
 		gate.buoy.flash(Color(1.0, 1.0, 1.0) if correct else Color(0.1, 0.1, 0.1), 0.7)
 	gate_judged.emit(racer, gate, correct)
+	if not correct and rules.misses_to_disqualify > 0 and racer.buoys_missed >= rules.misses_to_disqualify:
+		_disqualify(racer)
+
+
+func _set_power(racer: RacerState, level: int) -> void:
+	if level == racer.power:
+		return
+	racer.power = level
+	racer.craft.power_multiplier = rules.thrust_for(level)
+	power_changed.emit(racer, level)
+
+
+func _disqualify(racer: RacerState) -> void:
+	racer.disqualified = true
+	racer.finish_time = race_time
+	racer.next_gate = 0
+	racer_disqualified.emit(racer)
+	if racer.is_player:
+		phase = Phase.FINISHED
+		finished.emit()
+
+
+func _on_crashed(reason: StringName, racer: RacerState) -> void:
+	racer.crashes += 1
+	racer_crashed.emit(racer, reason)
 
 
 func _complete_lap(racer: RacerState, at_time: float) -> void:
@@ -251,6 +293,8 @@ func _update_places() -> void:
 
 ## True if racer [param a] is ahead of racer [param b].
 static func is_ahead(a: RacerState, b: RacerState) -> bool:
+	if a.disqualified != b.disqualified:
+		return b.disqualified
 	if a.finished != b.finished:
 		return a.finished
 	if a.finished:
@@ -301,6 +345,20 @@ func place_racer(racer: RacerState, offset: float, lateral: float = 0.0, speed: 
 	racer.teleport_ticks = 2
 	racer.reverse_time = 0.0
 	racer.place_distance = racer.laps_done * course.length + offset
+
+
+## 1st, 2nd, 3rd, 4th...
+static func ordinal(n: int) -> String:
+	var suffix := "th"
+	if n % 100 < 11 or n % 100 > 13:
+		match n % 10:
+			1:
+				suffix = "st"
+			2:
+				suffix = "nd"
+			3:
+				suffix = "rd"
+	return "%d%s" % [n, suffix]
 
 
 ## The race time formatted as m:ss.cc.

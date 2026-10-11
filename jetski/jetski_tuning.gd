@@ -143,3 +143,41 @@ extends Resource
 @export_range(0.0, 5000.0, 1.0) var trim_torque: float = 260.0
 ## Angular damping in the air, per second.
 @export_range(0.0, 10.0, 0.01) var air_angular_damping: float = 0.3
+
+@export_group("Crashes")
+## A side or front impact against scenery that changes the craft's speed by more than this
+## throws the rider off, in m/s. Walls and floating things never do.
+@export_range(0.0, 50.0, 0.1, "suffix:m/s") var crash_impact_speed: float = 7.0
+## The same for a collision with another craft.
+@export_range(0.0, 50.0, 0.1, "suffix:m/s") var crash_craft_impact_speed: float = 9.0
+## Landing after at least [member crash_landing_air_time] in the air throws the rider off if
+## the nose is further below the water's surface than this...
+@export_range(0.0, 90.0, 0.1, "degrees") var crash_landing_pitch: float = 25.0
+## ...or the craft is rolled more than this...
+@export_range(0.0, 90.0, 0.1, "degrees") var crash_landing_roll: float = 55.0
+## ...or it is moving more than this far from where the nose points, above 8 m/s.
+@export_range(0.0, 180.0, 0.1, "degrees") var crash_landing_slip: float = 75.0
+@export_range(0.0, 3.0, 0.01, "suffix:s") var crash_landing_air_time: float = 0.3
+## Upside down in the water this long throws the rider off.
+@export_range(0.0, 5.0, 0.01, "suffix:s") var capsize_time: float = 0.35
+
+@export_group("Remount")
+## Share of the craft's velocity the rider keeps when thrown, and the extra upward and
+## sideways speed (to the side the craft leans, or to the left).
+@export_range(0.0, 1.5, 0.01) var throw_speed_share: float = 0.65
+@export_range(0.0, 15.0, 0.1, "suffix:m/s") var throw_up_speed: float = 3.0
+@export_range(0.0, 15.0, 0.1, "suffix:m/s") var throw_side_speed: float = 4.0
+## How fast the rider swims back to the craft. Faster than a real swimmer, for the game.
+@export_range(0.1, 10.0, 0.1, "suffix:m/s") var swim_speed: float = 2.0
+## Seconds the rider spends coming up for air before swimming.
+@export_range(0.0, 5.0, 0.01, "suffix:s") var surface_time: float = 0.6
+## Seconds the rider takes to climb back on.
+@export_range(0.1, 5.0, 0.01, "suffix:s") var mount_time: float = 0.9
+## The rider climbs on within this distance of the seat.
+@export_range(0.2, 5.0, 0.01, "suffix:m") var mount_reach: float = 1.4
+## After this long in the water the rider is put back on the craft whatever the distance.
+@export_range(1.0, 30.0, 0.1, "suffix:s") var max_swim_time: float = 7.0
+## How quickly a craft without its rider slows down, per second (the engine cuts out).
+@export_range(0.0, 10.0, 0.01) var riderless_brake: float = 1.1
+## Pull of a riderless craft toward its swimming rider, per second squared per meter.
+@export_range(0.0, 10.0, 0.01) var drift_to_rider: float = 0.5

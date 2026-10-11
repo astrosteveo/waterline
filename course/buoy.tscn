@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://course/buoy.gd" id="1"]
 
-[node name="Buoy" type="AnimatableBody3D"]
+[node name="Buoy" type="RigidBody3D"]
 script = ExtResource("1")

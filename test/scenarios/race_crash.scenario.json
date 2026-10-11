@@ -1,0 +1,121 @@
+{
+  "description": "Crashes: hitting a pillar at speed or landing nose first throws the rider off; the rider swims back, climbs on and rides again within a few seconds. A clean landing off a ramp and scraping a wall don't crash.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1
+  },
+  "steps": [
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "eval": "rules.set('misses_to_disqualify', 0)",
+      "name": "no disqualification: this test skips buoys"
+    },
+    {
+      "eval": "place_racer(player, 311, -9, 15)"
+    },
+    "step 3",
+    {
+      "until": "player.craft.rider_state != 0",
+      "hold": "throttle",
+      "max": 60,
+      "name": "hitting the pillar at 54 km/h throws the rider off"
+    },
+    {
+      "expect": "player.craft.last_crash_reason",
+      "equals": "impact"
+    },
+    {
+      "expect": "player.crashes",
+      "equals": 1,
+      "name": "the race counts the crash"
+    },
+    {
+      "until": "player.craft.rider_state == 2",
+      "hold": "throttle",
+      "max": 120,
+      "name": "the rider lands in the water and swims"
+    },
+    {
+      "until": "player.craft.rider_state == 0",
+      "hold": "throttle",
+      "max": 420,
+      "name": "and is back on within 7 s"
+    },
+    {
+      "eval": "place_racer(player, 100, 0, 12)"
+    },
+    "step 3",
+    {
+      "eval": "player.craft.set('global_transform', Transform3D(Basis(player.craft.global_basis.x, -0.8) * player.craft.global_basis, player.craft.global_position + Vector3(0, 2.5, 0)))",
+      "name": "drop the craft from 2.5 m, 46 degrees nose down"
+    },
+    {
+      "until": "player.craft.rider_state != 0",
+      "max": 90,
+      "name": "landing nose first throws the rider off"
+    },
+    {
+      "expect": "player.craft.last_landing.pitch < -30"
+    },
+    {
+      "expect": "player.craft.last_crash_reason",
+      "equals": "nose_dive"
+    },
+    {
+      "until": "player.craft.rider_state == 0",
+      "max": 600,
+      "name": "back on again"
+    },
+    {
+      "eval": "place_racer(player, 394, -1, 15)"
+    },
+    "step 3",
+    {
+      "until": "player.craft.airborne",
+      "hold": "throttle",
+      "max": 200
+    },
+    {
+      "until": "not player.craft.airborne",
+      "hold": "throttle",
+      "max": 200
+    },
+    "step 2",
+    {
+      "expect": "abs(player.craft.last_landing.pitch) < 25",
+      "name": "with no lean the craft lands flat enough"
+    },
+    {
+      "expect": "player.crashes",
+      "equals": 2,
+      "name": "a clean landing doesn't crash"
+    },
+    {
+      "eval": "place_racer(player, 600, 0, 15)"
+    },
+    "step 3",
+    {
+      "step": 40,
+      "hold": [
+        "throttle",
+        "steer_right"
+      ]
+    },
+    {
+      "step": 120,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.progress.lateral > 15",
+      "name": "the craft rode into the wall"
+    },
+    {
+      "expect": "player.crashes",
+      "equals": 2,
+      "name": "walls don't crash"
+    }
+  ]
+}

@@ -1,24 +1,89 @@
 {
-  "description": "Reset (R) on Gull Cove: a craft stopped against a pillar is put back clear of it, facing along the course, and rides away; reset on a ramp puts the craft beside the ramp.",
-  "start": {"scene": "res://race/race.tscn", "seed": 1},
+  "description": "Reset (R) on Gull Cove: a craft stopped against a pillar is put back clear of it, facing along the course, and rides away; reset on a ramp puts the craft beside the ramp; reset does nothing while the rider is in the water.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1
+  },
   "steps": [
-    {"until": "phase == 1", "max": 400},
-    {"eval": "place_racer(player, 311, -9, 12)"},
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "eval": "place_racer(player, 311, -9, 12)"
+    },
     "step 3",
-    {"step": 40, "hold": "throttle"},
-    {"expect": "player.craft.speed < 3", "name": "the pillar stopped the craft"},
-    {"step": 2, "tap": "reset_craft"},
+    {
+      "step": 40,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.craft.speed < 3",
+      "name": "the pillar stopped the craft"
+    },
+    {
+      "until": "player.craft.rider_state == 0",
+      "max": 600,
+      "name": "(the hit throws the rider; reset waits until the rider is back on)"
+    },
+    {
+      "step": 2,
+      "tap": "reset_craft"
+    },
     "step 3",
-    {"expect": "abs(player.progress.lateral - (-9)) > 5", "name": "reset moved it clear of the pillar"},
-    {"expect": "course.tangent_at(player.progress.offset).dot(-player.craft.global_basis.z) > 0.99", "name": "facing along the course"},
-    {"expect": "player.craft.global_basis.y.y > 0.95", "name": "upright"},
-    {"step": 120, "hold": "throttle"},
-    {"expect": "player.craft.speed > 8", "name": "and rides away (over 29 km/h)"},
-    {"eval": "place_racer(player, 405, -1, 0)"},
+    {
+      "expect": "abs(player.progress.lateral - (-9)) > 5",
+      "name": "reset moved it clear of the pillar"
+    },
+    {
+      "expect": "course.tangent_at(player.progress.offset).dot(-player.craft.global_basis.z) > 0.99",
+      "name": "facing along the course"
+    },
+    {
+      "expect": "player.craft.global_basis.y.y > 0.95",
+      "name": "upright"
+    },
+    {
+      "step": 120,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.craft.speed > 8",
+      "name": "and rides away (over 29 km/h)"
+    },
+    {
+      "eval": "place_racer(player, 405, -1, 0)"
+    },
     "step 3",
-    {"step": 2, "tap": "reset_craft"},
+    {
+      "step": 2,
+      "tap": "reset_craft"
+    },
     "step 3",
-    {"expect": "player.progress.lateral < -5 or player.progress.lateral > 5", "name": "reset on the ramp moves the craft beside it"},
-    {"expect": "player.craft.global_position.y < 0.5", "name": "on the water, not on the ramp"}
+    {
+      "expect": "player.progress.lateral < -5 or player.progress.lateral > 5",
+      "name": "reset on the ramp moves the craft beside it"
+    },
+    {
+      "expect": "player.craft.global_position.y < 0.5",
+      "name": "on the water, not on the ramp"
+    },
+    {
+      "eval": "place_racer(player, 100, 0, 15)"
+    },
+    "step 3",
+    {
+      "eval": "player.craft.throw_rider('impact')"
+    },
+    "step 30",
+    {
+      "step": 2,
+      "tap": "reset_craft"
+    },
+    "step 2",
+    {
+      "expect": "player.craft.rider_state != 0",
+      "name": "reset is ignored while the rider is off the craft"
+    }
   ]
 }

@@ -4,9 +4,14 @@ extends Node3D
 ## Placeholder jet ski and rider built from code: a flat-shaded low-poly hull, a seat,
 ## handlebars, and a blocky rider whose body leans with the controls.
 ##
-## [JetSki] calls [method set_pose] every frame. A replacement model only needs to be a
-## Node3D scene, optionally with the same method; the physics never reads the model.
-## Model space matches the craft: -Z forward, +Y up, origin on the keel at mid-length.
+## [JetSki] calls [method set_pose] and [method set_rider] every frame. A replacement model
+## only needs to be a Node3D scene, optionally with the same methods; the physics never reads
+## the model. Model space matches the craft: -Z forward, +Y up, origin on the keel at
+## mid-length.
+##
+## The rider's parts hang under their own node, so after a crash the rider can leave the
+## craft: [method set_rider] places the rider's pelvis anywhere in the world, in a tumbling,
+## swimming or climbing pose.
 
 @export_group("Colours")
 @export var hull_color: Color = Color(0.98, 0.78, 0.10):
@@ -57,6 +62,21 @@ extends Node3D
 ## How quickly the pose follows the controls, per second.
 @export_range(0.1, 50.0, 0.1) var pose_response: float = 10.0
 
+## What the rider is doing, for [method set_rider].
+enum RiderMode {
+	## Seated, riding.
+	ABOARD,
+	## Thrown off, tumbling through the air.
+	THROWN,
+	## In the water, swimming back to the craft.
+	SWIMMING,
+	## Climbing back on.
+	MOUNTING,
+}
+
+## Where the rider's pelvis sits when seated, in model space.
+const PELVIS_REST := Vector3(0.0, 1.12, 0.38)
+
 # Hull cross-sections from bow to stern: z, half width, keel height, chine height, deck height.
 const STATIONS: Array[Vector4] = [
 	Vector4(-1.50, 0.03, 0.40, 0.44),
@@ -79,6 +99,11 @@ var _build_queued := false
 
 var _parts: Dictionary[StringName, MeshInstance3D] = {}
 var _handlebar: Node3D
+var _rider_root: Node3D
+var _rider_mode: RiderMode = RiderMode.ABOARD
+var _rider_pelvis := Transform3D.IDENTITY
+var _mount_blend := 0.0
+var _clock := 0.0
 
 
 func _ready() -> void:
@@ -86,6 +111,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_clock += delta
 	var blend := 1.0 - exp(-pose_response * delta)
 	_steer = lerpf(_steer, _target_steer, blend)
 	_lean = lerpf(_lean, _target_lean, blend)
@@ -98,6 +124,33 @@ func set_pose(steer: float, lean: float, _throttle: float, airborne: bool) -> vo
 	_target_steer = clampf(steer, -1.0, 1.0)
 	_target_lean = clampf(lean, -1.0, 1.0)
 	_target_airborne = 1.0 if airborne else 0.0
+
+
+## Places the rider. ABOARD seats the rider on the craft. Otherwise [param pelvis] is the
+## rider's pelvis in world space (its -Z the way the rider faces, +Y toward the head), and
+## for MOUNTING [param blend] goes from 0 (in the water at [param pelvis]) to 1 (seated).
+func set_rider(mode: RiderMode, pelvis: Transform3D = Transform3D.IDENTITY, blend: float = 0.0) -> void:
+	_rider_mode = mode
+	_rider_pelvis = pelvis
+	_mount_blend = clampf(blend, 0.0, 1.0)
+	_place_rider_root()
+
+
+func _place_rider_root() -> void:
+	if _rider_root == null:
+		return
+	if _rider_mode == RiderMode.ABOARD:
+		_rider_root.top_level = false
+		_rider_root.transform = Transform3D.IDENTITY
+		return
+	_rider_root.top_level = true
+	var pelvis := _rider_pelvis
+	if _rider_mode == RiderMode.MOUNTING:
+		var seat := get_global_transform_interpolated() * Transform3D(Basis.IDENTITY, PELVIS_REST)
+		var t := _mount_blend * _mount_blend * (3.0 - 2.0 * _mount_blend)
+		pelvis = Transform3D(pelvis.basis.slerp(seat.basis, t).orthonormalized(),
+				pelvis.origin.lerp(seat.origin, t) + Vector3.UP * sin(PI * t) * 0.35)
+	_rider_root.global_transform = pelvis * Transform3D(Basis.IDENTITY, -PELVIS_REST)
 
 
 func _queue_build() -> void:
@@ -135,19 +188,24 @@ func _build() -> void:
 	bar.set_meta(&"model_part", true)
 	_handlebar.add_child(bar, false, Node.INTERNAL_MODE_FRONT)
 
-	# Rider: boxes between joints, placed every frame by _apply_pose().
+	# Rider: boxes between joints under their own node, placed every frame by _apply_pose().
+	_rider_root = Node3D.new()
+	_rider_root.name = "Rider"
+	_rider_root.set_meta(&"model_part", true)
+	add_child(_rider_root, false, Node.INTERNAL_MODE_FRONT)
 	for side in [&"left", &"right"]:
-		_add_box(StringName("shin_" + side), Vector3(0.13, 1.0, 0.14), Vector3.ZERO, suit_color.darkened(0.2))
-		_add_box(StringName("thigh_" + side), Vector3(0.16, 1.0, 0.17), Vector3.ZERO, suit_color)
-		_add_box(StringName("upper_arm_" + side), Vector3(0.11, 1.0, 0.11), Vector3.ZERO, suit_color)
-		_add_box(StringName("forearm_" + side), Vector3(0.09, 1.0, 0.09), Vector3.ZERO, suit_color.darkened(0.15))
-		_add_box(StringName("boot_" + side), Vector3(0.13, 0.1, 0.28), Vector3.ZERO, deck_color.darkened(0.5))
-		_add_box(StringName("glove_" + side), Vector3(0.09, 0.09, 0.11), Vector3.ZERO, deck_color.darkened(0.5))
-	_add_box(&"torso", Vector3(0.36, 1.0, 0.22), Vector3.ZERO, suit_color)
-	_add_box(&"vest", Vector3(0.42, 1.0, 0.27), Vector3.ZERO, vest_color)
-	_add_sphere(&"head", 0.11, skin_color)
-	_add_sphere(&"helmet", 0.135, helmet_color)
-	_add_box(&"visor", Vector3(0.2, 0.07, 0.04), Vector3.ZERO, Color(0.05, 0.08, 0.12))
+		_add_box(StringName("shin_" + side), Vector3(0.13, 1.0, 0.14), Vector3.ZERO, suit_color.darkened(0.2), _rider_root)
+		_add_box(StringName("thigh_" + side), Vector3(0.16, 1.0, 0.17), Vector3.ZERO, suit_color, _rider_root)
+		_add_box(StringName("upper_arm_" + side), Vector3(0.11, 1.0, 0.11), Vector3.ZERO, suit_color, _rider_root)
+		_add_box(StringName("forearm_" + side), Vector3(0.09, 1.0, 0.09), Vector3.ZERO, suit_color.darkened(0.15), _rider_root)
+		_add_box(StringName("boot_" + side), Vector3(0.13, 0.1, 0.28), Vector3.ZERO, deck_color.darkened(0.5), _rider_root)
+		_add_box(StringName("glove_" + side), Vector3(0.09, 0.09, 0.11), Vector3.ZERO, deck_color.darkened(0.5), _rider_root)
+	_add_box(&"torso", Vector3(0.36, 1.0, 0.22), Vector3.ZERO, suit_color, _rider_root)
+	_add_box(&"vest", Vector3(0.42, 1.0, 0.27), Vector3.ZERO, vest_color, _rider_root)
+	_add_sphere(&"head", 0.11, skin_color, _rider_root)
+	_add_sphere(&"helmet", 0.135, helmet_color, _rider_root)
+	_add_box(&"visor", Vector3(0.2, 0.07, 0.04), Vector3.ZERO, Color(0.05, 0.08, 0.12), _rider_root)
+	_place_rider_root()
 	_apply_pose()
 
 
@@ -156,40 +214,136 @@ func _apply_pose() -> void:
 		return
 	if _handlebar != null:
 		_handlebar.rotation = Vector3(0.0, -_steer * deg_to_rad(bar_angle), 0.0)
+	_place_rider_root()
+	var riding := _riding_joints()
+	var joints := riding
+	match _rider_mode:
+		RiderMode.THROWN:
+			joints = _thrown_joints()
+		RiderMode.SWIMMING:
+			joints = _swimming_joints()
+		RiderMode.MOUNTING:
+			var t := _mount_blend * _mount_blend * (3.0 - 2.0 * _mount_blend)
+			joints = _blend_joints(_swimming_joints(), riding, t)
+	_pose_from(joints)
 
+
+## Joint positions in model space (the rider node's space) for riding: the spine tips with
+## the lean and the turn, hands on the bars, feet in the footwells.
+func _riding_joints() -> Dictionary:
 	var pitch := deg_to_rad(lean_forward_angle) * maxf(_lean, 0.0) - deg_to_rad(lean_back_angle) * maxf(-_lean, 0.0)
 	var roll := _steer * deg_to_rad(turn_lean_angle)
 	# The spine tips about the pelvis: forward for a forward lean, sideways into the turn.
 	var spine := Basis(Vector3.RIGHT, -pitch) * Basis(Vector3.FORWARD, roll)
 	var crouch := 0.06 * maxf(_lean, 0.0) - 0.08 * _airborne
-	var pelvis := Vector3(_steer * 0.05, 1.12 - crouch, 0.38 + 0.06 * maxf(_lean, 0.0))
+	var pelvis := Vector3(_steer * 0.05, PELVIS_REST.y - crouch, PELVIS_REST.z + 0.06 * maxf(_lean, 0.0))
 	var chest := pelvis + spine * Vector3(0.0, 0.46, -0.24)
-	var neck := pelvis + spine * Vector3(0.0, 0.62, -0.30)
-	var head := pelvis + spine * Vector3(0.0, 0.74, -0.33)
-	var shoulder_offset := spine * Vector3(0.21, 0.0, 0.0)
+	var joints := {
+		"spine": spine,
+		"pelvis": pelvis,
+		"chest": chest,
+		"neck": pelvis + spine * Vector3(0.0, 0.62, -0.30),
+		"head": pelvis + spine * Vector3(0.0, 0.74, -0.33),
+	}
+	var bar_basis := Basis(Vector3.UP, -_steer * deg_to_rad(bar_angle))
+	joints["hand_basis"] = bar_basis
+	for i in 2:
+		var side := -1.0 if i == 0 else 1.0
+		var tag := "_l" if i == 0 else "_r"
+		var foot := Vector3(0.30 * side, 0.56, 0.30)
+		var hip := pelvis + spine * Vector3(0.11 * side, 0.0, 0.0)
+		var shoulder := chest + spine * Vector3(0.21 * side, 0.0, 0.0)
+		var hand := Vector3(0.0, 1.03, -0.42) + bar_basis * Vector3(0.33 * side, 0.0, 0.0)
+		joints["hip" + tag] = hip
+		joints["knee" + tag] = (hip + foot) * 0.5 + Vector3(0.06 * side, 0.0, -0.24 - 0.05 * _airborne)
+		joints["foot" + tag] = foot
+		joints["shoulder" + tag] = shoulder
+		joints["elbow" + tag] = (shoulder + hand) * 0.5 + Vector3(0.12 * side, -0.06, 0.06)
+		joints["hand" + tag] = hand
+	return joints
 
-	_place_between(&"torso", pelvis, neck)
+
+## Thrown off: body straight, arms and legs flailing.
+func _thrown_joints() -> Dictionary:
+	var flail := _clock * 11.0
+	return _straight_joints(
+		func(side: float) -> Vector3: return Vector3(0.42 * side, 0.30 + 0.15 * sin(flail + side), 0.1 * cos(flail)),
+		func(side: float) -> Vector3: return Vector3(0.24 * side, -0.80, 0.12 * sin(flail * 0.8 + side * 2.0)))
+
+
+## Swimming a crawl: arms turning over in turn, legs kicking. The body's +Y points the way
+## it swims; [JetSki] tilts it to lie in the water.
+func _swimming_joints() -> Dictionary:
+	var stroke := _clock * 4.2
+	return _straight_joints(
+		func(side: float) -> Vector3:
+			var phase := stroke + (0.0 if side < 0.0 else PI)
+			return Vector3(0.10 * side, 0.55 * cos(phase), -0.25 * maxf(sin(phase), 0.0) + 0.1 * minf(sin(phase), 0.0)),
+		func(side: float) -> Vector3: return Vector3(0.07 * side, -0.86, 0.12 * sin(stroke * 2.0 + side * 1.5)))
+
+
+## A straight body about the rest pelvis; [param hand_offset] and [param foot_offset] give
+## each hand relative to its shoulder and each foot relative to its hip, for side -1 or 1.
+func _straight_joints(hand_offset: Callable, foot_offset: Callable) -> Dictionary:
+	var pelvis := PELVIS_REST
+	var chest := pelvis + Vector3(0.0, 0.46, -0.04)
+	var joints := {
+		"spine": Basis.IDENTITY,
+		"pelvis": pelvis,
+		"chest": chest,
+		"neck": pelvis + Vector3(0.0, 0.62, -0.04),
+		"head": pelvis + Vector3(0.0, 0.76, -0.05),
+		"hand_basis": Basis.IDENTITY,
+	}
+	for i in 2:
+		var side := -1.0 if i == 0 else 1.0
+		var tag := "_l" if i == 0 else "_r"
+		var hip := pelvis + Vector3(0.11 * side, 0.0, 0.0)
+		var shoulder := chest + Vector3(0.21 * side, 0.0, 0.0)
+		var hand: Vector3 = shoulder + hand_offset.call(side)
+		var foot: Vector3 = hip + foot_offset.call(side)
+		joints["hip" + tag] = hip
+		joints["knee" + tag] = (hip + foot) * 0.5 + Vector3(0.03 * side, 0.0, -0.08)
+		joints["foot" + tag] = foot
+		joints["shoulder" + tag] = shoulder
+		joints["elbow" + tag] = (shoulder + hand) * 0.5 + Vector3(0.08 * side, 0.0, 0.06)
+		joints["hand" + tag] = hand
+	return joints
+
+
+func _blend_joints(from: Dictionary, to: Dictionary, t: float) -> Dictionary:
+	var out := {}
+	for key in to:
+		var a: Variant = from[key]
+		var b: Variant = to[key]
+		if a is Basis:
+			out[key] = (a as Basis).slerp(b as Basis, t).orthonormalized()
+		else:
+			out[key] = (a as Vector3).lerp(b as Vector3, t)
+	return out
+
+
+## Places every rider part from a set of joints.
+func _pose_from(joints: Dictionary) -> void:
+	var spine: Basis = joints["spine"]
+	var pelvis: Vector3 = joints["pelvis"]
+	var chest: Vector3 = joints["chest"]
+	var head: Vector3 = joints["head"]
+	_place_between(&"torso", pelvis, joints["neck"])
 	_place_between(&"vest", pelvis + spine * Vector3(0.0, 0.16, -0.07), chest + spine * Vector3(0.0, 0.05, 0.0))
 	_set_part(&"head", Transform3D(spine, head))
 	_set_part(&"helmet", Transform3D(spine, head + spine * Vector3(0.0, 0.025, 0.01)))
 	_set_part(&"visor", Transform3D(spine, head + spine * Vector3(0.0, 0.0, -0.13)))
-
-	var bar_basis := Basis(Vector3.UP, -_steer * deg_to_rad(bar_angle))
-	for i in 2:
-		var side := -1.0 if i == 0 else 1.0
-		var tag := "left" if i == 0 else "right"
-		var foot := Vector3(0.30 * side, 0.56, 0.30)
-		var hip := pelvis + spine * Vector3(0.11 * side, 0.0, 0.0)
-		var knee := (hip + foot) * 0.5 + Vector3(0.06 * side, 0.0, -0.24 - 0.05 * _airborne)
-		var shoulder := chest + shoulder_offset * side
-		var hand := Vector3(0.0, 1.03, -0.42) + bar_basis * Vector3(0.33 * side, 0.0, 0.0)
-		var elbow := (shoulder + hand) * 0.5 + Vector3(0.12 * side, -0.06, 0.06)
-		_place_between(StringName("thigh_" + tag), hip, knee)
-		_place_between(StringName("shin_" + tag), knee, foot)
-		_set_part(StringName("boot_" + tag), Transform3D(Basis.IDENTITY, foot + Vector3(0.0, -0.02, -0.05)))
-		_place_between(StringName("upper_arm_" + tag), shoulder, elbow)
-		_place_between(StringName("forearm_" + tag), elbow, hand)
-		_set_part(StringName("glove_" + tag), Transform3D(bar_basis, hand))
+	var hand_basis: Basis = joints["hand_basis"]
+	for tag in ["_l", "_r"]:
+		var side_name := "left" if tag == "_l" else "right"
+		_place_between(StringName("thigh_" + side_name), joints["hip" + tag], joints["knee" + tag])
+		_place_between(StringName("shin_" + side_name), joints["knee" + tag], joints["foot" + tag])
+		_set_part(StringName("boot_" + side_name), Transform3D(spine if _rider_mode != RiderMode.ABOARD else Basis.IDENTITY,
+				joints["foot" + tag] + Vector3(0.0, -0.02, -0.05)))
+		_place_between(StringName("upper_arm_" + side_name), joints["shoulder" + tag], joints["elbow" + tag])
+		_place_between(StringName("forearm_" + side_name), joints["elbow" + tag], joints["hand" + tag])
+		_set_part(StringName("glove_" + side_name), Transform3D(hand_basis, joints["hand" + tag]))
 
 
 ## Stretches a unit-height box part between two points.
@@ -213,22 +367,22 @@ func _set_part(part: StringName, xform: Transform3D) -> void:
 		node.transform = xform
 
 
-func _add_part(part: StringName, node: MeshInstance3D) -> void:
+func _add_part(part: StringName, node: MeshInstance3D, parent: Node = self) -> void:
 	node.name = String(part)
 	node.layers = ShoreMap.DYNAMIC_LAYER
 	node.set_meta(&"model_part", true)
-	add_child(node, false, Node.INTERNAL_MODE_FRONT)
+	parent.add_child(node, false, Node.INTERNAL_MODE_FRONT)
 	_parts[part] = node
 
 
-func _add_box(part: StringName, size: Vector3, at: Vector3, color: Color) -> void:
+func _add_box(part: StringName, size: Vector3, at: Vector3, color: Color, parent: Node = self) -> void:
 	var node := MeshInstance3D.new()
 	node.mesh = _box_mesh(size, color)
 	node.position = at
-	_add_part(part, node)
+	_add_part(part, node, parent)
 
 
-func _add_sphere(part: StringName, radius: float, color: Color) -> void:
+func _add_sphere(part: StringName, radius: float, color: Color, parent: Node = self) -> void:
 	var node := MeshInstance3D.new()
 	var sphere := SphereMesh.new()
 	sphere.radius = radius
@@ -237,7 +391,7 @@ func _add_sphere(part: StringName, radius: float, color: Color) -> void:
 	sphere.rings = 5
 	sphere.material = _material(color)
 	node.mesh = sphere
-	_add_part(part, node)
+	_add_part(part, node, parent)
 
 
 func _box_mesh(size: Vector3, color: Color) -> BoxMesh:

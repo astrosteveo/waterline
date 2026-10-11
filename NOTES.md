@@ -10,7 +10,8 @@ A jet ski racer in Godot 4.7 (Forward+, typed GDScript, Jolt physics), a spiritu
 | 1. Water | Done (session 1) |
 | 2. Jet ski on open water | Done (session 1) |
 | 3. A course | Done (session 2) |
-| 4–8 | Not started |
+| 4. The race rules | Done (session 2) |
+| 5–8 | Not started |
 
 Run the game: `godot --path /home/astrosteveo/Projects/waterline` (or open the project in the
 editor and press F5). The main scene is `res://race/race.tscn`: a 3-lap race on the Gull Cove
@@ -40,8 +41,8 @@ debug/          WaterProbe, DebugHud (F3 readout), RideRecorder (ride statistics
                 DemoDriver (scripted ride, --demo)
 course/         Course (centre line, walls, gates, progress), CourseGate, CourseProgress, Buoy,
                 Ramp, StartGate (all code-built and swappable), wall_float.gdshader
-race/           Race (race.tscn is the main scene), RacerState, RaceHud, GateMarker; RaceRules,
-                PowerMeter and RacingLine (written for milestones 4 and 5, not used yet)
+race/           Race (race.tscn is the main scene), RacerState, RaceRules (rules/default_rules.tres),
+                RaceHud, PowerMeter (HUD widget), GateMarker; RacingLine (for milestone 5)
 levels/         gull_cove.tscn (course), open_water.tscn (free ride), water_test.tscn
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
@@ -138,8 +139,7 @@ frame: -Z forward, +X right, origin on the keel at mid-length. Each tick:
    `air_control_delay` of air time, and stopping at `air_pitch_limit` from the horizon), steer sets
    a yaw rate about the vertical, and the roll levels out toward a small bank into the turn. Water
    and air control blend by how much of the hull is wet.
-9. **Capsize:** upside down in the water for `capsize_reset_time` seconds puts the craft upright
-   where it is (a stand-in until milestone 4's crash and remount).
+9. **Crashes** (milestone 4, below) replace the old capsize reset.
 
 Controls come in through `JetSki.controls` (`RiderControls`: throttle, steer, lean). `PlayerInput`
 fills them from the Input Map (keyboard steer and lean ease in over 0.12–0.15 s); a computer rider
@@ -256,9 +256,11 @@ judges gate crossings, counts laps and sorts the racers by distance travelled in
   line, else either side, else up to 30 m further on. Gate checks pause for two ticks so the jump
   isn't read as a crossing.
 - **Wrong way:** moving against the course faster than 1.5 m/s for 1 s shows WRONG WAY.
-- **HUD** (`RaceHud`, built in code): lap, race time and each lap's time (best marked), speed,
-  the countdown, and short calls (NICE / MISSED BUOY, LAP 2, FINAL LAP, FINISH) in the upper third,
-  clear of the rider. `GateMarker` floats an arrow over the player's next buoy pointing to its
+- **HUD** (`RaceHud`, built in code): place (1st/4), lap, race time and each lap's time (best
+  marked), speed, the power meter (`PowerMeter`: slanted segments filling yellow to red, flashing
+  as a level is gained, pulsing at max), missed buoys out of five, the countdown, and short calls
+  (NICE, MAX POWER, MISSED BUOY with "2 LEFT" near disqualification, LAP 2, FINAL LAP, FINISH,
+  DISQUALIFIED) in the upper third, clear of the rider. `GateMarker` floats an arrow over the player's next buoy pointing to its
   passing side, in the buoy's colour.
 - **`Race.place_racer(racer, offset, lateral, speed, backwards)`** puts a racer anywhere on the
   course with a given speed, for tests; its distance is set to that offset in its current lap.
@@ -267,6 +269,55 @@ judges gate crossings, counts laps and sorts the racers by distance travelled in
   the craft's position and steers toward a point ahead on a line through each buoy's passing side.
   `--laps`, `--shots OFFSETS`, `--start-offset/--start-lateral/--start-speed`, `--lateral` and
   `--wrong-side INDEX` set up tests; `--out` saves a log of position, speed, airborne and lateral.
+
+## Crashes and remounting
+
+`JetSki` detects crashes in `_integrate_forces` while the rider is aboard and in control, and
+throws the rider off on the next tick. The reasons (`JetSki.last_crash_reason`):
+
+- **impact:** a contact whose impulse changes the craft's speed by more than
+  `crash_impact_speed` (7 m/s) against scenery, or `crash_craft_impact_speed` (9 m/s) against
+  another craft. Contacts with walls and floating things (buoys, crates) never count, nor do
+  contacts on the hull's underside (contact normal within 45° of the craft's up: riding up a ramp
+  or a beach). A head-on pillar hit at 54 km/h measures 15.8 m/s.
+- **nose_dive / landed_on_side / landed_sideways:** judged at the first touchdown after at least
+  0.3 s in the air (`JetSki.last_landing` keeps the numbers): nose more than
+  `crash_landing_pitch` (25°) below the water surface, rolled over 55° or upside down, or moving
+  over 75° away from where the nose points above 8 m/s. Clean ramp landings come in 12–23° nose
+  up; holding a full forward lean through a ramp jump lands 27–35° nose down and crashes. The
+  milestone-2 tuning keeps a carving hop above −16°, so normal riding stays clear.
+- **capsized:** upside down in the water for 0.35 s.
+
+The rider then goes through `JetSki.rider_state`: THROWN (flies on at 65% of the craft's speed
+from before the impact, plus 3 m/s up and 4 m/s sideways, tumbling; a ray stops the rider at
+rocks and walls), SWIMMING (comes up for 0.6 s, then swims at 2 m/s to the nearest boarding
+point: either side of the seat or behind the stern), MOUNTING (0.9 s climb; an upturned craft is
+turned upright), then ABOARD. Without its rider the craft's engine cuts out, it brakes at 1.1/s
+and drifts gently toward the swimmer. After 7 s in the water the rider climbs on wherever the
+craft is. Every number is in the Crashes and Remount groups of `JetSkiTuning`.
+
+A crash at 55 km/h on open water costs 4.7 s (71 m less in 12 s at full throttle; control returns
+3.45 s after the crash); the playtester measured 4.65 s for a pillar hit on the course. A hit that
+drops the rider beside the craft costs less (control back in 1.4–2 s, but the craft is stopped).
+Reset (R) is ignored while the rider is off the craft, so it can't cut the penalty short.
+
+The model (`JetSkiModel`) keeps the rider's parts under their own node; `set_rider(mode, pelvis,
+blend)` places the rider's pelvis in the world while off the craft, with tumbling, swimming
+(crawl strokes) and climbing poses blended from joint positions. The chase camera looks between
+the craft and the rider while the rider is off it (`JetSki.camera_focus()`).
+
+## Race rules (race/race_rules.gd, values in race/rules/default_rules.tres)
+
+| Rule | Value | Why |
+|---|---|---|
+| Power levels | 5 | As in the original. Each buoy passed on its marked side adds one; a miss (wrong side or skipped) empties the meter. Crashes leave it as it is (the brief doesn't say). |
+| Thrust per level | 1.00, 1.07, 1.14, 1.22, 1.30, 1.38 | Top speed grows with about the square root of the thrust: 59 km/h at level 0, 69 km/h at level 5 (+17%) on open water; 57 and 68 km/h on Gull Cove's start straight. Enough to matter, not so much that the hairpin becomes impossible at full power. |
+| Disqualification | 5 misses in a race | As in the original. The race ends for the player (results come up), no more buoys are judged, the clock stops. |
+
+A buoy is a moored `RigidBody3D` (80 kg): springs pull it to its anchor, to the water height and
+upright along the waves. A head-on hit at 50 km/h costs the craft 30% of its speed and pushes the
+buoy 2 m, after which it swings back; as a kinematic body it had stopped the craft dead. Gates use
+the anchor position.
 
 ## Course design tool
 
@@ -362,6 +413,26 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 - Screenshots: `docs/screenshots/m3_*.png` (start grid, slalom with the buoy arrow, hairpin,
   pillars, ramp jump, wall floats, the course map).
 
+### Milestone 4 (the race rules)
+
+- **Power meter.** A clean lap with the test driver filled it to 5 by the fifth buoy and lapped in
+  43.45 s (44.8 s before power); a miss emptied it. Top speeds as in the table above.
+- **Crashes.** Pillar hit at 54 km/h: `impact`, rider in the water and back on (see the numbers
+  above). Nose-first landing off ramp 1 with a held forward lean: `nose_dive` at 34° nose down.
+  Upside down: `capsized` after 0.35 s, and the craft turned upright as the rider climbs on.
+  No false crashes in 20 s heading into open water's steep swell at power 0 and 5 (8–9 jumps each),
+  20 s of carving hops, clean ramp jumps, a lap, wall scrapes or buoy hits. Holding a forward lean
+  straight into open water's steepest swell for 20 s crashed twice (nose first), which is the rule
+  working: lean back or stay neutral in the air.
+- **Playtester agent:** passed all 7 goals (power meter, disqualification by riding past five buoys
+  on the wrong side, crash and remount, no false crashes over about 2.8 laps, jumps, wall scrapes
+  and buoy hits, reset while swimming, HUD values and layout, no engine errors). It found: reset
+  skipping the crash penalty, a nose-first crash needing full power, MAX POWER hidden by NICE, the
+  clock running after disqualification, DISQUALIFIED briefly covering the HUD, NICE in a red that
+  looked like a miss, and the swimmer at the edge of the screen. All are fixed.
+- **Regression scenarios** added: `race_power`, `race_disqualify`, `race_crash`; `course_reset`
+  now also checks that reset waits for the rider. All 13 pass.
+
 ## Controls (Input Map actions)
 
 | Action | Keyboard | Gamepad |
@@ -369,7 +440,7 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 | throttle | Space, J | A, right trigger |
 | steer_left / steer_right | A / D, Left / Right | left stick X, D-pad |
 | lean_forward / lean_back | W / S, Up / Down | left stick Y (up = forward), D-pad |
-| reset_craft | R (in a race: back on the course, clear of obstacles) | Back |
+| reset_craft | R (in a race: back on the course, clear of obstacles; not while swimming) | Back |
 | toggle_camera | C | Y |
 | toggle_debug | F3 | |
 | cam_forward/back/left/right | W S A D (free camera only) | |
@@ -427,11 +498,7 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 - No spray, wake or sound yet (milestone 8). `JetSki.carving` and `JetSki.airborne` are there for
   them.
 
-## Next: milestones 4 and 5 (this session)
+## Next: milestone 5 (this session)
 
-- Power meter: raise `JetSki.power_multiplier` (thrust). Top speed grows with about its square
-  root, so +44% thrust is +20% top speed; lowering drag is the other lever.
 - Opponents: fill `JetSki.controls` from an AI node instead of `PlayerInput`; the physics is the
-  same. `RacingLine` and `AIDriver` are drafted.
-- Crashes: replace the capsize recovery (`JetSki.respawn_here()`) with the rider falling off,
-  swimming back and remounting.
+  same. `RacingLine` is written; `AIDriver` and a results screen are drafted.
