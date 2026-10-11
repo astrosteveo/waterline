@@ -55,6 +55,7 @@ var _snap_next := true
 func _ready() -> void:
 	# Moved in _process from the craft's interpolated transform.
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	cull_mask &= ~ShoreMap.CAPTURE_LAYER
 	_target = get_node_or_null(target_path) as Node3D
 	if _target is JetSki:
 		(_target as JetSki).respawned.connect(snap)

@@ -7,6 +7,10 @@ render_mode blend_mix, depth_draw_always, cull_back, diffuse_lambert, specular_s
 
 // Set by Sun (res://environment/sun.gd): unit vector pointing toward the sun.
 global uniform vec3 sun_direction;
+// Set by ShoreMap (res://water/shore_map.gd): the static scenery's height seen from above,
+// and the area it covers (x, z of its corner, then width and depth). A zero width means no map.
+global uniform sampler2D shore_height_map;
+global uniform vec4 shore_map_rect;
 
 group_uniforms grid;
 // Set by OceanSurface from its exported grid settings.
@@ -50,6 +54,9 @@ uniform float crest_foam_start = 0.11;
 uniform float crest_foam_full = 0.42;
 // Foam along shores and rocks, within this depth in meters.
 uniform float shore_foam_depth = 0.35;
+// What lies under the water counts as shore only if it is within this height of the static
+// scenery's top surface (or below it). Anything floating higher, such as a hull, isn't.
+uniform float shore_tolerance = 0.5;
 
 uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
@@ -111,8 +118,15 @@ void fragment() {
 	float surface_depth = FRAGCOORD.z;
 	vec2 refract_uv = clamp(SCREEN_UV + normal_world.xz * refraction_strength, vec2(0.001), vec2(0.999));
 	float floor_depth = texture(depth_texture, refract_uv).r;
-	// Reverse Z: a larger value is nearer. Don't refract objects in front of the water.
-	if (floor_depth > surface_depth) {
+	// Reverse Z: a larger value is nearer. Don't refract objects in front of the water. With
+	// MSAA, an edge pixel's colour is a blend of the object and what's behind it while its
+	// depth is only one of them, so check the neighbouring pixels too: refracting an edge
+	// pixel drew a broken outline of the craft, shifted sideways.
+	vec2 texel = 1.5 / vec2(textureSize(depth_texture, 0));
+	float nearest = max(floor_depth, max(
+			max(texture(depth_texture, refract_uv + vec2(texel.x, 0.0)).r, texture(depth_texture, refract_uv - vec2(texel.x, 0.0)).r),
+			max(texture(depth_texture, refract_uv + vec2(0.0, texel.y)).r, texture(depth_texture, refract_uv - vec2(0.0, texel.y)).r)));
+	if (nearest > surface_depth) {
 		refract_uv = SCREEN_UV;
 		floor_depth = texture(depth_texture, SCREEN_UV).r;
 	}
@@ -145,6 +159,24 @@ void fragment() {
 	float squeeze = 1.0 - min(fold, vertex_fold);
 	float crest_foam = smoothstep(crest_foam_start, crest_foam_full, squeeze);
 	float shore_foam = (1.0 - smoothstep(0.0, shore_foam_depth, vertical_depth)) * 0.8;
+	if (shore_map_rect.z > 0.0 && floor_depth > 0.0) {
+		vec2 shore_uv = (floor_world.xz - shore_map_rect.xy) / shore_map_rect.zw;
+		if (all(greaterThanEqual(shore_uv, vec2(0.0))) && all(lessThan(shore_uv, vec2(1.0)))) {
+			// The highest scenery in the 3 x 3 texels around the point: a point on a rock's
+			// steep side often rounds to a texel just outside the rock's outline.
+			ivec2 size = textureSize(shore_height_map, 0);
+			ivec2 centre = ivec2(shore_uv * vec2(size));
+			float scenery_height = -64.0;
+			for (int dy = -1; dy <= 1; dy++) {
+				for (int dx = -1; dx <= 1; dx++) {
+					ivec2 texel_at = clamp(centre + ivec2(dx, dy), ivec2(0), size - 1);
+					vec2 encoded = texelFetch(shore_height_map, texel_at, 0).rg;
+					scenery_height = max(scenery_height, (round(encoded.r * 63.0) + encoded.g) / 64.0 * 128.0 - 64.0);
+				}
+			}
+			shore_foam *= step(floor_world.y, scenery_height + shore_tolerance);
+		}
+	}
 	float coverage = max(crest_foam, shore_foam);
 	float foam = smoothstep(1.0 - coverage, 1.22 - coverage, foam_noise) * step(0.001, coverage);
 

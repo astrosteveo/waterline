@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Environment" path="res://environment/day_environment.tres" id="1"]
 [ext_resource type="Script" path="res://environment/sun.gd" id="2"]
@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" path="res://props/crate.tscn" id="14"]
 [ext_resource type="Script" path="res://debug/ride_recorder.gd" id="15"]
 [ext_resource type="Script" path="res://debug/demo_driver.gd" id="16"]
+[ext_resource type="Script" path="res://water/shore_map.gd" id="17"]
 
 [node name="OpenWater" type="Node3D"]
 
@@ -34,6 +35,9 @@ script = ExtResource("2")
 script = ExtResource("3")
 wave_set = ExtResource("4")
 water_material = ExtResource("5")
+
+[node name="ShoreMap" type="Node3D" parent="."]
+script = ExtResource("17")
 
 [node name="Terrain" type="MeshInstance3D" parent="."]
 script = ExtResource("6")

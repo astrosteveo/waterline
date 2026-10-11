@@ -22,6 +22,7 @@ var _velocity := Vector3.ZERO
 func _ready() -> void:
 	# Moved in _process, so not interpolated between physics ticks.
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	cull_mask &= ~ShoreMap.CAPTURE_LAYER
 	_yaw = rotation.y
 	_pitch = rotation.x
 

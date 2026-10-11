@@ -46,6 +46,7 @@ func _build() -> void:
 	cap.material_override = _flat_material(Color(1.0, 0.85, 0.0))
 	cap.position = Vector3(0.0, half, 0.0)
 	cap.set_meta(&"probe_part", true)
+	cap.layers = ShoreMap.DYNAMIC_LAYER
 	add_child(cap, false, Node.INTERNAL_MODE_FRONT)
 
 
@@ -62,6 +63,7 @@ func _add_cylinder(at: Vector3, radius: float, length: float, color: Color) -> v
 	part.position = at
 	part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	part.set_meta(&"probe_part", true)
+	part.layers = ShoreMap.DYNAMIC_LAYER
 	add_child(part, false, Node.INTERNAL_MODE_FRONT)
 
 

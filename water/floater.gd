@@ -26,6 +26,7 @@ var _samples: Array[WaterSample] = []
 
 func _ready() -> void:
 	can_sleep = false
+	_set_dynamic_layer(self)
 	if sample_points.is_empty():
 		_use_box_corners()
 	for i in sample_points.size():
@@ -43,6 +44,15 @@ func _ready() -> void:
 			submerged += maxf(waterline - p.y, 0.0)
 		buoyancy_per_point = mass * 9.8 / submerged
 		max_depth = maxf(max_depth, high - low)
+
+
+## Moves every mesh under [param node] to the moving-things visual layer, so the water
+## doesn't treat it as shore.
+func _set_dynamic_layer(node: Node) -> void:
+	for child in node.get_children():
+		if child is VisualInstance3D:
+			(child as VisualInstance3D).layers = ShoreMap.DYNAMIC_LAYER
+		_set_dynamic_layer(child)
 
 
 func _use_box_corners() -> void:

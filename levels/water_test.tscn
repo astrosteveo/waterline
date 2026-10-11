@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://dr6pnqnlnv2o" path="res://cameras/free_camera.gd" id="7"]
 [ext_resource type="Script" uid="uid://c8f2da2mcbhuk" path="res://environment/rock.gd" id="8"]
 [ext_resource type="Script" uid="uid://dp4rc8ryu4r2o" path="res://debug/water_probe.gd" id="9"]
+[ext_resource type="Script" path="res://water/shore_map.gd" id="10"]
 
 [node name="WaterTest" type="Node3D"]
 
@@ -27,6 +28,9 @@ script = ExtResource("2")
 script = ExtResource("3")
 wave_set = ExtResource("4")
 water_material = ExtResource("5")
+
+[node name="ShoreMap" type="Node3D" parent="."]
+script = ExtResource("10")
 
 [node name="Terrain" type="MeshInstance3D" parent="."]
 script = ExtResource("6")

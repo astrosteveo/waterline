@@ -25,7 +25,8 @@ While gdh holds the game between commands, the scene tree is paused.
 
 ```
 water/          WaveSet + GerstnerWave resources, the CPU wave math, the Ocean autoload,
-                OceanSurface (the drawn water), the water shader, Floater (floating props)
+                OceanSurface (the drawn water), the water shader, Floater (floating props),
+                ShoreMap (static scenery heights for shoreline foam)
 water/presets/  WaveSet presets: open_sea.tres (choppy), rolling_swell.tres (open-water level)
 environment/    sky shader, day environment, Sun, Terrain (seabed + islands), Rock
 jetski/         JetSki (RigidBody3D physics), JetSkiTuning (every tuning number),
@@ -75,7 +76,23 @@ captures/       gdh output, git-ignored and hidden from Godot (.gdignore)
   of what is below, absorption per colour channel, crest glow toward the sun, foam where the
   Jacobian determinant ("fold") shows crests squeezed together and in water shallower than 0.35 m,
   two scrolling noise normal maps for ripples, and Godot's own specular and sky reflection
-  (SPECULAR 0.25, which is water's 2% reflectance).
+  (SPECULAR 0.25, which is water's 2% reflectance). Detail too fine to draw at a distance turns
+  into roughness, so far water doesn't become a mirror.
+- **Refraction near objects.** The refracted lookup is skipped when any of 4 neighbouring depth
+  texels is in front of the water. With 4× MSAA, an edge pixel's colour blends the object with
+  what's behind it while its depth holds only one of them; refracting those pixels drew a
+  broken cyan outline of the craft and rider, shifted sideways.
+- **Shoreline foam only on scenery.** The shallow-water foam comes from the depth buffer, so it
+  used to also coat anything floating just under the surface: a white block behind the jet ski's
+  stern. `ShoreMap` (one per level) now renders the static scenery's heights from straight above
+  once at load (a SubViewport with an orthographic camera and a full-screen pass that turns
+  depth into height, two 8-bit channels, 0.78 m texels over 800 m). The water gives a point under
+  it shoreline foam only if that point lies at most 0.5 m above the highest scenery in the 3×3
+  texels around it. Rocks and beaches keep their foam; hulls, crates and buoys get none.
+- **Visual layers.** 1 = static scenery (terrain, rocks, ramps, anything that should get
+  shoreline foam), 2 = moving things (`JetSkiModel` and `Floater` set it on their meshes), 3 =
+  water, 20 = the ShoreMap capture pass, which the game cameras exclude (it also discards itself
+  for any other camera).
 
 ## How the jet ski works
 
@@ -264,7 +281,8 @@ changes the yaw rate within 1 frame of the input. The bank settles at 10–15° 
 - Courses: build them as scenes like `open_water.tscn`. `Terrain.islands` makes islands and
   shoals; `Rock` makes rocks and pillars (set `height_scale` above 1). Buoys should be `Floater`s
   (or kinematic nodes placed with `Ocean.height_at_time(pos, Ocean.end_time)` in
-  `_physics_process`).
+  `_physics_process`). Each course needs a `ShoreMap` covering it; keep static scenery on visual
+  layer 1 and anything that moves on layer 2, or it will get shoreline foam.
 - Ramps: the craft has a box collider (1.0 × 0.55 × 2.7 m) and no thrust out of the water, so it
   coasts up a ramp on its speed. Start ramps below the waterline.
 - Power meter: raise `JetSki.power_multiplier` (thrust). Top speed grows with its square root, so

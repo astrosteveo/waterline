@@ -62,6 +62,7 @@ func _ready() -> void:
 	# The grid moves in _process, under the camera, so it isn't interpolated.
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	layers = ShoreMap.WATER_LAYER
 	material_override = water_material
 	_rebuild_mesh()
 	_on_wave_set_changed()

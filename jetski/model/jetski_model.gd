@@ -131,6 +131,7 @@ func _build() -> void:
 	add_child(_handlebar, false, Node.INTERNAL_MODE_FRONT)
 	var bar := MeshInstance3D.new()
 	bar.mesh = _box_mesh(Vector3(0.74, 0.05, 0.05), deck_color.darkened(0.5))
+	bar.layers = ShoreMap.DYNAMIC_LAYER
 	bar.set_meta(&"model_part", true)
 	_handlebar.add_child(bar, false, Node.INTERNAL_MODE_FRONT)
 
@@ -214,6 +215,7 @@ func _set_part(part: StringName, xform: Transform3D) -> void:
 
 func _add_part(part: StringName, node: MeshInstance3D) -> void:
 	node.name = String(part)
+	node.layers = ShoreMap.DYNAMIC_LAYER
 	node.set_meta(&"model_part", true)
 	add_child(node, false, Node.INTERNAL_MODE_FRONT)
 	_parts[part] = node

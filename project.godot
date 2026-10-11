@@ -173,3 +173,11 @@ sun_direction={
 "type": "vec3",
 "value": Vector3(0.32, 0.6, -0.73)
 }
+shore_height_map={
+"type": "sampler2D",
+"value": ""
+}
+shore_map_rect={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
