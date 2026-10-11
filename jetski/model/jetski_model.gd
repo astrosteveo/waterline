@@ -104,6 +104,8 @@ var _rider_mode: RiderMode = RiderMode.ABOARD
 var _rider_pelvis := Transform3D.IDENTITY
 var _mount_blend := 0.0
 var _clock := 0.0
+var _stunt: StringName = &""
+var _stunt_progress := 0.0
 
 
 func _ready() -> void:
@@ -124,6 +126,14 @@ func set_pose(steer: float, lean: float, _throttle: float, airborne: bool) -> vo
 	_target_steer = clampf(steer, -1.0, 1.0)
 	_target_lean = clampf(lean, -1.0, 1.0)
 	_target_airborne = 1.0 if airborne else 0.0
+
+
+## Shows a stunt: [param stunt] is a key of [constant JetSki.STUNTS] or empty, and
+## [param progress] runs from 0 to 1. A handstand is the rider's own pose; for a roll, flip
+## or spin the craft turns the whole model and the rider tucks in.
+func set_stunt(stunt: StringName, progress: float) -> void:
+	_stunt = stunt
+	_stunt_progress = clampf(progress, 0.0, 1.0)
 
 
 ## Places the rider. ABOARD seats the rider on the craft. Otherwise [param pelvis] is the
@@ -216,6 +226,10 @@ func _apply_pose() -> void:
 		_handlebar.rotation = Vector3(0.0, -_steer * deg_to_rad(bar_angle), 0.0)
 	_place_rider_root()
 	var riding := _riding_joints()
+	if _stunt == &"handstand":
+		# Up onto the bars, hold, and back down onto the seat.
+		var up := smoothstep(0.0, 0.3, _stunt_progress) * (1.0 - smoothstep(0.7, 1.0, _stunt_progress))
+		riding = _blend_joints(riding, _handstand_joints(), up)
 	var joints := riding
 	match _rider_mode:
 		RiderMode.THROWN:
@@ -236,6 +250,10 @@ func _riding_joints() -> Dictionary:
 	# The spine tips about the pelvis: forward for a forward lean, sideways into the turn.
 	var spine := Basis(Vector3.RIGHT, -pitch) * Basis(Vector3.FORWARD, roll)
 	var crouch := 0.06 * maxf(_lean, 0.0) - 0.08 * _airborne
+	var tuck := 0.0
+	if _stunt != &"" and _stunt != &"handstand":
+		tuck = sin(PI * _stunt_progress)
+		crouch += 0.14 * tuck
 	var pelvis := Vector3(_steer * 0.05, PELVIS_REST.y - crouch, PELVIS_REST.z + 0.06 * maxf(_lean, 0.0))
 	var chest := pelvis + spine * Vector3(0.0, 0.46, -0.24)
 	var joints := {
@@ -255,10 +273,41 @@ func _riding_joints() -> Dictionary:
 		var shoulder := chest + spine * Vector3(0.21 * side, 0.0, 0.0)
 		var hand := Vector3(0.0, 1.03, -0.42) + bar_basis * Vector3(0.33 * side, 0.0, 0.0)
 		joints["hip" + tag] = hip
-		joints["knee" + tag] = (hip + foot) * 0.5 + Vector3(0.06 * side, 0.0, -0.24 - 0.05 * _airborne)
+		joints["knee" + tag] = (hip + foot) * 0.5 + Vector3(0.06 * side, 0.08 * tuck, -0.24 - 0.05 * _airborne - 0.08 * tuck)
 		joints["foot" + tag] = foot
 		joints["shoulder" + tag] = shoulder
 		joints["elbow" + tag] = (shoulder + hand) * 0.5 + Vector3(0.12 * side, -0.06, 0.06)
+		joints["hand" + tag] = hand
+	return joints
+
+
+## A handstand on the handlebars: the body upside down above the bars, legs straight up.
+## The spine is turned forward over the bars by 207°, which puts the chest straight under
+## the pelvis; blending from the riding pose swings the body forward, not backward.
+func _handstand_joints() -> Dictionary:
+	var spine := Basis(Vector3.RIGHT, -2.66)
+	var pelvis := Vector3(0.0, 2.10, -0.40)
+	var chest := pelvis + spine * Vector3(0.0, 0.46, -0.24)
+	var joints := {
+		"spine": spine,
+		"pelvis": pelvis,
+		"chest": chest,
+		"neck": pelvis + spine * Vector3(0.0, 0.62, -0.30),
+		"head": pelvis + spine * Vector3(0.0, 0.74, -0.33),
+		"hand_basis": Basis.IDENTITY,
+	}
+	for i in 2:
+		var side := -1.0 if i == 0 else 1.0
+		var tag := "_l" if i == 0 else "_r"
+		var hip := pelvis + spine * Vector3(0.11 * side, 0.0, 0.0)
+		var shoulder := chest + spine * Vector3(0.21 * side, 0.0, 0.0)
+		var hand := Vector3(0.33 * side, 1.03, -0.42)
+		var foot := Vector3(0.16 * side, 2.95, -0.30)
+		joints["hip" + tag] = hip
+		joints["knee" + tag] = (hip + foot) * 0.5 + Vector3(0.02 * side, 0.0, -0.03)
+		joints["foot" + tag] = foot
+		joints["shoulder" + tag] = shoulder
+		joints["elbow" + tag] = (shoulder + hand) * 0.5 + Vector3(0.05 * side, 0.0, 0.02)
 		joints["hand" + tag] = hand
 	return joints
 

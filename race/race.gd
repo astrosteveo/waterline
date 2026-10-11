@@ -24,6 +24,8 @@ signal power_changed(racer: RacerState, level: int)
 signal racer_disqualified(racer: RacerState)
 ## A racer's rider was thrown off.
 signal racer_crashed(racer: RacerState, reason: StringName)
+## A racer touched down after a jump: see [signal JetSki.landed].
+signal racer_landed(racer: RacerState, quality: StringName, stunts: Array[StringName], points: int)
 ## Every racer has finished or been disqualified.
 signal all_finished
 ## In watch mode, the camera moved to another rider.
@@ -105,6 +107,13 @@ func _ready() -> void:
 	add_child(course)
 	move_child(course, 0)
 	laps = laps_override if laps_override > 0 else course.laps
+	# The rider chosen on the rider select screen, or `-- --rider NAME`, races the others.
+	var chosen := Game.player_rider
+	if Game.arg_value("--rider") != "":
+		chosen = Game.rider_named(Game.arg_value("--rider"))
+	if chosen != null:
+		player_rider = chosen
+		opponents = Game.opponents_for(chosen)
 	racing_line = RacingLine.new(course)
 	_spawn_player()
 	# `-- --no-opponents` races the player alone, for tests and practice.
@@ -137,6 +146,7 @@ func _spawn_player() -> void:
 	craft.name = "Player"
 	if player_rider != null:
 		player_rider.apply_colors(craft.get_node_or_null(^"Model"))
+		craft.tuning = player_rider.tuned(craft.tuning)
 	var racer := _add_racer(craft, player_rider.display_name if player_rider != null else "You", player_slot)
 	racer.profile = player_rider
 	racer.is_player = true
@@ -159,6 +169,7 @@ func _spawn_computer(profile: RiderProfile, slot: int) -> void:
 	var craft := craft_scene.instantiate() as JetSki
 	craft.name = profile.display_name.validate_node_name()
 	profile.apply_colors(craft.get_node_or_null(^"Model"))
+	craft.tuning = profile.tuned(craft.tuning)
 	var racer := _add_racer(craft, profile.display_name, slot)
 	racer.profile = profile
 	var driver := AIDriver.new()
@@ -189,6 +200,7 @@ func _add_racer(craft: JetSki, display_name: String, slot: int) -> RacerState:
 	craft.reset_handler = rescue.bind(racer)
 	craft.power_multiplier = rules.thrust_for(0)
 	craft.crashed.connect(_on_crashed.bind(racer))
+	craft.landed.connect(_on_landed.bind(racer))
 	return racer
 
 
@@ -348,6 +360,15 @@ func _on_crashed(reason: StringName, racer: RacerState) -> void:
 				racer.display_name, reason, racer.progress.offset, racer.progress.lateral,
 				racer.craft.last_impact_speed, (hit as Node).name if hit is Node else "-"])
 	racer_crashed.emit(racer, reason)
+
+
+func _on_landed(quality: StringName, stunts: Array[StringName], points: int, racer: RacerState) -> void:
+	if quality != &"failed" and not stunts.is_empty():
+		racer.stunts_landed += stunts.size()
+		racer.stunt_points += points
+		if racer.is_racing() and phase == Phase.RACING and rules.stunt_power > 0:
+			_set_power(racer, mini(racer.power + rules.stunt_power, rules.power_levels))
+	racer_landed.emit(racer, quality, stunts, points)
 
 
 func _complete_lap(racer: RacerState, at_time: float) -> void:

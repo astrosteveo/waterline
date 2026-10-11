@@ -12,11 +12,14 @@ A jet ski racer in Godot 4.7 (Forward+, typed GDScript, Jolt physics), a spiritu
 | 3. A course | Done (session 2) |
 | 4. The race rules | Done (session 2) |
 | 5. Opponents | Done (session 2) |
-| 6–8 | Not started |
+| 6. Stunts and riders | Done (session 3) |
+| 7–8 | Not started |
 
 Run the game: `godot --path /home/astrosteveo/Projects/waterline` (or open the project in the
-editor and press F5). The main scene is `res://race/race.tscn`: a 3-lap race on the Gull Cove
-course against three computer riders (`-- --no-opponents` races alone; `-- --watch` lets the
+editor and press F5). The game opens on the rider select screen (`res://menus/rider_select.tscn`),
+which starts `res://race/race.tscn`: a 3-lap race on the Gull Cove course against the three
+other riders. The race scene also runs on its own (`--scene res://race/race.tscn`, as Marina, or
+`-- --rider koa`) (`-- --no-opponents` races alone; `-- --watch` lets the
 computer ride the player's craft too, and Tab or the right shoulder button moves the camera
 from rider to rider, with the HUD and buoy arrow following that rider). `res://levels/open_water.tscn` is the milestone-2 free ride (one jet ski on open water
 with rolling swells, islands, rocks and floating crates; `godot --path . --scene
@@ -44,9 +47,11 @@ debug/          WaterProbe, DebugHud (F3 readout), RideRecorder (ride statistics
                 DemoDriver (scripted ride, --demo)
 course/         Course (centre line, walls, gates, progress), CourseGate, CourseProgress, Buoy,
                 Ramp, StartGate (all code-built and swappable), wall_float.gdshader
-race/           Race (race.tscn is the main scene), RacerState, RaceRules (rules/default_rules.tres),
+game/           Game autoload (riders, the player's choice, scene changes)
+menus/          RiderSelect (rider_select.tscn, the main scene), MenuStyle (shared look), StatBar
+race/           Race (race.tscn), RacerState, RaceRules (rules/default_rules.tres),
                 RaceHud, PowerMeter (HUD widget), GateMarker, ResultsScreen, RacingLine, AIDriver
-riders/         RiderProfile and the four riders (marina, koa, ines, dax .tres)
+riders/         RiderProfile (colours, craft stats, computer skill) and the four riders (.tres)
 levels/         gull_cove.tscn (course), open_water.tscn (free ride), water_test.tscn
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
@@ -144,6 +149,7 @@ frame: -Z forward, +X right, origin on the keel at mid-length. Each tick:
    a yaw rate about the vertical, and the roll levels out toward a small bank into the turn. Water
    and air control blend by how much of the hull is wet.
 9. **Crashes** (milestone 4, below) replace the old capsize reset.
+10. **Stunts and landings** (milestone 6, below).
 
 Controls come in through `JetSki.controls` (`RiderControls`: throttle, steer, lean). `PlayerInput`
 fills them from the Input Map (keyboard steer and lean ease in over 0.12–0.15 s); a computer rider
@@ -503,6 +509,26 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 - **Regression scenarios** added: `race_power`, `race_disqualify`, `race_crash`; `course_reset`
   now also checks that reset waits for the rider. All 13 pass.
 
+### Milestone 6 (stunts and riders)
+
+- **Stunts:** `race_stunts` (27 checks): a barrel roll and a handstand started early land
+  clean, score 100 and 120 and add a power level; stunt on the water does nothing; a backflip
+  started 0.5 s into the jump throws the rider off (`stunt_failed`); 0.5 s of forward lean
+  lands about 20° nose down, untidy, losing 5–36% of the speed.
+- **Riders:** `riders_select` (15 checks): the stats shown per rider, the list wrapping,
+  confirming races as Ines against the other three with Ines's handling and weight, and the
+  computer riders on their own stats. The flat-water and Gull Cove numbers are in "Riders".
+- **Playtester agent:** goals 2–6 passed (every stunt binding including gamepad B and X,
+  stunt directions, scores and the combo, late stunts failing, landing quality matching the
+  speed lost to the percent, rider stats in the expected order, computer riders landing 6
+  barrel rolls in 18 ramp jumps, results buttons, no engine errors). Goal 1 failed on one
+  point: gamepad A didn't confirm, because `ui_accept` had only its keyboard defaults. Also
+  found: rider names touching the button edge, the stats panel jumping 13 px between one- and
+  two-line descriptions, early backflips and handstands landing untidy on short jumps, and no
+  call for a failed stunt. All fixed: `ui_accept`/`ui_cancel` now include gamepad A/B, buttons
+  have side padding, the description keeps two lines' height, the two stunts take 0.8 s, and
+  the HUD calls WIPEOUT on any crash. All 17 scenarios pass.
+
 ### Milestone 5 (opponents)
 
 - **Computer riders alone** (player idle): three 3-lap races, all within 2.1 s of each other at
@@ -528,6 +554,92 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 - Screenshots: `docs/screenshots/m5_*.png` (the grid with opponents, racing 2nd in a pack, the
   results).
 
+## Stunts and landings
+
+The `stunt` action pressed in the air (after `stunt_min_air_time`, 0.08 s) starts a stunt; the
+direction held as it goes down picks it (`JetSki.stunt_for`, from the raw axes so a key pressed
+with it counts): steer left or right is a **barrel roll** that way, lean back a **backflip**,
+lean forward a **handstand**, nothing a **spin** (a flat 360°). The rider can't steer or lean
+while a stunt runs; a second stunt can follow the first in the same jump.
+
+- **The model turns, not the body.** A roll, flip or spin turns the `Model` node about
+  `JetSki.STUNT_PIVOT` (between hull and rider), easing in and out
+  (`p - sin(2πp)/2π`); the rigid body keeps its air attitude. Driving the body through 360° in
+  under a second fought the air control and the camera, and a body rolled 180° at touchdown
+  would be judged by the physics, not the stunt. The handstand is the rider's own pose
+  (`JetSkiModel.set_stunt`): the body swings forward over the bars, upside down, legs up. A
+  replacement model only needs `set_stunt(stunt, progress)` for the handstand; the turn works
+  on any model.
+- **Timing.** Roll 0.75 s, backflip 0.8 s, spin 0.7 s, handstand 0.8 s. A ramp jump on Gull
+  Cove gives 0.85–1.25 s of air (waves and power), so any one stunt fits if started within
+  about 0.1–0.2 s of the lip; two need more air (Ebb Reef's ramps at low tide, big swells). At
+  0.9 s a backflip or handstand started at the first moment still landed untidy on a third of
+  the shorter jumps; at 0.8 s, ten such jumps (1.00–1.27 s of air) all landed clean.
+- **Touchdown mid-stunt.** A roll, flip or spin within `stunt_landing_tolerance` (45°) of
+  finished, or a handstand past 85%, counts: the model finishes the turn in 0.12 s and the
+  landing is at least untidy. Otherwise the rider is thrown off (`stunt_failed`).
+- **Landing quality** (`JetSki._judge_landing`, after `crash_landing_air_time` 0.3 s of air or
+  any stunt): **failed** is the milestone-4 crash rules plus `stunt_failed`. **Clean**: nose
+  between 8° down and 28° up against the water, roll under 15°, slip under 20°; no speed lost.
+  Clean ramp landings come in 12–23° nose up, so 28° leaves room. **Untidy**: anything between;
+  "badness" is how far the worst measure is from its clean limit toward its crash limit (nose
+  up: 25° past the limit), and the craft loses 8% (just past clean) to 35% (nearly a crash) of
+  its speed through the water at once. Holding lean forward for 0.33 s of a ramp jump lands
+  1° down (clean), 0.5 s lands 21° down (untidy, 28% lost), 0.67 s lands 26° down (crash).
+- **Scoring:** roll 100, backflip 150, spin 80, handstand 120; two in one jump ×1.5, three ×2;
+  an untidy landing half. `JetSki.landed(quality, stunts, points)` reports every judged
+  landing; `Race` adds the points to `RacerState.stunt_points` and, in a race, adds
+  `RaceRules.stunt_power` (1) power levels for a landed stunt, so stunts are worth the risk in a
+  race (the original gives nothing for them outside stunt mode). The HUD calls "BARREL ROLL
+  +100", "ROUGH" on an untidy one and "ROUGH LANDING" for an untidy landing without a stunt.
+- **Computer riders** judge each jump 0.1 s after take-off from the climb rate and height
+  (air left = (v + √(v² + 2gh)) / g) and, half the time, barrel-roll if the air left beats the
+  roll by a margin that shrinks with skill and has some random misjudgement below skill 1, so a
+  weaker rider can land mid-roll. Over two watched races each rider landed 0–4.
+
+## Riders
+
+`RiderProfile` (`riders/*.tres`) holds a rider's name, a one-line description, colours
+(including the hull's bottom, so riders tell apart from behind), four craft factors and a weight,
+and the computer skill. `RiderProfile.tuned(base)` returns a copy of the craft's `JetSkiTuning`:
+
+- **Top speed s, acceleration a:** thrust × a, linear drag × a/s, quadratic drag × a/s². Top
+  speed solves thrust = linear·v + quadratic·v², so a keeps it and s scales it; a scales the push
+  from a standstill.
+- **Handling h:** turn rates, yaw response and yaw acceleration × h. **Grip g:** `grip_g` and
+  `grip_rate` × g; a computer rider counts on `cornering × g` in the turns.
+- **Weight:** every force that scales with the body (thrust, drag, buoyancy, damping, torques)
+  scales with the mass too, so the weight changes collisions (who pushes whom), not the ride.
+
+| Rider | Top speed | Accel. | Handling | Grip | Mass | Character |
+|---|---|---|---|---|---|---|
+| Marina | 1.00 | 1.00 | 1.00 | 1.00 | 300 kg | the base craft |
+| Koa | 1.06 | 0.86 | 0.92 | 1.00 | 330 kg | fast once going, slow to get there and to turn |
+| Ines | 0.96 | 1.00 | 1.12 | 1.10 | 280 kg | tightest turns, holds the line, lowest top speed |
+| Dax | 1.00 | 1.14 | 1.04 | 0.88 | 290 kg | quickest off the mark, slides in turns |
+
+Measured on flat water (`test/tools/rider_bench.py --flat`, repeatable to 0.01 s):
+
+| Rider | 0–40 km/h | 0–50 km/h | Top speed | Full-lock U-turn from top speed | Most slip | Speed after |
+|---|---|---|---|---|---|---|
+| Marina | 1.95 s | 2.98 s | 58.2 km/h | 2.63 s | 8.5° | 49.6 km/h |
+| Koa | 2.18 s | 3.18 s | 61.5 km/h | 2.87 s | 5.9° | 54.4 km/h |
+| Ines | 1.97 s | 3.13 s | 55.9 km/h | 2.38 s | 6.4° | 49.3 km/h |
+| Dax | 1.72 s | 2.62 s | 58.3 km/h | 2.40 s | 29.4° | 38.5 km/h |
+
+On waves the same runs vary by about 0.2 s between repeats (the craft meets different swells),
+so compare riders on flat water. On Gull Cove, each rider alone on the computer driver at skill
+1.0 over 3 laps: Koa 1:58.71, Marina 1:59.80, Dax 1:59.99, Ines 2:00.55, no misses or crashes.
+The spread is 1.5%, so the choice is about feel, not a best rider.
+
+**Rider select** (`menus/rider_select.tscn`, the main scene): the riders down the left (focus
+moves with ui_up/ui_down, the list wraps, the mouse works too), the focused rider's craft
+floating on Gull Cove in the middle with the camera circling it, and a panel on the right with
+the name, the line and four stat bars (`StatBar`; 3 is the base craft, a point per 7%, half
+steps). ui_accept sets `Game.player_rider` and opens the race. `Race` then races that rider
+against `Game.opponents_for()` the rest; the command line `-- --rider NAME` does the same.
+The results screen has RACE AGAIN, RIDERS (back to rider select) and QUIT.
+
 ## Controls (Input Map actions)
 
 | Action | Keyboard | Gamepad |
@@ -535,7 +647,9 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 | throttle | Space, J | A, right trigger |
 | steer_left / steer_right | A / D, Left / Right | left stick X, D-pad |
 | lean_forward / lean_back | W / S, Up / Down | left stick Y (up = forward), D-pad |
+| stunt | K, Left Shift (in the air; the held direction picks the stunt) | B, X |
 | reset_craft | R (in a race: back on the course, clear of obstacles; not while swimming) | Back |
+| ui_accept / ui_cancel (menus) | Enter, Space / Escape | A / B |
 | toggle_camera | C | Y |
 | watch_next | Tab (watch mode only: follow the next rider) | right shoulder |
 | toggle_debug | F3 | |
@@ -579,16 +693,13 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 - The test driver (`test/tools/autodrive.py`) follows a line through the buoys only; it knows
   nothing of rocks. The computer riders' `RacingLine` does.
 - A computer rider close behind can come between the chase camera and the player's craft.
-- Koa's and Dax's craft both look mostly white from behind (the hull's white bottom band
-  dominates); their suits tell them apart. Give riders their own bottom colour in milestone 6.
 - Computer riders don't aim for ramps; they ride over them because the ramps sit on the line.
 
 - The terrain is flat-shaded with 4 m cells, so the edges of shallow areas show straight facets
   through the water. A finer grid near shores would smooth this.
 - Eight waves repeat visibly when seen from high above; at riding height it isn't noticeable.
 - Holding a turn through a long jump yaws the craft in the air, so it can land with 40–50° of slip
-  and slide. That's the air steering doing what it's asked; milestone 6 should judge such
-  landings.
+  and slide. Since milestone 6 such a landing is untidy and costs speed.
 - Off the throttle the craft slows quickly (42 to 7 km/h in 3 s). Real jet skis do, but it may
   feel abrupt; lower `linear_drag` if so.
 - The craft beaches itself on island sand and can't reverse; R resets it. Course walls keep
@@ -605,7 +716,7 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
   (a per-rider copy of `JetSkiTuning`, or multipliers on `max_thrust`, the drag, `turn_rate_*` and
   `grip_g`). `Race.player_rider` and `Race.opponents` choose who races; a rider select screen sets
   them. Marina is the player's default today.
-- **Stunts (milestone 6):** landings are already judged in `JetSki._judge_landing` and kept in
+- **Stunts (done in milestone 6):** landings are judged in `JetSki._judge_landing` and kept in
   `JetSki.last_landing` (pitch, roll, slip, air time); today only crash-worthy landings do anything.
   Add the speed loss for untidy landings and the stunt inputs there. The air pitch and yaw control
   is in `_integrate_forces`; a barrel roll or handstand needs its own input actions (and the model's

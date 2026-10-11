@@ -181,3 +181,33 @@ extends Resource
 @export_range(0.0, 10.0, 0.01) var riderless_brake: float = 1.1
 ## Pull of a riderless craft toward its swimming rider, per second squared per meter.
 @export_range(0.0, 10.0, 0.01) var drift_to_rider: float = 0.5
+
+@export_group("Stunts")
+## A stunt can start once the craft has been this long in the air.
+@export_range(0.0, 1.0, 0.01, "suffix:s") var stunt_min_air_time: float = 0.08
+## Seconds each stunt takes. A stunt still going at touchdown fails (see
+## [member stunt_landing_tolerance]), so a longer stunt needs a bigger jump.
+@export_range(0.1, 3.0, 0.01, "suffix:s") var barrel_roll_time: float = 0.75
+@export_range(0.1, 3.0, 0.01, "suffix:s") var backflip_time: float = 0.8
+@export_range(0.1, 3.0, 0.01, "suffix:s") var spin_time: float = 0.7
+@export_range(0.1, 3.0, 0.01, "suffix:s") var handstand_time: float = 0.8
+## A roll, flip or spin this close to finished at touchdown still counts (the landing is
+## untidy); further from it, the rider is thrown off.
+@export_range(0.0, 180.0, 0.1, "degrees") var stunt_landing_tolerance: float = 45.0
+## A handstand counts at touchdown once the rider is this far through it (back on the seat).
+@export_range(0.0, 1.0, 0.01) var handstand_landing_progress: float = 0.85
+
+@export_group("Landings")
+## A landing after at least [member crash_landing_air_time] in the air is clean when the nose
+## is no more than this far below the water's surface...
+@export_range(0.0, 90.0, 0.1, "degrees") var clean_landing_pitch_down: float = 8.0
+## ...and no more than this far above it...
+@export_range(0.0, 90.0, 0.1, "degrees") var clean_landing_pitch_up: float = 28.0
+## ...the craft is rolled no more than this...
+@export_range(0.0, 90.0, 0.1, "degrees") var clean_landing_roll: float = 15.0
+## ...and it moves no more than this far from where the nose points.
+@export_range(0.0, 90.0, 0.1, "degrees") var clean_landing_slip: float = 20.0
+## An untidy landing (between clean and a crash) costs this share of the speed when only just
+## past clean, up to [member untidy_landing_max_loss] when nearly a crash.
+@export_range(0.0, 1.0, 0.01) var untidy_landing_min_loss: float = 0.08
+@export_range(0.0, 1.0, 0.01) var untidy_landing_max_loss: float = 0.35

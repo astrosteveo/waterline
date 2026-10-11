@@ -11,6 +11,7 @@ const YELLOW := Color(1.0, 0.86, 0.12)
 const RED := Color(1.0, 0.22, 0.16)
 const WHITE := Color(1.0, 1.0, 1.0)
 const CYAN := Color(0.45, 0.92, 1.0)
+const ORANGE := Color(1.0, 0.6, 0.15)
 
 var _font: FontVariation
 var _place_value: Label
@@ -45,6 +46,8 @@ func _ready() -> void:
 		race.racer_finished.connect(_on_racer_finished)
 		race.watched_changed.connect(func(racer: RacerState) -> void: _shown_power = racer.power)
 		race.racer_disqualified.connect(_on_disqualified)
+		race.racer_landed.connect(_on_landed)
+		race.racer_crashed.connect(_on_crashed)
 
 
 func _build() -> void:
@@ -259,6 +262,28 @@ func _on_gate_judged(racer: RacerState, gate: CourseGate, correct: bool) -> void
 		var left := race.rules.misses_to_disqualify - racer.buoys_missed
 		var warning := "  %d LEFT" % left if left > 0 and left <= 2 else ""
 		show_sub_message("MISSED BUOY" + warning, RED, 1.2)
+
+
+func _on_landed(racer: RacerState, quality: StringName, stunts: Array[StringName], points: int) -> void:
+	if racer != race.watched or quality == &"failed":
+		return
+	_shown_power = racer.power
+	if stunts.is_empty():
+		if quality == &"untidy":
+			show_sub_message("ROUGH LANDING", ORANGE, 0.9)
+		return
+	var names := PackedStringArray()
+	for stunt in stunts:
+		names.append(JetSki.STUNTS[stunt]["label"])
+	var text := " + ".join(names) + "  +%d" % points
+	if quality == &"untidy":
+		text += "  ROUGH"
+	show_sub_message(text, YELLOW if quality == &"clean" else ORANGE, 1.4)
+
+
+func _on_crashed(racer: RacerState, _reason: StringName) -> void:
+	if racer == race.watched and racer.is_racing():
+		show_sub_message("WIPEOUT", RED, 1.2)
 
 
 func _on_lap_completed(racer: RacerState, lap: int, lap_time: float) -> void:

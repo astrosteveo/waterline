@@ -33,6 +33,11 @@ func _physics_process(delta: float) -> void:
 			steer_rise_time, steer_fall_time)
 	controls.lean = _ease(controls.lean, Input.get_axis(&"lean_back", &"lean_forward"), delta,
 			lean_rise_time, steer_fall_time)
+	if Input.is_action_just_pressed(&"stunt"):
+		# The direction held as the button goes down picks the stunt; the raw axes, not the
+		# eased steer and lean, so a key pressed together with it counts.
+		controls.request_stunt(Vector2(Input.get_axis(&"steer_left", &"steer_right"),
+				Input.get_axis(&"lean_back", &"lean_forward")))
 	if Input.is_action_just_pressed(&"reset_craft"):
 		_craft.request_reset()
 

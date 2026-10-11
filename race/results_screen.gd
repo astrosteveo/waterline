@@ -12,13 +12,14 @@ signal quit_pressed
 @export var race: Race
 ## Seconds after the player finishes before the results appear.
 @export_range(0.0, 10.0, 0.1, "suffix:s") var delay: float = 3.3
+## Scene the RIDERS button opens.
+@export_file("*.tscn") var rider_select_scene: String = "res://menus/rider_select.tscn"
 
 const YELLOW := Color(1.0, 0.86, 0.12)
 const WHITE := Color(1.0, 1.0, 1.0)
 const DIM := Color(0.72, 0.8, 0.95)
 const RED := Color(1.0, 0.3, 0.22)
 
-var _font: FontVariation
 var _root: Control
 var _rows: VBoxContainer
 var _again: Button
@@ -27,10 +28,6 @@ var _shown := false
 
 func _ready() -> void:
 	layer = 8
-	_font = FontVariation.new()
-	_font.base_font = ThemeDB.fallback_font
-	_font.variation_embolden = 0.9
-	_font.variation_transform = Transform2D(Vector2(1.0, 0.0), Vector2(-0.18, 1.0), Vector2.ZERO)
 	_build()
 	_root.visible = false
 	if race != null:
@@ -79,18 +76,7 @@ func _build() -> void:
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(shade)
 
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.04, 0.12, 0.36, 0.92)
-	style.border_color = YELLOW
-	style.set_border_width_all(6)
-	style.set_corner_radius_all(14)
-	style.skew = Vector2(0.06, 0.0)
-	style.content_margin_left = 64
-	style.content_margin_right = 64
-	style.content_margin_top = 36
-	style.content_margin_bottom = 40
-	panel.add_theme_stylebox_override(&"panel", style)
+	var panel := MenuStyle.panel(64, 38)
 	_root.add_child(panel)
 	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -126,6 +112,10 @@ func _build() -> void:
 	_again = _button("RACE AGAIN")
 	_again.pressed.connect(_on_again)
 	buttons.add_child(_again)
+	var riders := _button("RIDERS")
+	riders.name = "Riders"
+	riders.pressed.connect(_on_riders)
+	buttons.add_child(riders)
 	var quit := _button("QUIT")
 	quit.pressed.connect(_on_quit)
 	buttons.add_child(quit)
@@ -177,48 +167,20 @@ func _cell(text: String, width: float, size: int, color: Color,
 
 
 func _label(text: String, size: int, color: Color) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_override(&"font", _font)
-	label.add_theme_font_size_override(&"font_size", size)
-	label.add_theme_color_override(&"font_color", color)
-	label.add_theme_color_override(&"font_outline_color", Color(0.02, 0.05, 0.16))
-	label.add_theme_constant_override(&"outline_size", maxi(size / 7, 4))
-	return label
+	return MenuStyle.label(text, size, color)
 
 
 func _button(text: String) -> Button:
-	var button := Button.new()
-	button.text = text
-	button.add_theme_font_override(&"font", _font)
-	button.add_theme_font_size_override(&"font_size", 38)
-	button.custom_minimum_size = Vector2(300, 72)
-	for state in [&"normal", &"hover", &"pressed", &"focus"]:
-		var style := StyleBoxFlat.new()
-		style.set_corner_radius_all(10)
-		style.skew = Vector2(0.15, 0.0)
-		match state:
-			&"normal":
-				style.bg_color = Color(0.08, 0.24, 0.62)
-			&"hover":
-				style.bg_color = Color(0.12, 0.34, 0.8)
-			&"pressed":
-				style.bg_color = Color(0.9, 0.6, 0.05)
-			&"focus":
-				style.bg_color = Color(0, 0, 0, 0)
-				style.border_color = YELLOW
-				style.set_border_width_all(5)
-				style.draw_center = false
-		button.add_theme_stylebox_override(state, style)
-	button.add_theme_color_override(&"font_color", WHITE)
-	button.add_theme_color_override(&"font_focus_color", YELLOW)
-	button.add_theme_color_override(&"font_hover_color", YELLOW)
-	return button
+	return MenuStyle.button(text)
 
 
 func _on_again() -> void:
 	race_again_pressed.emit()
 	get_tree().reload_current_scene()
+
+
+func _on_riders() -> void:
+	get_tree().change_scene_to_file(rider_select_scene)
 
 
 func _on_quit() -> void:
