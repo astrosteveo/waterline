@@ -1,7 +1,7 @@
 class_name GateMarker
 extends Node3D
-## A floating arrow over the player's next buoy, in the buoy's colour, pointing to the side
-## the player must pass on. It follows [member race]'s player.
+## A floating arrow over the next buoy of the rider the camera follows (the player, unless
+## watching a race), in the buoy's colour, pointing to the side to pass on.
 
 @export var race: Race
 ## Height of the arrow above the buoy's water line.
@@ -47,11 +47,11 @@ func _process(delta: float) -> void:
 
 
 func _target_gate() -> CourseGate:
-	if race == null or race.player == null or race.course == null:
+	if race == null or race.watched == null or race.course == null:
 		return null
-	if race.player.finished or race.course.gates.is_empty():
+	if not race.watched.is_racing() or race.course.gates.is_empty():
 		return null
-	var index := race.player.next_gate
+	var index := race.watched.next_gate
 	if index >= race.course.gates.size():
 		return null
 	var gate := race.course.gates[index]

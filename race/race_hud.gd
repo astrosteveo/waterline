@@ -24,6 +24,7 @@ var _speed_value: Label
 var _message: Label
 var _sub_message: Label
 var _wrong_way: Label
+var _watch_label: Label
 var _message_tween: Tween
 var _shown_power := 0
 var _sub_tween: Tween
@@ -41,7 +42,8 @@ func _ready() -> void:
 		race.started.connect(_on_started)
 		race.gate_judged.connect(_on_gate_judged)
 		race.lap_completed.connect(_on_lap_completed)
-		race.finished.connect(_on_finished)
+		race.racer_finished.connect(_on_racer_finished)
+		race.watched_changed.connect(func(racer: RacerState) -> void: _shown_power = racer.power)
 		race.racer_disqualified.connect(_on_disqualified)
 
 
@@ -131,6 +133,15 @@ func _build() -> void:
 	_centre(root, _wrong_way, -150.0)
 	_wrong_way.visible = false
 
+	# Top middle, in watch mode: who the camera follows.
+	_watch_label = _label("", 34, CYAN)
+	root.add_child(_watch_label)
+	_watch_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_watch_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_watch_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_watch_label.position.y += 28.0
+	_watch_label.visible = false
+
 
 func _column(parent: Control, preset: Control.LayoutPreset, offset: Vector2) -> VBoxContainer:
 	var box := VBoxContainer.new()
@@ -171,9 +182,13 @@ func _label(text: String, size: int, color: Color) -> Label:
 
 
 func _process(_delta: float) -> void:
-	if race == null or race.player == null:
+	if race == null or race.watched == null:
 		return
-	var racer := race.player
+	_watch_label.visible = race.watching and race.watched != null
+	if _watch_label.visible:
+		_watch_label.text = "WATCHING %s     TAB / RB: NEXT RIDER" % race.watched.display_name.to_upper()
+	# The rider the camera follows: the player, unless watching a race.
+	var racer := race.watched
 	_place_value.text = Race.ordinal(racer.place) if not racer.disqualified else "DQ"
 	_place_total.text = "/%d" % race.racers.size()
 	_lap_value.text = "%d/%d" % [mini(racer.laps_done + 1, race.laps), race.laps]
@@ -231,9 +246,7 @@ func _on_started() -> void:
 
 
 func _on_gate_judged(racer: RacerState, gate: CourseGate, correct: bool) -> void:
-	if race.phase == Race.Phase.FINISHED:
-		return
-	if not racer.is_player:
+	if racer != race.watched or not racer.is_racing():
 		return
 	var power_before := _shown_power
 	_shown_power = racer.power
@@ -249,21 +262,21 @@ func _on_gate_judged(racer: RacerState, gate: CourseGate, correct: bool) -> void
 
 
 func _on_lap_completed(racer: RacerState, lap: int, lap_time: float) -> void:
-	if not racer.is_player or racer.finished:
+	if racer != race.watched or racer.finished:
 		return
 	var text := "FINAL LAP" if lap == race.laps - 1 else "LAP %d" % (lap + 1)
 	show_message(text, YELLOW if lap == race.laps - 1 else WHITE, 1.6)
 	show_sub_message(Race.format_time(lap_time), WHITE, 1.6)
 
 
-func _on_finished() -> void:
-	if race.player.disqualified:
+func _on_racer_finished(racer: RacerState) -> void:
+	if racer != race.watched:
 		return
 	show_message("FINISH", YELLOW, 3.0)
-	show_sub_message(Race.format_time(race.player.finish_time), WHITE, 3.0)
+	show_sub_message(Race.format_time(racer.finish_time), WHITE, 3.0)
 
 
 func _on_disqualified(racer: RacerState) -> void:
-	if racer.is_player:
+	if racer == race.watched:
 		show_message("DISQUALIFIED", RED, 4.0)
 		show_sub_message("%d BUOYS MISSED" % racer.buoys_missed, WHITE, 4.0)

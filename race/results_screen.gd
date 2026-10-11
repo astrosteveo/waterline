@@ -34,7 +34,8 @@ func _ready() -> void:
 	_build()
 	_root.visible = false
 	if race != null:
-		race.finished.connect(_on_race_finished)
+		race.finished.connect(_on_race_finished.bind(false))
+		race.all_finished.connect(_on_race_finished.bind(true))
 
 
 ## Shows the results now.
@@ -53,7 +54,11 @@ func is_open() -> bool:
 	return _shown
 
 
-func _on_race_finished() -> void:
+## Opens the results after [member delay]: when the player finishes, or, when watching a
+## race, once everyone has ([param everyone]).
+func _on_race_finished(everyone: bool) -> void:
+	if race.watching != everyone:
+		return
 	if delay <= 0.0:
 		open()
 	else:

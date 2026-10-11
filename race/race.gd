@@ -26,6 +26,8 @@ signal racer_disqualified(racer: RacerState)
 signal racer_crashed(racer: RacerState, reason: StringName)
 ## Every racer has finished or been disqualified.
 signal all_finished
+## In watch mode, the camera moved to another rider.
+signal watched_changed(racer: RacerState)
 ## The player finished or was disqualified; the race is over for them.
 signal finished
 
@@ -75,6 +77,11 @@ var player: RacerState
 var phase: Phase = Phase.COUNTDOWN
 ## Seconds since the start.
 var race_time: float = 0.0
+## True when the computer rides every craft, the player's included, and the watch_next
+## action moves the camera from rider to rider (`-- --watch`).
+var watching: bool = false
+## The rider the camera follows.
+var watched: RacerState
 ## Laps in this race.
 var laps: int = 3
 
@@ -115,6 +122,11 @@ func _ready() -> void:
 	for racer in racers:
 		course.track(racer.progress, racer.craft.global_position)
 		racer.last_position = _flat(racer.craft.global_position)
+	watched = player
+	# `-- --watch`: the computer rides the player's craft too; watch the race.
+	if "--watch" in OS.get_cmdline_user_args():
+		watching = true
+		autopilot(player, player_rider.ai_skill if player_rider != null else 0.85)
 	_countdown_left = countdown_time
 	phase = Phase.COUNTDOWN
 	_update_places()
@@ -178,6 +190,19 @@ func _add_racer(craft: JetSki, display_name: String, slot: int) -> RacerState:
 	craft.power_multiplier = rules.thrust_for(0)
 	craft.crashed.connect(_on_crashed.bind(racer))
 	return racer
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if watching and event.is_action_pressed(&"watch_next") and not racers.is_empty():
+		watch(racers[(racers.find(watched) + 1) % racers.size()])
+
+
+## Points the chase camera at [param racer].
+func watch(racer: RacerState) -> void:
+	watched = racer
+	if chase_camera != null:
+		chase_camera.set_target(racer.craft)
+	watched_changed.emit(racer)
 
 
 func _physics_process(delta: float) -> void:

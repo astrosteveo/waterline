@@ -16,7 +16,9 @@ A jet ski racer in Godot 4.7 (Forward+, typed GDScript, Jolt physics), a spiritu
 
 Run the game: `godot --path /home/astrosteveo/Projects/waterline` (or open the project in the
 editor and press F5). The main scene is `res://race/race.tscn`: a 3-lap race on the Gull Cove
-course against three computer riders (`-- --no-opponents` races alone). `res://levels/open_water.tscn` is the milestone-2 free ride (one jet ski on open water
+course against three computer riders (`-- --no-opponents` races alone; `-- --watch` lets the
+computer ride the player's craft too, and Tab or the right shoulder button moves the camera
+from rider to rider, with the HUD and buoy arrow following that rider). `res://levels/open_water.tscn` is the milestone-2 free ride (one jet ski on open water
 with rolling swells, islands, rocks and floating crates; `godot --path . --scene
 res://levels/open_water.tscn -- --demo` rides a fixed sequence of controls by itself).
 `res://levels/water_test.tscn` is the milestone-1 water scene with a free camera.
@@ -535,6 +537,7 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 | lean_forward / lean_back | W / S, Up / Down | left stick Y (up = forward), D-pad |
 | reset_craft | R (in a race: back on the course, clear of obstacles; not while swimming) | Back |
 | toggle_camera | C | Y |
+| watch_next | Tab (watch mode only: follow the next rider) | right shoulder |
 | toggle_debug | F3 | |
 | cam_forward/back/left/right | W S A D (free camera only) | |
 | cam_up / cam_down | E / Q | |
