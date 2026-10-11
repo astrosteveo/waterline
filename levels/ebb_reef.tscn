@@ -19,8 +19,8 @@ course_name = "Ebb Reef"
 laps = 3
 grid_distance = 28
 lap_levels = PackedFloat32Array(0, -0.9, -1.8)
-control_points = PackedVector3Array(0, 0, 60, 0, 0, -40, 20, 0, -100, 70, 0, -132, 130, 0, -125, 168, 0, -85, 162, 0, -25, 132, 0, 18, 138, 0, 72, 172, 0, 112, 152, 0, 165, 90, 0, 180, 32, 0, 150)
-half_widths = PackedFloat32Array(22, 22, 20, 20, 19, 18, 17, 17, 18, 19, 20, 20, 21)
+control_points = PackedVector3Array(0, 0, 60, 0, 0, -30, 2, 0, -100, 18, 0, -140, 50, 0, -158, 86, 0, -146, 100, 0, -110, 96, 0, -60, 118, 0, -20, 96, 0, 22, 120, 0, 62, 128, 0, 112, 96, 0, 150, 44, 0, 152, 10, 0, 120)
+half_widths = PackedFloat32Array(22, 22, 20, 18, 17, 17, 17, 16, 16, 16, 17, 19, 20, 21, 22)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = ExtResource("env")
@@ -45,94 +45,94 @@ script = ExtResource("shore")
 script = ExtResource("terrain")
 size = 760
 cells = 190
-islands = Array[Vector4]([Vector4(78, -35, 52, 4), Vector4(82, 85, 42, -0.6), Vector4(70, 30, 30, -1.2), Vector4(-90, 0, 70, 10), Vector4(250, 40, 70, 9), Vector4(100, 290, 80, 8), Vector4(60, -260, 70, 9), Vector4(-60, 160, 40, -0.8), Vector4(230, -170, 50, -0.7)])
+islands = Array[Vector4]([Vector4(50, -60, 30, 3), Vector4(50, 0, 26, -0.7), Vector4(52, 60, 30, -0.9), Vector4(60, 110, 22, 2), Vector4(-90, -20, 70, 10), Vector4(230, -30, 75, 9), Vector4(90, 290, 80, 8), Vector4(40, -280, 70, 9), Vector4(175, 140, 40, -0.8), Vector4(-70, 140, 40, -0.8), Vector4(200, -170, 50, -0.7)])
 coast_noise = 0.15
 
 [node name="StartLine" type="Marker3D" parent="."]
-transform = Transform3D(0.99965, 0, 0.02652, 0, 1, 0, -0.02652, 0, 0.99965, -3.706, 0.000, 20.195)
+transform = Transform3D(0.99995, 0, -0.01010, 0, 1, 0, 0.01010, 0, 0.99995, -1.042, 0.000, 20.023)
 
 [node name="StartGate" parent="." instance=ExtResource("gate")]
-transform = Transform3D(0.99965, 0, 0.02652, 0, 1, 0, -0.02652, 0, 0.99965, -3.706, 0.000, 20.195)
+transform = Transform3D(0.99995, 0, -0.01010, 0, 1, 0, 0.01010, 0, 0.99995, -1.042, 0.000, 20.023)
 span = 46
 height = 13
 
 [node name="Buoys" type="Node3D" parent="."]
 
 [node name="Buoy01" parent="Buoys" instance=ExtResource("buoy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.424, 0, -76.604)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.641, 0, -74.857)
 
 [node name="Buoy02" parent="Buoys" instance=ExtResource("buoy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 59.031, 0, -133.895)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53.860, 0, -162.140)
 kind = 1
 
 [node name="Buoy03" parent="Buoys" instance=ExtResource("buoy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 130.503, 0, -117.929)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 91.041, 0, -127.317)
 
 [node name="Buoy04" parent="Buoys" instance=ExtResource("buoy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 174.880, 0, -57.167)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.916, 0, -60.924)
 kind = 1
 
 [node name="Buoy05" parent="Buoys" instance=ExtResource("buoy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 139.612, 0, -3.509)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112.654, 0, -17.417)
 
 [node name="Buoy06" parent="Buoys" instance=ExtResource("buoy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 139.845, 0, 59.249)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 101.792, 0, 25.802)
 kind = 1
 
 [node name="Buoy07" parent="Buoys" instance=ExtResource("buoy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 160.009, 0, 143.300)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122.760, 0, 108.002)
 
 [node name="Buoy08" parent="Buoys" instance=ExtResource("buoy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 98.769, 0, 185.556)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55.034, 0, 159.831)
 kind = 1
 
 [node name="Buoy09" parent="Buoys" instance=ExtResource("buoy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.949, 0, 142.878)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.823, 0, 128.472)
 
 [node name="Ramps" type="Node3D" parent="."]
 
 [node name="Ramp1" parent="Ramps" instance=ExtResource("ramp")]
-transform = Transform3D(0.98739, 0, -0.15830, 0, 1, 0, 0.15830, 0, 0.98739, -0.060, 0.000, -39.630)
+transform = Transform3D(1.00000, 0, -0.00085, 0, 1, 0, 0.00085, 0, 1.00000, 0.036, 0.000, -34.971)
 bottom = -4.2
 length = 18.95
 
 [node name="Ramp2" parent="Ramps" instance=ExtResource("ramp")]
-transform = Transform3D(-0.38346, 0, 0.92356, 0, 1, 0, -0.92356, 0, -0.38346, 137.932, 0.000, 173.380)
+transform = Transform3D(-0.87071, 0, 0.49180, 0, 1, 0, -0.49180, 0, -0.87071, 123.310, 0.000, 122.999)
 bottom = -4.2
 length = 18.95
 
 [node name="Rocks" type="Node3D" parent="."]
 
 [node name="Rock1" type="StaticBody3D" parent="Rocks"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100.65, -1.5, -137.22)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.26, -1.5, -138.86)
 script = ExtResource("rock")
 radius = 2
 height_scale = 0.42
 rock_seed = 11
 
 [node name="Rock2" type="StaticBody3D" parent="Rocks"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 156.92, -1.5, -25.73)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 94.53, -1.5, -90.27)
 script = ExtResource("rock")
-radius = 2.2
+radius = 2.1
 height_scale = 0.42
 rock_seed = 5
 
 [node name="Rock3" type="StaticBody3D" parent="Rocks"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 160.86, -1.5, 87.95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 127.52, -1.5, 68.29)
 script = ExtResource("rock")
 radius = 2
 height_scale = 0.42
 rock_seed = 17
 
 [node name="Rock4" type="StaticBody3D" parent="Rocks"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53.09, -1.5, 163.68)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.63, -1.5, 91.24)
 script = ExtResource("rock")
 radius = 2.1
 height_scale = 0.42
 rock_seed = 23
 
 [node name="Rock5" type="StaticBody3D" parent="Rocks"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 121.23, -1.5, 30.95)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 115.99, -1.5, -44.15)
 script = ExtResource("rock")
 radius = 2.4
 height_scale = 2.4
@@ -146,21 +146,21 @@ height_scale = 1.2
 rock_seed = 31
 
 [node name="Rock7" type="StaticBody3D" parent="Rocks"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 200.00, -1.5, -40.00)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 170.00, -1.5, -60.00)
 script = ExtResource("rock")
 radius = 4
 height_scale = 1.4
 rock_seed = 37
 
 [node name="Rock8" type="StaticBody3D" parent="Rocks"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 205.00, -1.5, 130.00)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 190.00, -1.5, 60.00)
 script = ExtResource("rock")
 radius = 3.5
 height_scale = 1.1
 rock_seed = 41
 
 [node name="Rock9" type="StaticBody3D" parent="Rocks"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.00, -1.5, 90.00)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.00, -1.5, 80.00)
 script = ExtResource("rock")
 radius = 3
 height_scale = 1.3

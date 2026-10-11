@@ -698,11 +698,13 @@ line for tests.
 | Gull Cove | calm | 636 m | `cove_calm.tres`: the cove swell at half height (troughs to about −0.7 m). The first course, for learning the buoys. |
 | Whitecap Point | choppy open sea | 908 m | `whitecap_chop.tres`: `open_sea` with a lower main swell (0.62 m) and stronger chop (0.19, 0.13, 0.07 m). The craft hops off the chop on every straight. Long start straight with a ramp, a sweeping top, a chicane past a rock, a long bottom sweep. |
 | Lantern Harbor | night, harbour lights | 1021 m | `night_environment.tres` (dark sky with stars, a moon disc, colour ambient light, glow), a dim blue moon low in the sky so its glitter shows the swells, `harbor_swell.tres` (cove swell at 55%). Piers with lamps and lit buildings along the north shore, a breakwater with red and green entrance lights, lit buoys (`Buoy.lamp_energy`) and darker water (`OceanSurface.shader_overrides`). The course leaves through the breakwater gap and comes back round its east end. |
-| Ebb Reef | the tide goes out each lap | 852 m | `Course.lap_levels` 0, −0.9, −1.8 m: when the leader starts lap 2 and 3 the rest level falls at 0.15 m/s and the HUD calls THE TIDE IS GOING OUT. Reef flats break the surface, four rocks hidden 0.6 m under the water on lap 1 stand up to 1.2 m above it on lap 3 (the computer riders' line avoids them from the start), and the ramps' lips rise from 1.8 m to 3.6 m above the water, so the jumps grow. The ramps start 4.2 m under the high-tide level (19 m long, same 17.6° slope): with the default 2 m, a trough at low tide exposed the ramp's front edge and riders hit it head-on. Walls stay 4.3 m deep at high tide (2.5 m at low tide). |
+| Ebb Reef | the tide goes out each lap | 776 m | `Course.lap_levels` 0, −0.9, −1.8 m: when the leader starts lap 2 and 3 the rest level falls at 0.15 m/s and the HUD calls THE TIDE IS GOING OUT. Reef flats break the surface, four rocks hidden 0.6 m under the water on lap 1 stand up to 1.2 m above it on lap 3 (the computer riders' line avoids them from the start), and the ramps' lips rise from 1.8 m to 3.6 m above the water, so the jumps grow. The ramps start 4.2 m under the high-tide level (19 m long, same 17.6° slope): with the default 2 m, a trough at low tide exposed the ramp's front edge and riders hit it head-on. Walls stay 4.3 m deep at high tide (2.5 m at low tide). |
 
 Computer races (four riders, 3 laps): Whitecap Point 58–60 s laps, 0–1 misses each, no crashes;
 Lantern Harbor about 60 s laps, Koa about 10 s ahead of the rest (top speed and skill on long
-straights), 0–1 misses, no crashes; Ebb Reef 50–59 s laps, 0–2 misses, no crashes.
+straights), 0–1 misses, no crashes; Ebb Reef (an elongated B: a long straight, a hairpin at the
+north end, an S through the reef) about 50 s laps, the field within 6 s, 0–2 misses, one failed
+barrel roll by Koa in two races.
 
 **Water level and other systems.** `Ocean.level` is set by each course at load (and reset to 0
 by every `OceanSurface`, since the autoload outlives scenes). Buoys, wall floats, rings, the
