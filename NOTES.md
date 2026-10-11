@@ -872,8 +872,6 @@ entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_le
 - Pausing uses `SceneTree.paused`, which gdh also uses to hold the game, so a gdh step runs a
   paused game: scenarios can check the pause menu opens and closes, not that the race stops.
   Checked by hand in a live session instead.
-- Whitecap Point and Ebb Reef have similar bean-shaped outlines (one runs each way round);
-  their conditions differ, their shapes could differ more.
 - On Lantern Harbor Koa wins computer races by about 10 s (top speed on long straights plus the
   highest skill); on the shorter courses the field is within a few seconds.
 - The spray is soft round puffs, a stylised look; at full speed the bow spray shows as a string
@@ -886,5 +884,4 @@ All eight milestones are done. Ideas for after them, roughly by value:
 - Real models and sounds: every model is swappable (`JetSkiModel` and the scenery scripts take
   a child named "Model"), and `SoundBank` is the one place sounds come from.
 - Music (an empty slot: there is no music bus yet).
-- A reshaped Ebb Reef, so no two courses share an outline.
 - Split-screen two-player races (input actions would need a player prefix).

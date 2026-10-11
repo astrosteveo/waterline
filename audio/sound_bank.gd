@@ -161,3 +161,8 @@ static func _build(key: StringName, make: Callable) -> AudioStreamWAV:
 		stream.loop_end = samples.size()
 	_cache[key] = stream
 	return stream
+
+
+## Drops every cached sound, at exit.
+static func release() -> void:
+	_cache.clear()
