@@ -19,6 +19,7 @@ var _carve_left: GPUParticles3D
 var _carve_right: GPUParticles3D
 var _splash: GPUParticles3D
 var _draw_mesh: QuadMesh
+var _material: ShaderMaterial
 
 
 func _ready() -> void:
@@ -26,7 +27,7 @@ func _ready() -> void:
 		craft = get_parent() as JetSki
 	_draw_mesh = _make_draw_mesh()
 	# Rooster tail: up and back from the nozzle.
-	_tail = _emitter("RoosterTail", Vector3(0.0, 0.25, 1.45), Vector3(0.0, 0.9, 0.45), 5.0, 5.0, 7.0, 0.6, 110, 0.3, 2.0, 0.95)
+	_tail = _emitter("RoosterTail", Vector3(0.0, 0.25, 1.45), Vector3(0.0, 0.75, 0.65), 5.0, 3.5, 5.0, 0.5, 90, 0.22, 1.8, 0.95)
 	# Bow spray: out and up from either side of the bow.
 	_bow_left = _emitter("BowLeft", Vector3(-0.5, 0.45, -0.85), Vector3(-0.8, 1.0, 0.2), 15.0, 2.0, 3.0, 0.35, 40, 0.3, 1.4, 0.95)
 	_bow_right = _emitter("BowRight", Vector3(0.5, 0.45, -0.85), Vector3(0.8, 1.0, 0.2), 15.0, 2.0, 3.0, 0.35, 40, 0.3, 1.4, 0.95)
@@ -34,7 +35,7 @@ func _ready() -> void:
 	_carve_left = _emitter("CarveLeft", Vector3(-0.6, 0.4, 0.1), Vector3(-0.9, 1.0, 0.3), 15.0, 3.0, 5.5, 0.55, 90, 0.45, 2.0, 0.85)
 	_carve_right = _emitter("CarveRight", Vector3(0.6, 0.4, 0.1), Vector3(0.9, 1.0, 0.3), 15.0, 3.0, 5.5, 0.55, 90, 0.45, 2.0, 0.85)
 	# Landing splash: a burst all round the hull.
-	_splash = _emitter("Splash", Vector3(0.0, 0.35, 0.0), Vector3(0.0, 1.0, 0.0), 55.0, 2.5, 6.0, 0.8, 140, 0.45, 2.0, 0.5)
+	_splash = _emitter("Splash", Vector3(0.0, 0.35, 0.0), Vector3(0.0, 1.0, 0.0), 55.0, 2.0, 4.5, 0.7, 90, 0.3, 1.8, 0.5)
 	_splash.one_shot = true
 	_splash.explosiveness = 0.9
 	_splash.emitting = false
@@ -118,9 +119,9 @@ func _emitter(node_name: String, at: Vector3, direction: Vector3, spread: float,
 	scale_texture.curve = scale_curve
 	material.scale_curve = scale_texture
 	var ramp := Gradient.new()
-	ramp.set_color(0, Color(1, 1, 1, 0.85))
+	ramp.set_color(0, Color(1, 1, 1, 0.7))
 	ramp.set_color(1, Color(1, 1, 1, 0.0))
-	ramp.add_point(0.6, Color(1, 1, 1, 0.6))
+	ramp.add_point(0.6, Color(1, 1, 1, 0.5))
 	var ramp_texture := GradientTexture1D.new()
 	ramp_texture.gradient = ramp
 	material.color_ramp = ramp_texture
@@ -130,12 +131,13 @@ func _emitter(node_name: String, at: Vector3, direction: Vector3, spread: float,
 	return particles
 
 
-## A soft round billboard, lit so the spray darkens at night.
+## A soft round billboard, lit so the spray darkens at night, fading out at the water and
+## near the camera ([code]spray.gdshader[/code]).
 func _make_draw_mesh() -> QuadMesh:
 	var gradient := Gradient.new()
 	gradient.set_color(0, Color(1, 1, 1, 1))
 	gradient.set_color(1, Color(1, 1, 1, 0))
-	gradient.add_point(0.45, Color(1, 1, 1, 0.75))
+	gradient.add_point(0.4, Color(1, 1, 1, 0.8))
 	var texture := GradientTexture2D.new()
 	texture.gradient = gradient
 	texture.fill = GradientTexture2D.FILL_RADIAL
@@ -143,25 +145,17 @@ func _make_draw_mesh() -> QuadMesh:
 	texture.fill_to = Vector2(1.0, 0.5)
 	texture.width = 64
 	texture.height = 64
-	var material := StandardMaterial3D.new()
-	material.albedo_texture = texture
-	material.albedo_color = Color(0.95, 0.98, 1.0)
-	material.vertex_color_use_as_albedo = true
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
-	# Keep each particle's own size; without this every particle draws a full meter across.
-	material.billboard_keep_scale = true
-	material.roughness = 1.0
-	material.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-	# Fade out close to the camera, so the chase camera never looks through a cloud.
-	material.distance_fade_mode = BaseMaterial3D.DISTANCE_FADE_PIXEL_ALPHA
-	material.distance_fade_min_distance = 3.0
-	material.distance_fade_max_distance = 6.0
-	# Spray glows with light from behind it, as thin water does.
-	material.backlight_enabled = true
-	material.backlight = Color(0.85, 0.9, 0.95)
+	_material = ShaderMaterial.new()
+	_material.shader = preload("res://effects/spray.gdshader")
+	_material.set_shader_parameter(&"puff", texture)
 	# Drawn over the water, which is in the transparent pass too.
-	material.render_priority = 2
+	_material.render_priority = 2
+	Ocean.add_follower(_material)
 	var quad := QuadMesh.new()
-	quad.material = material
+	quad.material = _material
 	return quad
+
+
+func _exit_tree() -> void:
+	if _material != null:
+		Ocean.remove_follower(_material)

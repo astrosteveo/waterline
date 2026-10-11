@@ -68,12 +68,27 @@
       "name": "Escape closes the panel"
     },
     {
-      "expect": "Settings.load_from_disk() == null and Settings.binding_text('stunt', false) == 'L' and abs(Settings.volumes['master'] - 0.7) < 0.001",
-      "name": "the settings were saved and load back"
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "Options",
+      "name": "closing the options puts the focus back on OPTIONS"
     },
     {
-      "step": 3,
-      "tap": "ui_up"
+      "eval": "Settings.rebind('steer_right', Settings._defaults['steer_left'][0])"
+    },
+    {
+      "expect": "[Settings.binding_text('steer_right', false), Settings.binding_text('steer_left', false)]",
+      "equals": [
+        "A",
+        "D"
+      ],
+      "name": "taking another action's key swaps the two"
+    },
+    {
+      "eval": "Settings.reset_controls()"
+    },
+    {
+      "expect": "Settings.load_from_disk() == null and Settings.binding_text('stunt', false) == 'L' and abs(Settings.volumes['master'] - 0.7) < 0.001",
+      "name": "the settings were saved and load back"
     },
     {
       "step": 3,

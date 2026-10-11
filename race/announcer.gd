@@ -67,7 +67,7 @@ func _ready() -> void:
 	if race == null:
 		return
 	race.countdown_changed.connect(_on_countdown)
-	race.started.connect(func() -> void: say("AND THEY'RE OFF!" if not Game.is_solo() else "GO!", PRIORITY_HIGH))
+	race.started.connect(func() -> void: say("AND THEY'RE OFF!" if race.racers.size() > 1 else "GO!", PRIORITY_HIGH))
 	race.racer_crashed.connect(_on_crashed)
 	race.racer_landed.connect(_on_landed)
 	race.racer_disqualified.connect(func(racer: RacerState) -> void:
@@ -198,9 +198,13 @@ func _connect_modes() -> void:
 				say("%d RINGS IN A ROW!" % chain, PRIORITY_NORMAL))
 		race.stunt_mode.ring_missed.connect(func(_ring: StuntRing) -> void: _chain_called = 0)
 	if race.time_trial != null:
-		race.time_trial.split.connect(func(_lap: int, _lap_time: float, difference: float) -> void:
-			if not is_nan(difference) and difference < 0.0:
-				say("NEW LAP RECORD!", PRIORITY_HIGH))
+		var best := [race.time_trial.record_lap]
+		race.time_trial.split.connect(func(_lap: int, lap_time: float, _difference: float) -> void:
+			# The lap itself against the best lap so far (the record, then this run's laps).
+			if lap_time < best[0]:
+				if best[0] < INF:
+					say("NEW LAP RECORD!", PRIORITY_HIGH)
+				best[0] = lap_time)
 
 
 func _on_crashed(racer: RacerState, _reason: StringName) -> void:

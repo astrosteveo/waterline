@@ -83,6 +83,24 @@
       "expect": "time_trial.ghost.get_child(0).ghost",
       "equals": true,
       "name": "drawn as a ghost"
+    },
+    {
+      "eval": "get_node('Announcer').set_meta('n', get_node('Announcer').history.size())"
+    },
+    {
+      "eval": "time_trial.split.emit(5, time_trial.record_lap + 3.0, -2.0)"
+    },
+    {
+      "expect": "get_node('Announcer').history.size() == get_node('Announcer').get_meta('n')",
+      "name": "a lap slower than the lap record isn't called a record, even when ahead of the record run"
+    },
+    {
+      "eval": "time_trial.split.emit(6, time_trial.record_lap - 0.5, 4.0)"
+    },
+    {
+      "expect": "get_node('Announcer').history.back()[1]",
+      "equals": "NEW LAP RECORD!",
+      "name": "a lap faster than the lap record is called, even when behind the record run"
     }
   ]
 }

@@ -600,6 +600,33 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
     the menu font in a static variable. `Game._exit_tree` releases it; about 25 objects are still
     reported after a gdh session that changed scenes (none when each menu runs alone).
 
+### Milestone 8 (polish)
+
+- **Scenario** added: `menu_options` (volume sliders and buses, rebinding by pressing a key,
+  swapping a taken key, focus back on OPTIONS, settings saved and loaded, the pause menu);
+  `mode_time_trial` now checks the lap-record call. All 25 pass.
+- **Measured:** engine pitch 0.56 at idle, 1.13 at half speed, 1.59 at full speed and up to 1.97
+  in the air; the hiss from −53 dB on the grid to −14.5 dB at full speed; a 30 s four-craft
+  recording peaks at −0.46 dBFS (the limiter); GPU 0.63–0.76 ms a frame median with four craft
+  on any course (RTX 5080, 1920×1080).
+- **Playtester agent** (on a snapshot): wake (every craft, on the waves, none in the air, gone
+  4 s after stopping), sound, options and pause (sliders exact to the dB, every binding kind,
+  Escape cancelling, saving and loading, pause stopping the clock and the engines in a real-time
+  run) and performance passed. It found, all fixed since:
+  - spray puffs falling into the water were cut flat along the waterline in rows, a landing
+    splash hid the craft, and the rooster tail hid the rider's legs. The spray now has its own
+    shader (`effects/spray.gdshader`) that reads the wave height under each particle from the
+    same Gerstner waves and fades the particle out over its last 0.35 m above the water, so
+    nothing reaches the surface to be cut; the tail and splash are smaller and lower;
+  - "NEW LAP RECORD!" followed the overall gap to the record run, not the lap time; it now
+    compares the lap with the best lap so far;
+  - closing OPTIONS put the focus on QUIT (so Enter quit the game); it now returns to OPTIONS;
+  - the fullscreen switch was a tiny icon (now a FULLSCREEN: ON/OFF button), taking another
+    action's binding left that action with none (the two now swap), race sounds cut each other
+    off (four players in turn), the splash and race sounds didn't pause, a lone rider heard
+    "AND THEY'RE OFF!", and the wake arms read as hard white stripes on dark water (softer
+    edges, lower strength).
+
 ## Stunts and landings
 
 The `stunt` action pressed in the air (after `stunt_min_air_time`, 0.08 s) starts a stunt; the

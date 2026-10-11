@@ -23,7 +23,8 @@ func _open_options() -> void:
 	get_node(^"UI/Root").add_child(panel)
 	panel.closed.connect(func() -> void:
 		list.visible = true
-		_buttons[5].grab_focus())
+		# Back on OPTIONS (the button after the four modes).
+		_buttons[4].grab_focus())
 
 
 func _build_ui() -> void:

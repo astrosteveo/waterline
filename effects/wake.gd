@@ -121,8 +121,8 @@ func _process(_delta: float) -> void:
 	# The churned trail: wide behind the stern, widening and fading quickly.
 	_ribbon(vertices, colors, uvs, indices, 0.0, 1.0, 0.9, trail_life, 1.0)
 	# The two arms of the V.
-	_ribbon(vertices, colors, uvs, indices, -1.0, 0.6, 0.45, arm_life, 0.85)
-	_ribbon(vertices, colors, uvs, indices, 1.0, 0.6, 0.45, arm_life, 0.85)
+	_ribbon(vertices, colors, uvs, indices, -1.0, 0.8, 0.55, arm_life, 0.7)
+	_ribbon(vertices, colors, uvs, indices, 1.0, 0.8, 0.55, arm_life, 0.7)
 	if indices.is_empty():
 		return
 	var arrays := []

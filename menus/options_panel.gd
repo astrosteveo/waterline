@@ -75,13 +75,12 @@ func _build() -> void:
 		if _first == null:
 			_first = slider
 	left.add_child(MenuStyle.label("DISPLAY", 32, MenuStyle.CYAN))
-	var fullscreen := CheckButton.new()
+	var fullscreen := MenuStyle.button("", 28, Vector2(380, 56))
 	fullscreen.name = "Fullscreen"
-	fullscreen.text = "FULLSCREEN"
-	fullscreen.button_pressed = Settings.fullscreen
-	fullscreen.add_theme_font_override(&"font", MenuStyle.font())
-	fullscreen.add_theme_font_size_override(&"font_size", 28)
-	fullscreen.toggled.connect(Settings.set_fullscreen)
+	fullscreen.text = "FULLSCREEN: %s" % ("ON" if Settings.fullscreen else "OFF")
+	fullscreen.pressed.connect(func() -> void:
+		Settings.set_fullscreen(not Settings.fullscreen)
+		fullscreen.text = "FULLSCREEN: %s" % ("ON" if Settings.fullscreen else "OFF"))
 	left.add_child(fullscreen)
 	var reset := MenuStyle.button("RESET CONTROLS", 28, Vector2(380, 56))
 	reset.name = "ResetControls"

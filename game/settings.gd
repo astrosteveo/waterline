@@ -46,14 +46,32 @@ func set_fullscreen(on: bool) -> void:
 
 
 ## Replaces [param action]'s keyboard binding (or its gamepad binding, when
-## [param event] is a gamepad event) with [param event], and takes it off any other
-## rebindable action that had it.
+## [param event] is a gamepad event) with [param event]. Another rebindable action that had
+## [param event] gets [param action]'s old binding in its place, so the two swap and no
+## action is left without one.
 func rebind(action: StringName, event: InputEvent) -> void:
 	var pad := _is_pad(event)
+	var old: InputEvent = null
+	for existing in InputMap.action_get_events(action):
+		if _is_pad(existing) == pad:
+			old = existing
+			break
+	if old != null and _same(old, event):
+		return
 	for other in REBINDABLE:
-		for existing in InputMap.action_get_events(other):
-			if _same(existing, event):
-				InputMap.action_erase_event(other, existing)
+		if other == action:
+			continue
+		var events := InputMap.action_get_events(other)
+		var changed := false
+		for i in events.size():
+			if _same(events[i], event):
+				events[i] = old
+				changed = true
+		if changed:
+			InputMap.action_erase_events(other)
+			for kept in events:
+				if kept != null:
+					InputMap.action_add_event(other, kept)
 	# Replace the first binding of the same kind where it stands, so it stays the one shown.
 	var events := InputMap.action_get_events(action)
 	var replaced := false

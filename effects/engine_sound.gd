@@ -62,7 +62,7 @@ func _process(delta: float) -> void:
 func _notification(what: int) -> void:
 	# Silence the engine while the game is paused, and pick up where it was after.
 	if what == NOTIFICATION_PAUSED or what == NOTIFICATION_UNPAUSED:
-		for player in [_engine, _hiss]:
+		for player in [_engine, _hiss, _splash]:
 			if player != null:
 				player.stream_paused = what == NOTIFICATION_PAUSED
 

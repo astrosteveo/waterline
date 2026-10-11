@@ -31,7 +31,8 @@ void fragment() {
 	float edge = 1.0 - abs(UV.x * 2.0 - 1.0);
 	float noise = texture(foam_noise, world_xz * noise_scale).r;
 	// Strong foam breaks up into patches as it fades.
-	float foam = smoothstep(0.0, 0.5, edge) * mix(smoothstep(0.3, 0.7, noise), 1.0, COLOR.a * 0.6);
+	// Edges fade over most of the ribbon's width, so the arms never show as hard stripes.
+	float foam = smoothstep(0.0, 0.9, edge) * mix(smoothstep(0.3, 0.7, noise), 1.0, COLOR.a * 0.4);
 	ALBEDO = foam_color;
 	ROUGHNESS = 1.0;
 	ALPHA = clamp(foam * COLOR.a, 0.0, 1.0);
