@@ -1,5 +1,5 @@
-// Bright daytime sky: a horizon-to-zenith gradient, a sun disc with a halo, and soft
-// cumulus clouds from a noise texture projected onto a dome.
+// Sky: a horizon-to-zenith gradient, a sun (or moon) disc with a halo, soft cumulus clouds
+// from a noise texture projected onto a dome, and stars for a night sky.
 shader_type sky;
 
 uniform vec3 zenith_color : source_color = vec3(0.10, 0.32, 0.78);
@@ -22,6 +22,16 @@ uniform float cloud_scale = 0.22;
 // Clouds are thicker near the horizon, as a band of fair-weather cumulus.
 uniform float horizon_cloud_boost : hint_range(0.0, 0.3) = 0.08;
 
+// Stars: 0 for a day sky. Each cell of a grid of directions holds a star or not.
+uniform float star_brightness = 0.0;
+uniform float star_density : hint_range(0.0, 0.1) = 0.02;
+
+float hash3(vec3 p) {
+	p = fract(p * 0.3183099 + 0.1);
+	p *= 17.0;
+	return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
 float cloud_field(vec2 uv) {
 	// Large, slow variation clusters the clouds and leaves stretches of clear sky.
 	float cluster = texture(cloud_noise, uv * 0.31 + vec2(0.71, 0.29)).r;
@@ -36,6 +46,19 @@ void sky() {
 	vec3 color = mix(horizon_color, zenith_color, pow(clamp(up, 0.0, 1.0), gradient_curve));
 	if (up < 0.0) {
 		color = mix(horizon_color, below_color, clamp(-up * 6.0, 0.0, 1.0));
+	}
+
+	if (star_brightness > 0.0 && up > 0.0) {
+		vec3 grid = dir * 220.0;
+		vec3 cell = floor(grid);
+		float h = hash3(cell);
+		if (h < star_density) {
+			vec3 centre = cell + 0.5 + (vec3(hash3(cell + 7.1), hash3(cell + 3.3), hash3(cell + 5.7)) - 0.5) * 0.6;
+			float d = length(grid - centre);
+			float size = 0.12 + 0.25 * hash3(cell + 1.9);
+			float star = smoothstep(size, 0.0, d) * (0.3 + 0.7 * hash3(cell + 9.4));
+			color += vec3(0.85, 0.9, 1.0) * star * star_brightness * smoothstep(0.0, 0.15, up);
+		}
 	}
 
 	// Clouds on a flattened dome: project the view direction onto a plane above.

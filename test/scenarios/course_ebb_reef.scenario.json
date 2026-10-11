@@ -1,0 +1,73 @@
+{
+  "description": "Ebb Reef: the tide goes out each lap: the water's rest level drops from 0 to -0.9 m on lap 2 and -1.8 m on lap 3, with a HUD call; a computer rider rides it cleanly at every level.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 5,
+    "args": [
+      "--no-opponents",
+      "--course",
+      "ebb_reef"
+    ]
+  },
+  "steps": [
+    "step 3",
+    {
+      "expect": "[course.course_name, course.gates.size(), racers.size()]",
+      "equals": [
+        "Ebb Reef",
+        9,
+        1
+      ]
+    },
+    {
+      "expect": "Ocean.level == 0.0 and course.lap_levels.size() == 3 and abs(course.lap_levels[2] + 1.8) < 0.001",
+      "name": "high tide on lap 1, three levels"
+    },
+    {
+      "eval": "autopilot(player, 1.0)"
+    },
+    {
+      "until": "player.laps_done >= 1",
+      "max": 4500,
+      "name": "the computer rides 1 lap"
+    },
+    {
+      "expect": "[player.buoys_missed, player.crashes]",
+      "equals": [
+        0,
+        0
+      ],
+      "name": "without missing a buoy or crashing"
+    },
+    {
+      "step": 600
+    },
+    {
+      "expect": "abs(Ocean.level + 0.9) < 0.01",
+      "name": "lap 2: the level has dropped to -0.9 m"
+    },
+    {
+      "until": "player.laps_done >= 2",
+      "max": 4500
+    },
+    {
+      "step": 800
+    },
+    {
+      "expect": "abs(Ocean.level + 1.8) < 0.01",
+      "name": "lap 3: -1.8 m"
+    },
+    {
+      "until": "player.laps_done >= 3",
+      "max": 4500
+    },
+    {
+      "expect": "[player.buoys_missed, player.crashes]",
+      "equals": [
+        0,
+        0
+      ],
+      "name": "three laps without a miss or a crash"
+    }
+  ]
+}

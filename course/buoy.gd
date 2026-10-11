@@ -36,6 +36,11 @@ const STRIPE_COLOR := Color(0.97, 0.97, 0.95)
 	set(value):
 		radius = value
 		_queue_build()
+## A light on top, in the buoy's colour, for night courses. 0 for none.
+@export_range(0.0, 16.0, 0.1) var lamp_energy: float = 0.0:
+	set(value):
+		lamp_energy = value
+		_queue_build()
 ## How much the buoy tilts with the wave slope: 0 stays upright, 1 stands along the normal.
 @export_range(0.0, 1.0, 0.01) var tilt_follow: float = 0.6
 ## How stiffly the mooring holds the buoy at its anchor, per second squared (and the
@@ -162,7 +167,20 @@ func _build() -> void:
 	ball.height = radius * 0.52
 	ball.radial_segments = 10
 	ball.rings = 5
-	_add_mesh(ball, Vector3(0.0, height, 0.0), stripe)
+	if lamp_energy > 0.0:
+		var glow := _material(color())
+		glow.emission_enabled = true
+		glow.emission = color()
+		glow.emission_energy_multiplier = 3.0
+		_add_mesh(ball, Vector3(0.0, height, 0.0), glow)
+		var light := OmniLight3D.new()
+		light.light_color = color().lerp(Color.WHITE, 0.3)
+		light.light_energy = lamp_energy
+		light.omni_range = 12.0
+		light.position = Vector3(0.0, height + 0.4, 0.0)
+		_add_part(light)
+	else:
+		_add_mesh(ball, Vector3(0.0, height, 0.0), stripe)
 	_add_mesh(_cylinder(radius * 0.92, radius * 0.92, 0.06), Vector3(0.0, -0.56, 0.0), dark)
 
 

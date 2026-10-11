@@ -28,6 +28,9 @@ signal racer_crashed(racer: RacerState, reason: StringName)
 signal racer_landed(racer: RacerState, quality: StringName, stunts: Array[StringName], points: int)
 ## Every racer has finished or been disqualified.
 signal all_finished
+## The leader started a lap on which the water's rest level differs: it now moves toward
+## [param level].
+signal tide_turned(level: float)
 ## In watch mode, the camera moved to another rider.
 signal watched_changed(racer: RacerState)
 ## The player finished or was disqualified; the race is over for them.
@@ -86,8 +89,13 @@ var watching: bool = false
 var watched: RacerState
 ## Laps in this race.
 var laps: int = 3
+## In stunt mode, the run's scoring; in a time trial, the records and ghost. Null otherwise.
+var stunt_mode: StuntMode
+var time_trial: TimeTrial
 
 var _ticks := 0
+# The lap whose water level the tide moves toward: the leader's.
+var _tide_lap := 0
 var _countdown_left := 0.0
 var _last_countdown_second := -1
 
@@ -95,8 +103,17 @@ var _last_countdown_second := -1
 func _ready() -> void:
 	# After the racers' input (priority 0), before the ride recorder (100).
 	process_physics_priority = 50
+	# Every race starts on the same waves, so a time-trial ghost rides the water it was
+	# recorded on, and a replay with the same seed repeats.
+	Ocean.reset_time(0.0)
 	if rules == null:
 		rules = RaceRules.new()
+	# The course chosen in the menus, or `-- --course ID`.
+	var info := Game.course
+	if Game.arg_value("--course") != "":
+		info = Game.course_named(Game.arg_value("--course"))
+	if info != null:
+		course_scene = load(info.scene) as PackedScene
 	if course_scene == null:
 		push_error("Race needs a course scene.")
 		return
@@ -107,6 +124,18 @@ func _ready() -> void:
 	add_child(course)
 	move_child(course, 0)
 	laps = laps_override if laps_override > 0 else course.laps
+	# `-- --laps N`: shorter races for tests.
+	if Game.arg_value("--laps").is_valid_int():
+		laps = maxi(int(Game.arg_value("--laps")), 1)
+	if Game.is_solo():
+		# Alone, from the middle of the grid.
+		grid_slots = 1
+		player_slot = 0
+	if Game.mode == Game.Mode.STUNT:
+		# One lap; buoys still count for the power meter but can't disqualify.
+		laps = 1
+		rules = rules.duplicate() as RaceRules
+		rules.misses_to_disqualify = 0
 	# The rider chosen on the rider select screen, or `-- --rider NAME`, races the others.
 	var chosen := Game.player_rider
 	if Game.arg_value("--rider") != "":
@@ -118,7 +147,7 @@ func _ready() -> void:
 	_spawn_player()
 	# `-- --no-opponents` races the player alone, for tests and practice.
 	var riders: Array[RiderProfile] = opponents
-	if "--no-opponents" in OS.get_cmdline_user_args():
+	if "--no-opponents" in OS.get_cmdline_user_args() or Game.is_solo():
 		riders = []
 	var slot := 0
 	for profile in riders:
@@ -139,6 +168,56 @@ func _ready() -> void:
 	_countdown_left = countdown_time
 	phase = Phase.COUNTDOWN
 	_update_places()
+	_setup_mode(info)
+
+
+## Adds what the mode needs on top of a race: the stunt run's rings and score, or the
+## time trial's records and ghost, and the screen that ends them.
+func _setup_mode(info: CourseInfo) -> void:
+	if not Game.is_solo():
+		return
+	var results := get_node_or_null(^"ResultsScreen") as ResultsScreen
+	if results != null:
+		results.active = false
+	var solo := SoloResults.new()
+	solo.name = "SoloResults"
+	add_child(solo)
+	var course_id := info.id if info != null else course_scene.resource_path.get_file().get_basename()
+	if Game.mode == Game.Mode.STUNT:
+		stunt_mode = StuntMode.new()
+		stunt_mode.name = "StuntMode"
+		add_child(stunt_mode)
+		stunt_mode.setup(self)
+		stunt_mode.run_over.connect(func(completed: bool) -> void:
+			var best := Game.records.best_stunt_score(course_id)
+			var rider := player_rider.display_name if player_rider != null else ""
+			var record := Game.records.submit_stunt_score(course_id, rider, stunt_mode.score)
+			solo.open("STUNT RESULTS", [
+				["RINGS", "%d / %d" % [stunt_mode.rings_taken, stunt_mode.rings.size()], MenuStyle.WHITE],
+				["RING POINTS", str(stunt_mode.ring_score), MenuStyle.WHITE],
+				["STUNT POINTS", str(stunt_mode.stunt_score), MenuStyle.WHITE],
+				["TIME BONUS", str(stunt_mode.finish_score) if completed else "TIME UP", MenuStyle.WHITE if completed else MenuStyle.RED],
+				["SCORE", str(stunt_mode.score), MenuStyle.YELLOW],
+				["BEST", "NEW RECORD!" if record else str(best), MenuStyle.CYAN if record else MenuStyle.WHITE],
+			]))
+	else:
+		time_trial = TimeTrial.new()
+		time_trial.name = "TimeTrial"
+		add_child(time_trial)
+		time_trial.setup(self, course_id)
+		time_trial.run_over.connect(func(records: Dictionary) -> void:
+			var rows := []
+			if player.disqualified:
+				rows.append(["RESULT", "DISQUALIFIED", MenuStyle.RED])
+			else:
+				for i in player.lap_times.size():
+					rows.append(["LAP %d" % (i + 1), Race.format_time(player.lap_times[i]), MenuStyle.WHITE])
+				rows.append(["TOTAL", Race.format_time(player.finish_time), MenuStyle.YELLOW])
+				var race_record := "NEW RECORD!" if records.get("race", false) else Race.format_time(time_trial.record_race)
+				var lap_record := "NEW RECORD!" if records.get("lap", false) else Race.format_time(time_trial.record_lap)
+				rows.append(["RECORD", race_record, MenuStyle.CYAN if records.get("race", false) else MenuStyle.WHITE])
+				rows.append(["BEST LAP RECORD", lap_record, MenuStyle.CYAN if records.get("lap", false) else MenuStyle.WHITE])
+			solo.open("TIME TRIAL", rows))
 
 
 func _spawn_player() -> void:
@@ -234,6 +313,8 @@ func _physics_process(delta: float) -> void:
 		return
 	_ticks += 1
 	race_time = _ticks * delta
+	if not course.lap_levels.is_empty():
+		Ocean.level = move_toward(Ocean.level, course.level_for_lap(_tide_lap), course.level_change_rate * delta)
 	for racer in racers:
 		_update_racer(racer, delta)
 	_update_places()
@@ -377,6 +458,10 @@ func _complete_lap(racer: RacerState, at_time: float) -> void:
 	racer.laps_done += 1
 	racer.lap_start_time = at_time
 	lap_completed.emit(racer, racer.laps_done, lap_time)
+	if racer.laps_done > _tide_lap and racer.laps_done < laps:
+		_tide_lap = racer.laps_done
+		if not is_equal_approx(course.level_for_lap(_tide_lap), course.level_for_lap(_tide_lap - 1)):
+			tide_turned.emit(course.level_for_lap(_tide_lap))
 	if racer.laps_done >= laps:
 		racer.finished = true
 		racer.finish_time = at_time
@@ -406,6 +491,18 @@ func _player_done() -> void:
 	driver.skill = 1.0
 	driver.cruise = true
 	finished.emit()
+
+
+## Ends the race for the player now (a stunt run out of time): the computer takes over the
+## craft and the results come up.
+func end_for_player() -> void:
+	if phase != Phase.FINISHED:
+		_player_done()
+
+
+## Adds [param levels] to [param racer]'s power meter, up to the top.
+func add_power(racer: RacerState, levels: int) -> void:
+	_set_power(racer, clampi(racer.power + levels, 0, rules.power_levels))
 
 
 ## A computer rider who is out of the race rides on at an easy pace.

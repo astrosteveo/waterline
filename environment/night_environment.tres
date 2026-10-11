@@ -1,0 +1,55 @@
+[gd_resource type="Environment" format=3]
+
+[ext_resource type="Shader" uid="uid://bhv0inh1tyjkq" path="res://environment/sky.gdshader" id="1"]
+
+[sub_resource type="FastNoiseLite" id="cloud_noise"]
+frequency = 0.006
+fractal_octaves = 6
+fractal_gain = 0.52
+
+[sub_resource type="NoiseTexture2D" id="cloud_texture"]
+width = 1024
+height = 1024
+noise = SubResource("cloud_noise")
+seamless = true
+
+[sub_resource type="ShaderMaterial" id="sky_material"]
+shader = ExtResource("1")
+shader_parameter/cloud_noise = SubResource("cloud_texture")
+shader_parameter/zenith_color = Color(0.008, 0.015, 0.05, 1)
+shader_parameter/horizon_color = Color(0.05, 0.08, 0.17, 1)
+shader_parameter/below_color = Color(0.02, 0.04, 0.08, 1)
+shader_parameter/gradient_curve = 0.35
+shader_parameter/sun_size_degrees = 2.4
+shader_parameter/sun_brightness = 14.0
+shader_parameter/halo_strength = 1.2
+shader_parameter/cloud_color = Color(0.2, 0.22, 0.3, 1)
+shader_parameter/cloud_shade_color = Color(0.06, 0.07, 0.11, 1)
+shader_parameter/cloud_coverage = 0.62
+shader_parameter/star_brightness = 2.5
+shader_parameter/star_density = 0.025
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_material")
+
+[resource]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 2
+ambient_light_color = Color(0.2, 0.25, 0.42, 1)
+ambient_light_energy = 1.9
+reflected_light_source = 2
+tonemap_mode = 2
+tonemap_white = 6.0
+glow_enabled = true
+glow_intensity = 0.6
+glow_bloom = 0.02
+glow_hdr_threshold = 0.9
+fog_enabled = true
+fog_light_color = Color(0.04, 0.06, 0.12, 1)
+fog_sun_scatter = 0.08
+fog_density = 0.0009
+fog_aerial_perspective = 0.4
+fog_sky_affect = 0.0
+adjustment_enabled = true
+adjustment_saturation = 1.05

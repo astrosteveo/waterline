@@ -51,6 +51,12 @@ extends Node3D
 		skin_color = value
 		_queue_build()
 
+## Draw see-through and without shadows, for a time-trial ghost.
+@export var ghost: bool = false:
+	set(value):
+		ghost = value
+		_queue_build()
+
 @export_group("Pose")
 ## How far the rider's body tips forward at full forward lean, and back at full back lean.
 @export_range(0.0, 60.0, 0.1, "degrees") var lean_forward_angle: float = 28.0
@@ -419,6 +425,8 @@ func _set_part(part: StringName, xform: Transform3D) -> void:
 func _add_part(part: StringName, node: MeshInstance3D, parent: Node = self) -> void:
 	node.name = String(part)
 	node.layers = ShoreMap.DYNAMIC_LAYER
+	if ghost:
+		node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	node.set_meta(&"model_part", true)
 	parent.add_child(node, false, Node.INTERNAL_MODE_FRONT)
 	_parts[part] = node
@@ -454,7 +462,22 @@ func _material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
 	material.roughness = 0.55
+	_make_ghostly(material)
 	return material
+
+
+## A ghost is see-through and glows faintly, so it reads as not really there.
+func _make_ghostly(material: StandardMaterial3D) -> void:
+	if not ghost:
+		return
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.albedo_color.a = 0.38
+	material.emission_enabled = true
+	material.emission = Color(0.55, 0.8, 1.0)
+	material.emission_energy_multiplier = 0.35
+	# Drawn after the water: both are see-through, and the water's mesh follows the camera,
+	# so by distance it would sort nearer and draw over the ghost.
+	material.render_priority = 1
 
 
 ## Builds the hull from its cross-sections, flat shaded, coloured by band.
@@ -506,6 +529,7 @@ func _build_hull_mesh() -> ArrayMesh:
 	var material := StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
 	material.roughness = 0.6
+	_make_ghostly(material)
 	mesh.surface_set_material(0, material)
 	return mesh
 

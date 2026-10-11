@@ -67,6 +67,13 @@ signal layout_changed
 ## The floats alternate between these colours.
 @export var float_colors: PackedColorArray = PackedColorArray([Color(1.0, 0.42, 0.08), Color(0.96, 0.96, 0.94)])
 
+@export_group("Tide")
+## The water's rest level on each lap, from the first, in meters. Empty: it stays at 0. The
+## race moves the level toward the next lap's when the leader starts that lap.
+@export var lap_levels: PackedFloat32Array = PackedFloat32Array()
+## How fast the level moves, in meters per second.
+@export_range(0.01, 2.0, 0.01, "suffix:m/s") var level_change_rate: float = 0.15
+
 @export_group("Preview")
 ## Draw the centre line, walls and gates in the editor.
 @export var preview_in_editor: bool = true:
@@ -101,6 +108,7 @@ func _ready() -> void:
 	rebuild()
 	if Engine.is_editor_hint():
 		return
+	Ocean.level = level_for_lap(0)
 	if build_walls:
 		_build_wall_bodies()
 	if wall_floats:
@@ -110,6 +118,13 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if _float_material != null and not Engine.is_editor_hint():
 		Ocean.remove_follower(_float_material)
+
+
+## The water's rest level on lap [param lap] (0 for the first).
+func level_for_lap(lap: int) -> float:
+	if lap_levels.is_empty():
+		return 0.0
+	return lap_levels[clampi(lap, 0, lap_levels.size() - 1)]
 
 
 ## Rebuilds the centre line, wall lines and gates from the current data.

@@ -1,0 +1,231 @@
+{
+  "description": "Championship: from the main menu, four one-lap races on the four courses in turn, points for each place (10, 6, 3, 1), standings after each race, the champion at the end, then back to the main menu.",
+  "start": {
+    "scene": "res://menus/main_menu.tscn",
+    "seed": 4,
+    "args": [
+      "--laps",
+      "1"
+    ]
+  },
+  "steps": [
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60
+    },
+    {
+      "expect": "Game.mode",
+      "equals": 1
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 120
+    },
+    "step 3",
+    {
+      "expect": "scene.course.course_name",
+      "equals": "Gull Cove",
+      "name": "race 1 is on Gull Cove"
+    },
+    {
+      "eval": "scene.autopilot(scene.player, 1.0)"
+    },
+    {
+      "until": "scene.get_node('ResultsScreen').is_open()",
+      "max": 9000,
+      "name": "race 1 ends with the results"
+    },
+    "step 5",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "Continue",
+      "name": "the results offer CONTINUE"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Standings'",
+      "max": 60,
+      "name": "then the standings"
+    },
+    "step 5",
+    {
+      "expect": "Game.championship.race_index",
+      "equals": 1
+    },
+    {
+      "expect": "Game.championship.points['Marina'] + Game.championship.points['Koa'] + Game.championship.points['Ines'] + Game.championship.points['Dax']",
+      "equals": 20,
+      "name": "20 points handed out per race"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 120
+    },
+    "step 3",
+    {
+      "expect": "scene.course.course_name",
+      "equals": "Whitecap Point",
+      "name": "race 2 is on Whitecap Point"
+    },
+    {
+      "eval": "scene.autopilot(scene.player, 1.0)"
+    },
+    {
+      "until": "scene.get_node('ResultsScreen').is_open()",
+      "max": 9000,
+      "name": "race 2 ends with the results"
+    },
+    "step 5",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "Continue",
+      "name": "the results offer CONTINUE"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Standings'",
+      "max": 60,
+      "name": "then the standings"
+    },
+    "step 5",
+    {
+      "expect": "Game.championship.race_index",
+      "equals": 2
+    },
+    {
+      "expect": "Game.championship.points['Marina'] + Game.championship.points['Koa'] + Game.championship.points['Ines'] + Game.championship.points['Dax']",
+      "equals": 40,
+      "name": "20 points handed out per race"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 120
+    },
+    "step 3",
+    {
+      "expect": "scene.course.course_name",
+      "equals": "Lantern Harbor",
+      "name": "race 3 is on Lantern Harbor"
+    },
+    {
+      "eval": "scene.autopilot(scene.player, 1.0)"
+    },
+    {
+      "until": "scene.get_node('ResultsScreen').is_open()",
+      "max": 9000,
+      "name": "race 3 ends with the results"
+    },
+    "step 5",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "Continue",
+      "name": "the results offer CONTINUE"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Standings'",
+      "max": 60,
+      "name": "then the standings"
+    },
+    "step 5",
+    {
+      "expect": "Game.championship.race_index",
+      "equals": 3
+    },
+    {
+      "expect": "Game.championship.points['Marina'] + Game.championship.points['Koa'] + Game.championship.points['Ines'] + Game.championship.points['Dax']",
+      "equals": 60,
+      "name": "20 points handed out per race"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 120
+    },
+    "step 3",
+    {
+      "expect": "scene.course.course_name",
+      "equals": "Ebb Reef",
+      "name": "race 4 is on Ebb Reef"
+    },
+    {
+      "eval": "scene.autopilot(scene.player, 1.0)"
+    },
+    {
+      "until": "scene.get_node('ResultsScreen').is_open()",
+      "max": 9000,
+      "name": "race 4 ends with the results"
+    },
+    "step 5",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "Continue",
+      "name": "the results offer CONTINUE"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Standings'",
+      "max": 60,
+      "name": "then the standings"
+    },
+    "step 5",
+    {
+      "expect": "Game.championship.race_index",
+      "equals": 4
+    },
+    {
+      "expect": "Game.championship.points['Marina'] + Game.championship.points['Koa'] + Game.championship.points['Ines'] + Game.championship.points['Dax']",
+      "equals": 80,
+      "name": "20 points handed out per race"
+    },
+    {
+      "expect": "scene.find_child('Title', true, false).text.begins_with('CHAMPION: ')",
+      "name": "after the last race: the champion"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'MainMenu'",
+      "max": 60,
+      "name": "back to the main menu"
+    },
+    {
+      "expect": "Game.championship == null"
+    }
+  ]
+}

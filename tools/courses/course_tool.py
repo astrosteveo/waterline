@@ -152,6 +152,21 @@ def draw_map(course, path, scale=3.0):
     for x, z, r, hs in rocks:
         c = P((x, z))
         d.ellipse([c[0] - r * scale, c[1] - r * scale, c[0] + r * scale, c[1] + r * scale], fill=(130, 120, 110))
+    for prop in spec.get("props", []):
+        x, z = prop.get("at", (0, 0))
+        if prop["type"] == "pier":
+            yaw = math.radians(prop.get("yaw", 0))
+            fwd = np.array([-math.sin(yaw), -math.cos(yaw)])
+            side = np.array([fwd[1], -fwd[0]]) * prop.get("width", 4) / 2
+            a0 = np.array([x, z])
+            a1 = a0 + fwd * prop.get("length", 30)
+            d.polygon([P(a0 - side), P(a1 - side), P(a1 + side), P(a0 + side)], fill=(150, 100, 60))
+        elif prop["type"] == "building":
+            c = P((x, z))
+            d.rectangle([c[0] - 8, c[1] - 8, c[0] + 8, c[1] + 8], fill=(200, 190, 170))
+        elif prop["type"] == "lamp":
+            c = P((x, z))
+            d.ellipse([c[0] - 3, c[1] - 3, c[0] + 3, c[1] + 3], fill=(255, 230, 120))
     for w in walls:
         d.line([P(p) for p in w] + [P(w[0])], fill=(255, 255, 255), width=2)
     d.line([P(p) for p in course.pts] + [P(course.pts[0])], fill=(110, 160, 220), width=1)
@@ -187,6 +202,43 @@ def draw_map(course, path, scale=3.0):
     return bad
 
 
+def draw_thumb(course, path, size=420):
+    """A small map for the menus: the corridor, the start line, buoys and ramps, on a clear background."""
+    spec = course.spec
+    walls = course.walls()
+    allp = np.vstack([np.array(w) for w in walls])
+    lo = allp.min(0) - 12
+    hi = allp.max(0) + 12
+    scale = (size - 8) / max(hi - lo)
+    off = (np.array([size, size]) - (hi - lo) * scale) / 2
+    ss = 3  # supersample, then shrink for smooth lines
+    img = Image.new("RGBA", (size * ss, size * ss), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    P = lambda p: tuple(((np.array(p[:2]) - lo) * scale + off) * ss)
+    area = lambda w: abs(sum(w[i][0] * w[i - 1][1] - w[i - 1][0] * w[i][1] for i in range(len(w)))) / 2
+    outer, inner = sorted(walls, key=area, reverse=True)
+    d.polygon([P(p) for p in outer], fill=(20, 60, 130, 235))
+    d.polygon([P(p) for p in inner], fill=(0, 0, 0, 0))
+    d.line([P(p) for p in outer] + [P(outer[0])], fill=(255, 255, 255, 255), width=3 * ss)
+    d.line([P(p) for p in inner] + [P(inner[0])], fill=(255, 255, 255, 255), width=3 * ss)
+    a, _ = course.at(0, -course.ws[0])
+    b, _ = course.at(0, course.ws[0])
+    d.line([P(a), P(b)], fill=(255, 220, 30, 255), width=5 * ss)
+    for kind, s, lat in spec["buoys"]:
+        p, _ = course.at(s, lat)
+        c = P(p)
+        col = (235, 50, 40, 255) if kind == "red" else (255, 215, 30, 255)
+        r = 4 * ss
+        d.ellipse([c[0] - r, c[1] - r, c[0] + r, c[1] + r], fill=col)
+    for s, lat in spec.get("ramps", []):
+        p, t = course.at(s, lat)
+        c = P(p)
+        r = 5 * ss
+        d.rectangle([c[0] - r, c[1] - r, c[0] + r, c[1] + r], fill=(250, 130, 30, 255))
+    img = img.resize((size, size), Image.LANCZOS)
+    img.save(path)
+
+
 def transform(pos, fwd, y=0.0):
     fx, fz = fwd
     # Basis columns: x = right of travel (-fz, 0, fx), y = up, z = backward (-fx, 0, -fz).
@@ -212,7 +264,12 @@ def write_scene(course, path):
         ('PackedScene', 'res://course/buoy.tscn', 'buoy'),
         ('PackedScene', 'res://course/ramp.tscn', 'ramp'),
         ('PackedScene', 'res://course/start_gate.tscn', 'gate'),
+        ('Script', 'res://environment/pier.gd', 'pier'),
+        ('Script', 'res://environment/lamp_post.gd', 'lamp'),
+        ('Script', 'res://environment/harbor_building.gd', 'building'),
     ]:
+        if i in ("pier", "lamp", "building") and not any(prop["type"] == i for prop in spec.get("props", [])):
+            continue
         out.append('[ext_resource type="%s" path="%s" id="%s"]' % (t, p, i))
     out.append('')
     cps = spec["control_points"]
@@ -221,6 +278,8 @@ def write_scene(course, path):
             'course_name = "%s"' % spec["name"],
             'laps = %d' % spec.get("laps", 3),
             'grid_distance = %g' % spec.get("grid_distance", 12),
+            ] + (['lap_levels = PackedFloat32Array(%s)' % ", ".join("%g" % v for v in spec["lap_levels"])]
+                 if spec.get("lap_levels") else []) + [
             'control_points = PackedVector3Array(%s)' % ", ".join("%g, 0, %g" % (c[0], c[1]) for c in cps),
             'half_widths = PackedFloat32Array(%s)' % ", ".join("%g" % c[2] for c in cps), '']
     sun = spec.get("sun", {"rotation": [-50, 205, 0], "color": [1, 0.96, 0.88], "energy": 1.25})
@@ -231,7 +290,15 @@ def write_scene(course, path):
             'light_energy = %g' % sun["energy"],
             'shadow_enabled = true', 'directional_shadow_max_distance = 220.0', 'script = ExtResource("sun")', '',
             '[node name="OceanSurface" type="MeshInstance3D" parent="."]', 'script = ExtResource("ocean")',
-            'wave_set = ExtResource("waves")', 'water_material = ExtResource("water_mat")', '',
+            'wave_set = ExtResource("waves")', 'water_material = ExtResource("water_mat")']
+    if spec.get("water"):
+        items = []
+        for key, value in spec["water"].items():
+            if isinstance(value, list):
+                value = "Color(%g, %g, %g, 1)" % tuple(value[:3])
+            items.append('"%s": %s' % (key, value))
+        out.append('shader_overrides = {%s}' % ", ".join(items))
+    out += ['',
             '[node name="ShoreMap" type="Node3D" parent="."]', 'script = ExtResource("shore")', '']
     ter = spec["terrain"]
     out += ['[node name="Terrain" type="MeshInstance3D" parent="."]', 'script = ExtResource("terrain")',
@@ -250,11 +317,17 @@ def write_scene(course, path):
                 'transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, %.3f, 0, %.3f)' % (p[0], p[1])]
         if kind == "yellow":
             out.append('kind = 1')
+        if spec.get("lit_buoys"):
+            out.append('lamp_energy = %g' % spec.get("buoy_lamp_energy", 2.5))
         out.append('')
     out += ['[node name="Ramps" type="Node3D" parent="."]', '']
     for k, (s, lat) in enumerate(spec.get("ramps", [])):
         p, t = course.at(s, lat)
-        out += ['[node name="Ramp%d" parent="Ramps" instance=ExtResource("ramp")]' % (k + 1), 'transform = ' + transform(p, t), '']
+        out += ['[node name="Ramp%d" parent="Ramps" instance=ExtResource("ramp")]' % (k + 1), 'transform = ' + transform(p, t)]
+        if "ramp_bottom" in spec:
+            # Deeper foot, same 17.6 degree slope (the default ramp rises 3.8 m over 12 m).
+            out += ['bottom = %g' % spec["ramp_bottom"], 'length = %.2f' % (12.0 * (1.8 - spec["ramp_bottom"]) / 3.8)]
+        out.append('')
     out += ['[node name="Rocks" type="Node3D" parent="."]', '']
     rocks = []
     for s, lat, r, hs in spec.get("course_rocks", []):
@@ -267,8 +340,41 @@ def write_scene(course, path):
                 'transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, %.2f, -1.5, %.2f)' % (x, z),
                 'script = ExtResource("rock")', 'radius = %g' % r, 'height_scale = %g' % hs,
                 'rock_seed = %d' % seeds[(k + 1) % len(seeds)], '']
+    out += write_props(spec, course)
     with open(path, "w") as f:
         f.write("\n".join(out))
+
+
+def write_props(spec, course):
+    """Piers, lamps and buildings: {"type", "at": [x, z] or "offset": [s, lateral], "yaw" (degrees), ...}."""
+    if not spec.get("props"):
+        return []
+    out = ['[node name="Props" type="Node3D" parent="."]', '']
+    for k, prop in enumerate(spec.get("props", [])):
+        if "offset" in prop:
+            p, _ = course.at(*prop["offset"])
+            x, z = p
+        else:
+            x, z = prop["at"]
+        yaw = math.radians(prop.get("yaw", 0))
+        c, s = math.cos(yaw), math.sin(yaw)
+        y = prop.get("y", 0)
+        xf = "Transform3D(%.5f, 0, %.5f, 0, 1, 0, %.5f, 0, %.5f, %.3f, %.3f, %.3f)" % (c, s, -s, c, x, y, z)
+        kind = prop["type"]
+        out += ['[node name="%s%d" type="%s" parent="Props"]' % (kind.capitalize(), k + 1,
+                {"pier": "StaticBody3D", "lamp": "Node3D", "building": "Node3D"}[kind]),
+                'transform = ' + xf, 'script = ExtResource("%s")' % kind]
+        for key, value in prop.items():
+            if key in ("type", "at", "offset", "yaw", "y"):
+                continue
+            if isinstance(value, list) and len(value) == 3 and key == "size":
+                out.append('%s = Vector3(%g, %g, %g)' % (key, *value))
+            elif isinstance(value, list):
+                out.append('%s = Color(%g, %g, %g, 1)' % (key, *value[:3]))
+            else:
+                out.append('%s = %s' % (key, value))
+        out.append('')
+    return out
 
 
 def main():
@@ -276,6 +382,7 @@ def main():
     ap.add_argument("spec")
     ap.add_argument("--map", help="write a top-down map PNG here")
     ap.add_argument("--scene", action="store_true", help="write the course scene named in the spec")
+    ap.add_argument("--thumb", action="store_true", help="write the menu map next to the course scene (<scene>_map.png)")
     ap.add_argument("--project", default=os.path.join(os.path.dirname(__file__), "..", ".."))
     args = ap.parse_args()
     spec = json.load(open(args.spec))
@@ -284,6 +391,10 @@ def main():
     if args.map:
         bad = draw_map(course, args.map)
         print("map: %s; wall points over shallow water: %d" % (args.map, bad))
+    if args.thumb:
+        path = os.path.join(args.project, spec["scene"].replace(".tscn", "_map.png"))
+        draw_thumb(course, path)
+        print("thumb:", os.path.normpath(path))
     if args.scene:
         path = os.path.join(args.project, spec["scene"])
         write_scene(course, path)
