@@ -1,0 +1,150 @@
+{
+  "description": "Options and pause: the options panel opens from the main menu; a volume slider sets its bus; a control is rebound by pressing the new key and the old one stops working; closing saves to user://settings.cfg; in a race the pause action opens the pause menu and RESUME closes it and the race goes on.",
+  "start": {
+    "scene": "res://menus/main_menu.tscn",
+    "seed": 1,
+    "user_data": "fresh"
+  },
+  "steps": [
+    "step 5",
+    {
+      "step": 2,
+      "click_text": "OPTIONS"
+    },
+    "step 5",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "VolumeMaster",
+      "name": "the master volume has the focus"
+    },
+    {
+      "step": 3,
+      "tap": "ui_left"
+    },
+    {
+      "step": 3,
+      "tap": "ui_left"
+    },
+    "step 3",
+    {
+      "expect": "Settings.volumes['master']",
+      "equals": 0.7,
+      "name": "two presses left: 70%"
+    },
+    {
+      "expect": "abs(AudioServer.get_bus_volume_db(0) - linear_to_db(0.7)) < 0.01",
+      "name": "the master bus follows"
+    },
+    {
+      "eval": "scene.find_child('Key_stunt', true, false).emit_signal('pressed')"
+    },
+    "step 2",
+    {
+      "step": 2,
+      "tap": "key:L"
+    },
+    "step 3",
+    {
+      "expect": "Settings.binding_text('stunt', false)",
+      "equals": "L",
+      "name": "stunt rebound to L"
+    },
+    {
+      "expect": "Settings.binding_text('stunt', true)",
+      "equals": "B",
+      "name": "the gamepad binding is untouched"
+    },
+    {
+      "expect": "InputMap.action_get_events('stunt').size() >= 2",
+      "name": "the gamepad bindings stay"
+    },
+    {
+      "step": 3,
+      "tap": "ui_cancel"
+    },
+    "step 3",
+    {
+      "expect": "scene.get_node_or_null('UI/Root/Options') == null",
+      "name": "Escape closes the panel"
+    },
+    {
+      "expect": "Settings.load_from_disk() == null and Settings.binding_text('stunt', false) == 'L' and abs(Settings.volumes['master'] - 0.7) < 0.001",
+      "name": "the settings were saved and load back"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60
+    },
+    "step 3",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 60
+    },
+    {
+      "until": "scene.phase == 1",
+      "max": 400
+    },
+    {
+      "step": 30,
+      "hold": "throttle"
+    },
+    {
+      "step": 2,
+      "tap": "pause"
+    },
+    "step 2",
+    {
+      "expect": "scene.get_node('PauseMenu').is_open()",
+      "equals": true,
+      "name": "the pause action opens the pause menu (gdh holds the game with the same tree pause, so the stop itself can't be seen here)"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    "step 3",
+    {
+      "expect": "scene.get_node('PauseMenu').is_open()",
+      "equals": false,
+      "name": "RESUME closes the menu"
+    },
+    {
+      "eval": "scene.set_meta('t', scene.race_time)"
+    },
+    {
+      "step": 30,
+      "hold": "throttle"
+    },
+    {
+      "expect": "scene.race_time > scene.get_meta('t')"
+    }
+  ]
+}

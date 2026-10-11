@@ -59,6 +59,14 @@ func _process(delta: float) -> void:
 	_hiss.pitch_scale = 0.8 + 0.4 * pace
 
 
+func _notification(what: int) -> void:
+	# Silence the engine while the game is paused, and pick up where it was after.
+	if what == NOTIFICATION_PAUSED or what == NOTIFICATION_UNPAUSED:
+		for player in [_engine, _hiss]:
+			if player != null:
+				player.stream_paused = what == NOTIFICATION_PAUSED
+
+
 func _splash_now(size: float) -> void:
 	_splash.volume_db = linear_to_db(clampf(size, 0.05, 1.0))
 	_splash.pitch_scale = randf_range(0.9, 1.1)

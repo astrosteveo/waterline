@@ -15,11 +15,23 @@ func _ready() -> void:
 	_buttons[[1, 0, 2, 3][Game.mode] if Game.mode_chosen else 0].grab_focus()
 
 
+func _open_options() -> void:
+	var list := get_node(^"UI/Root/Modes") as Control
+	list.visible = false
+	var panel := OptionsPanel.new()
+	panel.name = "Options"
+	get_node(^"UI/Root").add_child(panel)
+	panel.closed.connect(func() -> void:
+		list.visible = true
+		_buttons[5].grab_focus())
+
+
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "UI"
 	add_child(layer)
 	var root := Control.new()
+	root.name = "Root"
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root)
@@ -41,6 +53,7 @@ func _build_ui() -> void:
 		["QUICK RACE", func() -> void: Game.start_mode(Game.Mode.QUICK_RACE)],
 		["TIME TRIAL", func() -> void: Game.start_mode(Game.Mode.TIME_TRIAL)],
 		["STUNT MODE", func() -> void: Game.start_mode(Game.Mode.STUNT)],
+		["OPTIONS", _open_options],
 		["QUIT", func() -> void: get_tree().quit()],
 	]
 	for entry: Array in entries:
