@@ -28,6 +28,9 @@ uniform vec3 deep_color : source_color = vec3(0.0, 0.11, 0.30);
 uniform vec3 shallow_color : source_color = vec3(0.06, 0.55, 0.55);
 // Depth in meters over which the colour goes from shallow to deep.
 uniform float depth_color_range = 7.0;
+// How much the light reaching underwater objects is dimmed by the water above them, as a
+// share of the absorption along the view.
+uniform float light_down_scale = 1.6;
 // How quickly light is absorbed per meter of water, for red, green and blue.
 uniform vec3 absorption = vec3(0.5, 0.16, 0.11);
 // Light passing through thin crests toward the camera.
@@ -140,10 +143,11 @@ void fragment() {
 		path_length = 200.0;
 	}
 	vec3 transmittance = exp(-absorption * path_length);
+	// Light reaching what is below has crossed the water on its way down too, so things
+	// deeper down are darker: without this the underwater part of a rock or a post drew as a
+	// bright turquoise column.
+	vec3 light_down = exp(-absorption * vertical_depth * light_down_scale);
 
-	// The water's own colour shades from shallow to deep with its depth.
-	float depth_mix = 1.0 - exp(-vertical_depth / depth_color_range);
-	vec3 water_color = mix(shallow_color, deep_color, depth_mix);
 	vec3 refracted = textureLod(screen_texture, refract_uv, 0.0).rgb;
 
 	// Thin crests glow when the sun is behind them.
@@ -159,6 +163,9 @@ void fragment() {
 	float squeeze = 1.0 - min(fold, vertex_fold);
 	float crest_foam = smoothstep(crest_foam_start, crest_foam_full, squeeze);
 	float shore_foam = (1.0 - smoothstep(0.0, shore_foam_depth, vertical_depth)) * 0.8;
+	// 1 where what lies below is the top of the static scenery (sand, a reef, a rock's top),
+	// 0 on the side of a rock or a post or under a floating hull.
+	float on_scenery = 1.0;
 	if (shore_map_rect.z > 0.0 && floor_depth > 0.0) {
 		vec2 shore_uv = (floor_world.xz - shore_map_rect.xy) / shore_map_rect.zw;
 		if (all(greaterThanEqual(shore_uv, vec2(0.0))) && all(lessThan(shore_uv, vec2(1.0)))) {
@@ -175,15 +182,24 @@ void fragment() {
 				}
 			}
 			shore_foam *= step(floor_world.y, scenery_height + shore_tolerance);
+			float below_top = scenery_height - floor_world.y;
+			on_scenery = (1.0 - smoothstep(1.5, 3.0, below_top)) * (1.0 - smoothstep(shore_tolerance, shore_tolerance + 0.5, -below_top));
 		}
 	}
 	float coverage = max(crest_foam, shore_foam);
+
+	// The water's own colour shades from shallow to deep with the depth of the bottom. Only the
+	// top of the scenery counts as a shallow bottom: through the side of a rock, a post or a
+	// hull the water looks as deep as the sea around it, not like turquoise shallows.
+	float depth_mix = 1.0 - exp(-vertical_depth / depth_color_range);
+	depth_mix = mix(max(depth_mix, 0.9), depth_mix, on_scenery);
+	vec3 water_color = mix(shallow_color, deep_color, depth_mix);
 	float foam = smoothstep(1.0 - coverage, 1.22 - coverage, foam_noise) * step(0.001, coverage);
 
 	// In-scattered light is lit like a diffuse surface; what shows through from below is
 	// already lit, so it goes in as emission. Godot adds the reflection on top.
 	ALBEDO = mix(water_color * (vec3(1.0) - transmittance), foam_color, foam);
-	EMISSION = (refracted * transmittance * (1.0 - fresnel) + crest_glow) * (1.0 - foam);
+	EMISSION = (refracted * transmittance * light_down * (1.0 - fresnel) + crest_glow) * (1.0 - foam);
 	// Detail too fine to draw becomes roughness (GGX alpha is roughness squared, and adds
 	// twice the slope variance). The ripple maps count as a slope of about ripple_strength.
 	float lost_variance = gerstner_lost_slope_variance(pixel_size * 0.5)

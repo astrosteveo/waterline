@@ -66,6 +66,7 @@ func _exit_tree() -> void:
 	# Static variables outlive the scene tree; drop what they hold so nothing is reported as
 	# leaked when the game quits.
 	MenuStyle.release()
+	SoundBank.release()
 
 
 ## The rider called [param display_name] (any case), or null.

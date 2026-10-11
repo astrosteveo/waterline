@@ -16,6 +16,9 @@
 [ext_resource type="Resource" path="res://riders/ines.tres" id="14"]
 [ext_resource type="Resource" path="res://riders/dax.tres" id="15"]
 [ext_resource type="Script" path="res://riders/rider_profile.gd" id="16"]
+[ext_resource type="Script" path="res://race/race_sounds.gd" id="17"]
+[ext_resource type="Script" path="res://race/announcer.gd" id="18"]
+[ext_resource type="Script" path="res://race/pause_menu.gd" id="19"]
 
 [node name="Race" type="Node3D" node_paths=PackedStringArray("chase_camera", "debug_hud", "ride_recorder", "camera_switcher")]
 script = ExtResource("1")
@@ -66,4 +69,16 @@ chase_camera = NodePath("../ChaseCamera")
 
 [node name="ResultsScreen" type="CanvasLayer" parent="." node_paths=PackedStringArray("race")]
 script = ExtResource("11")
+race = NodePath("..")
+
+[node name="RaceSounds" type="Node" parent="." node_paths=PackedStringArray("race")]
+script = ExtResource("17")
+race = NodePath("..")
+
+[node name="Announcer" type="CanvasLayer" parent="." node_paths=PackedStringArray("race")]
+script = ExtResource("18")
+race = NodePath("..")
+
+[node name="PauseMenu" type="CanvasLayer" parent="." node_paths=PackedStringArray("race")]
+script = ExtResource("19")
 race = NodePath("..")
