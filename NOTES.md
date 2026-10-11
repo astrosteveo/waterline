@@ -14,7 +14,7 @@ A jet ski racer in Godot 4.7 (Forward+, typed GDScript, Jolt physics), a spiritu
 | 5. Opponents | Done (session 2) |
 | 6. Stunts and riders | Done (session 3) |
 | 7. Game modes and courses | Done (session 3) |
-| 8. Polish | Not started |
+| 8. Polish | Done (session 3) |
 
 Run the game: `godot --path /home/astrosteveo/Projects/waterline` (or open the project in the
 editor and press F5). The game opens on the main menu (`res://menus/main_menu.tscn`):
@@ -51,11 +51,15 @@ debug/          WaterProbe, DebugHud (F3 readout), RideRecorder (ride statistics
 course/         Course (centre line, walls, gates, progress, tide), CourseGate, CourseProgress,
                 CourseInfo, Buoy (with an optional lamp), Ramp, StartGate, StuntRing (all
                 code-built and swappable), wall_float.gdshader
-game/           Game autoload (riders, courses, modes, scene flow), Championship, Records
+game/           Game autoload (riders, courses, modes, scene flow), Championship, Records,
+                Settings autoload (volumes, fullscreen, controls)
+effects/        Wake (+ wake.gdshader), Spray, EngineSound (all on jetski.tscn)
+audio/          SoundBank (every sound, generated in code)
 menus/          MainMenu (main_menu.tscn, the main scene), RiderSelect, CourseSelect, Standings,
+                OptionsPanel,
                 MenuBackdrop (a course behind a menu), MenuStyle (shared look), StatBar
 race/           Race (race.tscn), StuntMode, TimeTrial, GhostRecorder, GhostRider, SoloResults,
-                RacerState, RaceRules (rules/default_rules.tres),
+                RaceSounds, Announcer, PauseMenu, RacerState, RaceRules (rules/default_rules.tres),
                 RaceHud, PowerMeter (HUD widget), GateMarker, ResultsScreen, RacingLine, AIDriver
 riders/         RiderProfile (colours, craft stats, computer skill) and the four riders (.tres)
 levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.png = menu map),
@@ -752,6 +756,56 @@ entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_le
 `--thumb`, which draws the menu map (`levels/<id>_map.png`). Edit the JSON and rerun
 `--scene --thumb`, never the scene.
 
+## Polish (milestone 8)
+
+- **Wake** (`effects/wake.gd`, `wake.gdshader`): every 0.7 m on the water at over 2 m/s the craft
+  drops a point at its stern, stored as the *rest* position of the surface under it
+  (`WaveSet.find_rest_position`, once per point). The shader includes `gerstner.gdshaderinc` and
+  is an `Ocean` follower, so every vertex rides the same waves the water draws, on the GPU, with
+  no height queries per frame. Three ribbons are rebuilt each frame from the points' ages: a
+  churned trail behind the stern (1 m wide, growing 0.9 m/s, gone in 2.2 s) and two arms
+  spreading at 32% of the speed they were made at (a V), fading over 4 s. Foam strength follows
+  the speed and doubles while carving; a noise texture breaks it into patches as it fades. The
+  material has `render_priority` 1 so it draws after the water (both are in the transparent
+  pass, and the water's huge bounds would otherwise sort it last).
+- **Spray** (`effects/spray.gd`): GPU particles in world space: a rooster tail from the jet while
+  the intake bites, bow spray growing with the square of the speed, a sheet off the outside of a
+  carve or slide (the side the craft slides toward), and a burst at each judged landing and each
+  crash. Lessons, each seen in screenshots: `billboard_keep_scale` must be on or every particle
+  draws a full meter across; particles must update every frame (`fixed_fps = 0`) and spawn over a
+  small box, or a fast craft leaves them in rows; spawn points sit above the waterline, because
+  the water writes depth and cuts any particle below it with a hard straight edge; a backlit,
+  lit material keeps spray bright against the sun and dark at night; spray fades out within
+  3–6 m of the camera so the chase camera never looks through a cloud.
+- **Sound** (`audio/sound_bank.gd`): every sound is generated in code at 22 050 Hz the first time
+  it is used, no files. The engine is an 80 Hz stack of harmonics pulsing at 40 Hz over rough
+  noise, a 0.5 s seamless loop; `EngineSound` (on each craft, 3D) sets its pitch from 0.55 at a
+  standstill to 1.55 at the craft's top speed, plus 0.18 with the throttle and up to 0.35 more
+  while the jet is out of the water, and its volume from −20 to −9 dB with throttle and speed.
+  A water hiss (band-limited noise) follows the speed while the hull is wet; a splash plays at
+  each landing and crash. `RaceSounds` plays countdown beeps, a bell or buzz at each buoy, a
+  ring chime and a finish fanfare. Buses: Master (with a hard limiter at −0.5 dB), Engine,
+  Effects. Measured with `gdh movie` (`audio.png`): before the limiter and a quieter, darker
+  hiss, four craft at speed clipped 5707 samples in 9 s; after, the peak is −1 dBFS.
+- **Announcer** (`race/announcer.gd`): lines across the top of the screen, one at a time for
+  2.4 s, dropped if they waited 3 s, important ones cutting in. It calls the start, lead changes
+  (at most every 5 s), the player moving up, the final lap, crashes, stunts, full power,
+  disqualifications, the winner, photo finishes (under 0.3 s apart), the tide, and in the solo
+  modes ring chains, lap records and the last ten seconds. `Announcer.history` keeps every line
+  for tests. The watch-mode label moved to the bottom.
+- **Options and pause:** `Settings` (autoload) applies and saves master, engine and effects
+  volumes (linear 0–1 on the buses), fullscreen, and every rebindable action's events
+  (`user://settings.cfg`). `OptionsPanel` works over the main menu and over the pause menu:
+  sliders, a fullscreen switch, a keyboard and a gamepad button per action (press it, then the
+  new key or button; Escape cancels; a binding taken by another action moves), RESET CONTROLS,
+  CLEAR RECORDS (press twice). `PauseMenu` (Escape, P, gamepad Start): RESUME, RESTART,
+  OPTIONS, QUIT TO MENU; engine sounds pause with the game.
+- **Underwater shading:** the water's shallow tint now applies only where what lies below is
+  the top of the static scenery (the shore map: within 1.5–3 m under its highest point and not
+  above it), so the sides of rocks and posts and hulls under the surface look as deep as the sea
+  around them instead of glowing turquoise; light reaching underwater objects is also dimmed by
+  the water above them (`light_down_scale`).
+
 ## Controls (Input Map actions)
 
 | Action | Keyboard | Gamepad |
@@ -762,6 +816,7 @@ entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_le
 | stunt | K, Left Shift (in the air; the held direction picks the stunt) | B, X |
 | reset_craft | R (in a race: back on the course, clear of obstacles; not while swimming) | Back |
 | ui_accept / ui_cancel (menus) | Enter, Space / Escape | A / B |
+| pause | Escape, P | Start |
 | toggle_camera | C | Y |
 | watch_next | Tab (watch mode only: follow the next rider) | right shoulder |
 | toggle_debug | F3 | |
@@ -798,10 +853,6 @@ entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_le
 
 ## Known issues and rough edges
 
-- Anything just under the water (the underwater part of rocks, ramp posts) is drawn bright
-  turquoise, because the water's depth colour treats it as shallow water. It reads like a cyan
-  shadow under rocks. A milestone-8 polish item: darken or desaturate the shallow colour where the
-  depth comes from a moving or vertical object rather than the seabed.
 - The test driver (`test/tools/autodrive.py`) follows a line through the buoys only; it knows
   nothing of rocks. The computer riders' `RacingLine` does.
 - A computer rider close behind can come between the chase camera and the player's craft.
@@ -818,16 +869,22 @@ entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_le
   racers 2.5 m deep or more.
 - A replay of a gdh session reaches the same state, but screenshots differ in about 0.5% of
   pixels around the rider (the pose eases in `_process`), so screenshot baselines need a tolerance.
-- No spray, wake or sound yet (milestone 8). `JetSki.carving` and `JetSki.airborne` are there for
-  them.
+- Pausing uses `SceneTree.paused`, which gdh also uses to hold the game, so a gdh step runs a
+  paused game: scenarios can check the pause menu opens and closes, not that the race stops.
+  Checked by hand in a live session instead.
+- Whitecap Point and Ebb Reef have similar bean-shaped outlines (one runs each way round);
+  their conditions differ, their shapes could differ more.
+- On Lantern Harbor Koa wins computer races by about 10 s (top speed on long straights plus the
+  highest skill); on the shorter courses the field is within a few seconds.
+- The spray is soft round puffs, a stylised look; at full speed the bow spray shows as a string
+  of separate puffs.
 
-## For the next session (milestone 8)
+## Where to go next
 
-- **Spray and wakes:** `JetSki.carving`, `airborne`, `last_landing` (with `quality`),
-  `thrust`, `speed` and `rider_state` are there to drive them; `JetSki.landed` fires at each
-  judged touchdown.
-- **Sound:** no audio yet. Engine pitch from `JetSki.thrust` and `speed`; splash on `landed`.
-- **Announcer:** `RaceHud.show_message` / `show_sub_message`, and the race signals
-  (`started`, `lap_completed`, `racer_finished`, `racer_crashed`, `racer_landed`,
-  `tide_turned`, places from `RacerState.place`).
-- **Options:** add to the main menu; `Records.clear()` exists for a "clear records" option.
+All eight milestones are done. Ideas for after them, roughly by value:
+
+- Real models and sounds: every model is swappable (`JetSkiModel` and the scenery scripts take
+  a child named "Model"), and `SoundBank` is the one place sounds come from.
+- Music (an empty slot: there is no music bus yet).
+- A reshaped Ebb Reef, so no two courses share an outline.
+- Split-screen two-player races (input actions would need a player prefix).
