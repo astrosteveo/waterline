@@ -27,6 +27,15 @@
       "max": 400
     },
     {
+      "step": 30,
+      "hold": "throttle"
+    },
+    {
+      "expect": "stunt_mode.rings_missed",
+      "equals": 0,
+      "name": "no ring counts as missed at the start (the grid is behind the start line)"
+    },
+    {
       "eval": "place_racer(player, stunt_mode._ring_offsets[0] - 25.0, racing_line.lateral_at(stunt_mode._ring_offsets[0]), 14)"
     },
     "step 3",
@@ -96,6 +105,30 @@
     {
       "expect": "Game.records.best_stunt_score('gull_cove') == stunt_mode.score",
       "name": "the score is saved as the best"
+    },
+    {
+      "eval": "get_tree().reload_current_scene()"
+    },
+    "step 5",
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "eval": "autopilot(player, 1.0)"
+    },
+    {
+      "until": "get_node('SoloResults').is_open()",
+      "max": 6000,
+      "name": "a run on the computer driver"
+    },
+    {
+      "expect": "stunt_mode.rings_taken >= 6",
+      "name": "takes most of the rings"
+    },
+    {
+      "expect": "player.finish_time <= stunt_mode.time_limit",
+      "name": "the clock stops at the finish or the limit"
     }
   ]
 }

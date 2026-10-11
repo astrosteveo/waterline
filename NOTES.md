@@ -561,6 +561,41 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
   have side padding, the description keeps two lines' height, the two stunts take 0.8 s, and
   the HUD calls WIPEOUT on any crash. All 17 scenarios pass.
 
+### Milestone 7 (game modes and courses)
+
+- **Scenarios** added: `menu_flow` (every screen and back, by keyboard), `mode_championship` (four
+  one-lap races, 20 points a race, the champion), `mode_time_trial` (records and ghost saved, the
+  ghost riding beside a repeat run), `mode_stunt` (no ring lost at the start, ring and stunt
+  points, a computer run taking at least 6 of 11 rings, the clock stopping), and one per new
+  course (`course_whitecap_point`: airborne over 5% of the time; `course_lantern_harbor`: night
+  environment, over 20 lights, darker water; `course_ebb_reef`: the level at 0, −0.9 and −1.8 m
+  on laps 1–3, three clean laps). All 24 pass.
+- **Playtester agent** (on a snapshot of the commit): menus (keyboard, gamepad, mouse, back),
+  the championship (order, points, DQ scoring 0, ties, the champion) and the four courses (four
+  computer riders, 3 laps each, no crashes, 0–2 misses; Whitecap Point airborne 22–25% of the
+  time against 10–14% on Gull Cove; the tide working) passed. It found, all fixed since:
+  - the time-trial ghost never showed in the chase view: the water's mesh follows the camera, so
+    it sorted nearer and drew over the see-through ghost. The ghost's materials now have
+    `render_priority` 1, like the wake;
+  - stunt mode counted most rings missed at the start: it compared the course offset, which is
+    near the end of the lap on the grid behind the start line. It now uses the distance
+    travelled. A computer run went from 3 to 9 of 11 rings on Gull Cove;
+  - lap splits compared every lap, the standing-start first lap included, with the best flying
+    lap, and the FINISH and tide calls replaced them. The race record now keeps its lap-by-lap
+    times (`<course>_splits` in `records.cfg`) and each split is the gap to that run at the same
+    point; the finish shows the gap to the record; the tide call waits 1.8 s;
+  - air rings were narrower than floating ones (2.4 against 2.9 m) and a floating ring hung 3 m
+    behind each: air rings are now 3 m wide and 1.6 m above the lip line, and no floating ring
+    sits within 16 m past a ramp;
+  - the clock ran on after TIME UP (`RacerState.timed_out` now stops it, with a TIME UP call);
+  - Lantern Harbor's near water was nearly black (mean brightness 5–7 of 255): brighter water
+    colours, ambient light and moon bring it to about 20, with the swells readable;
+  - the main menu always focused CHAMPIONSHIP coming back (it now refocuses the mode left), the
+    course details panel changed height, empty power-meter segments vanished on dark water;
+  - 32 textures, 2 fonts and 108 objects reported leaked at exit after going through the menus:
+    the menu font in a static variable. `Game._exit_tree` releases it; about 25 objects are still
+    reported after a gdh session that changed scenes (none when each menu runs alone).
+
 ## Stunts and landings
 
 The `stunt` action pressed in the air (after `stunt_min_air_time`, 0.08 s) starts a stunt; the

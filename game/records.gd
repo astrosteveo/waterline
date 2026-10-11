@@ -36,6 +36,11 @@ func best_race(course: String) -> float:
 	return float(_config.get_value("time_trial", course + "_race", INF))
 
 
+## The race record's time at the end of each lap (cumulative), or an empty array.
+func race_splits(course: String) -> PackedFloat64Array:
+	return PackedFloat64Array(_config.get_value("time_trial", course + "_splits", PackedFloat64Array()))
+
+
 func best_race_rider(course: String) -> String:
 	return str(_config.get_value("time_trial", course + "_race_rider", ""))
 
@@ -56,6 +61,12 @@ func submit_time_trial(course: String, rider: String, race_time: float, lap_time
 	if race_time < best_race(course):
 		_config.set_value("time_trial", course + "_race", race_time)
 		_config.set_value("time_trial", course + "_race_rider", rider)
+		var splits := PackedFloat64Array()
+		var total := 0.0
+		for t in lap_times:
+			total += t
+			splits.append(total)
+		_config.set_value("time_trial", course + "_splits", splits)
 		result["race"] = true
 	var best := INF
 	for t in lap_times:

@@ -243,6 +243,9 @@ func _connect_modes() -> void:
 			show_sub_message(text, YELLOW if ring.floating else CYAN, 0.9))
 		race.stunt_mode.ring_missed.connect(func(_ring: StuntRing) -> void:
 			show_sub_message("RING MISSED", ORANGE, 0.8))
+		race.stunt_mode.run_over.connect(func(completed: bool) -> void:
+			if not completed:
+				show_message("TIME UP", RED, 2.5))
 	if race.time_trial != null:
 		race.time_trial.split.connect(func(_lap: int, lap_time: float, difference: float) -> void:
 			if not is_nan(difference):
@@ -330,6 +333,8 @@ func _on_crashed(racer: RacerState, _reason: StringName) -> void:
 
 func _on_tide_turned(level: float) -> void:
 	var falling := level < Ocean.level
+	# After the lap call and its time, so it doesn't replace them.
+	await get_tree().create_timer(1.8, false).timeout
 	show_sub_message("THE TIDE IS GOING OUT" if falling else "THE TIDE IS COMING IN", CYAN, 2.5)
 
 
@@ -345,7 +350,14 @@ func _on_racer_finished(racer: RacerState) -> void:
 	if racer != race.watched:
 		return
 	show_message("FINISH", YELLOW, 3.0)
-	show_sub_message(Race.format_time(racer.finish_time), WHITE, 3.0)
+	var text := Race.format_time(racer.finish_time)
+	var color := WHITE
+	if race.time_trial != null and race.time_trial.record_race < INF:
+		# In a time trial, the finish time against the record.
+		var difference := racer.finish_time - race.time_trial.record_race
+		text += "   %s%.2f" % ["+" if difference >= 0.0 else "-", absf(difference)]
+		color = RED if difference >= 0.0 else Color(0.3, 1.0, 0.45)
+	show_sub_message(text, color, 3.0)
 
 
 func _on_disqualified(racer: RacerState) -> void:

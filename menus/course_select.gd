@@ -104,7 +104,8 @@ func _build_ui() -> void:
 	_map.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	column.add_child(_map)
 	_conditions = MenuStyle.label("", 28, MenuStyle.WHITE)
-	_conditions.custom_minimum_size = Vector2(560, 0)
+	# Two lines tall, so the panel keeps its height from course to course.
+	_conditions.custom_minimum_size = Vector2(560, 74)
 	_conditions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(_conditions)
 	_records = MenuStyle.label("", 30, MenuStyle.CYAN)

@@ -33,6 +33,8 @@ var place: int = 1
 var power: int = 0
 ## True once the racer has missed too many buoys; it races no more.
 var disqualified: bool = false
+## True once a stunt run's clock ran out; [member finish_time] holds the limit.
+var timed_out: bool = false
 ## Times the rider was thrown off.
 var crashes: int = 0
 ## Stunts landed and the points they scored.
@@ -71,4 +73,4 @@ func best_lap() -> float:
 
 ## True while the racer still races (not finished or disqualified).
 func is_racing() -> bool:
-	return not finished and not disqualified
+	return not finished and not disqualified and not timed_out

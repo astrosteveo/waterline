@@ -39,6 +39,7 @@ var ring_score: int = 0
 var stunt_score: int = 0
 var finish_score: int = 0
 var rings_taken: int = 0
+var rings_missed: int = 0
 ## Rings in a row without a miss.
 var chain: int = 0
 var time_limit: float = 60.0
@@ -103,9 +104,11 @@ func _centre() -> Vector3:
 	return craft.global_transform * Vector3(0.0, 0.6, 0.0)
 
 
+## True once the player is 20 m past ring [param i] along the lap. Distance, not the course
+## offset: on the grid, behind the start line, the offset is near the end of the lap, which
+## made every ring in the second half of the lap count as missed at the start.
 func _left_behind(i: int, player: RacerState) -> bool:
-	var ahead := player.progress.offset - _ring_offsets[i]
-	return player.laps_done == 0 and ahead > 20.0 and ahead < race.course.length * 0.5
+	return player.laps_done == 0 and player.progress.distance - _ring_offsets[i] > 20.0
 
 
 func _take(i: int) -> void:
@@ -124,6 +127,7 @@ func _take(i: int) -> void:
 
 func _miss(i: int) -> void:
 	_ring_done[i] = 1
+	rings_missed += 1
 	chain = 0
 	ring_missed.emit(rings[i])
 
@@ -154,6 +158,8 @@ func _end(finished: bool) -> void:
 	over = true
 	completed = finished
 	if not finished:
+		race.player.timed_out = true
+		race.player.finish_time = time_limit
 		race.end_for_player()
 	run_over.emit(finished)
 
@@ -173,6 +179,8 @@ func _build_rings() -> void:
 	for node in ramps:
 		course.relocate(probe, (node as Node3D).global_position)
 		avoid.append(probe.offset)
+		# Where the air ring hangs and the craft lands, past the lip.
+		avoid.append(probe.offset + 16.0)
 	var last := -INF
 	var s := 40.0
 	while s < course.length - 30.0:
@@ -201,8 +209,9 @@ func _build_rings() -> void:
 		var ring := StuntRing.new()
 		ring.name = "AirRing%d" % (rings.size() + 1)
 		ring.floating = false
+		ring.radius = 3.0
 		ring.color = Color(0.3, 0.9, 1.0)
-		ring.transform = Transform3D(Basis.looking_at(forward, Vector3.UP), lip + forward * 9.0 + Vector3.UP * 1.2)
+		ring.transform = Transform3D(Basis.looking_at(forward, Vector3.UP), lip + forward * 9.0 + Vector3.UP * 1.6)
 		holder.add_child(ring)
 		course.relocate(probe, ring.global_position)
 		_add_ring(ring, probe.offset)

@@ -44,8 +44,9 @@
     },
     "step 5",
     {
-      "step": 3,
-      "tap": "ui_down"
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "QuickRace",
+      "name": "back on the main menu, the mode left has the focus"
     },
     {
       "step": 3,

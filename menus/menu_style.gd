@@ -86,3 +86,8 @@ static func panel(margin_x: int = 64, margin_y: int = 38) -> PanelContainer:
 	style.content_margin_bottom = margin_y
 	node.add_theme_stylebox_override(&"panel", style)
 	return node
+
+
+## Drops the shared font, at exit.
+static func release() -> void:
+	_font = null

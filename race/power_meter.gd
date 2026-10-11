@@ -26,7 +26,7 @@ extends Control
 @export var low_color: Color = Color(1.0, 0.86, 0.12)
 @export var high_color: Color = Color(1.0, 0.25, 0.12)
 @export var empty_color: Color = Color(0.02, 0.05, 0.16, 0.55)
-@export var outline_color: Color = Color(0.02, 0.05, 0.16, 0.9)
+@export var outline_color: Color = Color(0.85, 0.9, 1.0, 0.55)
 ## How far each segment leans, as a share of its height.
 @export_range(0.0, 1.0, 0.01) var slant: float = 0.35
 ## Gap between segments, in pixels.

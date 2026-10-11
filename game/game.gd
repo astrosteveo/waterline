@@ -40,6 +40,8 @@ var courses: Array[CourseInfo] = [
 ]
 ## The mode being played.
 var mode: Mode = Mode.QUICK_RACE
+## True once the player has picked a mode from the main menu, so the menu can refocus it.
+var mode_chosen: bool = false
 ## The rider the player chose, or null to use the race scene's own.
 var player_rider: RiderProfile
 ## The course for the next race, or null to use the race scene's own.
@@ -58,6 +60,12 @@ func _ready() -> void:
 		var index := Mode.keys().find(named.to_upper())
 		if index >= 0:
 			mode = index as Mode
+
+
+func _exit_tree() -> void:
+	# Static variables outlive the scene tree; drop what they hold so nothing is reported as
+	# leaked when the game quits.
+	MenuStyle.release()
 
 
 ## The rider called [param display_name] (any case), or null.
@@ -100,6 +108,7 @@ func mode_name() -> String:
 ## Starts [param new_mode]: the rider select screen comes first.
 func start_mode(new_mode: Mode) -> void:
 	mode = new_mode
+	mode_chosen = true
 	championship = null
 	_change(RIDER_SELECT)
 

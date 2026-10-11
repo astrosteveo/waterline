@@ -10,7 +10,9 @@ func _ready() -> void:
 	backdrop.name = "Backdrop"
 	add_child(backdrop)
 	_build_ui()
-	_buttons[0].grab_focus()
+	# Back from a mode: focus that mode again (buttons: championship, quick race, time
+	# trial, stunt mode).
+	_buttons[[1, 0, 2, 3][Game.mode] if Game.mode_chosen else 0].grab_focus()
 
 
 func _build_ui() -> void:

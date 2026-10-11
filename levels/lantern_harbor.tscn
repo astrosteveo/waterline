@@ -30,7 +30,7 @@ environment = ExtResource("env")
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-22, 165, 0)
 light_color = Color(0.6, 0.7, 1, 1)
-light_energy = 0.55
+light_energy = 0.7
 shadow_enabled = true
 directional_shadow_max_distance = 220.0
 script = ExtResource("sun")
@@ -39,7 +39,7 @@ script = ExtResource("sun")
 script = ExtResource("ocean")
 wave_set = ExtResource("waves")
 water_material = ExtResource("water_mat")
-shader_overrides = {"crest_strength": 0.12, "shallow_color": Color(0.03, 0.17, 0.21, 1), "deep_color": Color(0.01, 0.05, 0.13, 1), "crest_color": Color(0.06, 0.28, 0.34, 1)}
+shader_overrides = {"crest_strength": 0.16, "shallow_color": Color(0.06, 0.26, 0.32, 1), "deep_color": Color(0.04, 0.13, 0.28, 1), "crest_color": Color(0.08, 0.32, 0.4, 1)}
 
 [node name="ShoreMap" type="Node3D" parent="."]
 script = ExtResource("shore")

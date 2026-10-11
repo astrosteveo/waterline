@@ -6,7 +6,9 @@ extends Node
 ## finish saves the race time and best lap to [Records] if they beat the records, and the run
 ## as the new ghost if it set the race record.
 
-## A lap ended: [param lap_time] and its difference from the record lap (NAN if none).
+## A lap ended: [param lap_time], and how far ahead (negative) or behind the race record's
+## run the player is at that point (NAN with no record). Without the record's lap times
+## (records from before they were kept) the lap is compared with the best lap instead.
 signal split(lap: int, lap_time: float, difference: float)
 ## The run ended: [param records] says which records it set (race, lap).
 signal run_over(records: Dictionary)
@@ -16,6 +18,8 @@ var course_id: String = ""
 var record_race: float = INF
 var record_lap: float = INF
 var record_rider: String = ""
+## The race record's time at the end of each lap.
+var record_splits := PackedFloat64Array()
 ## Which records the run set, once over.
 var new_records: Dictionary = {}
 var ghost: GhostRider
@@ -29,6 +33,7 @@ func setup(p_race: Race, p_course_id: String) -> void:
 	record_race = records.best_race(course_id)
 	record_lap = records.best_lap(course_id)
 	record_rider = records.best_race_rider(course_id)
+	record_splits = records.race_splits(course_id)
 	recorder = GhostRecorder.new()
 	recorder.name = "GhostRecorder"
 	recorder.craft = race.player.craft
@@ -50,7 +55,12 @@ func setup(p_race: Race, p_course_id: String) -> void:
 func _on_lap(racer: RacerState, lap: int, lap_time: float) -> void:
 	if racer != race.player:
 		return
-	split.emit(lap, lap_time, lap_time - record_lap if record_lap < INF else NAN)
+	var difference := NAN
+	if record_splits.size() >= lap:
+		difference = racer.lap_start_time - record_splits[lap - 1]
+	elif record_lap < INF:
+		difference = lap_time - record_lap
+	split.emit(lap, lap_time, difference)
 
 
 func _on_finished() -> void:

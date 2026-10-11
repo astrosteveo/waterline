@@ -475,6 +475,9 @@ func _make_ghostly(material: StandardMaterial3D) -> void:
 	material.emission_enabled = true
 	material.emission = Color(0.55, 0.8, 1.0)
 	material.emission_energy_multiplier = 0.35
+	# Drawn after the water: both are see-through, and the water's mesh follows the camera,
+	# so by distance it would sort nearer and draw over the ghost.
+	material.render_priority = 1
 
 
 ## Builds the hull from its cross-sections, flat shaded, coloured by band.
