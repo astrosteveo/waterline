@@ -2,7 +2,10 @@
   "description": "The power meter: each buoy passed on its marked side adds a level and more thrust; a missed buoy empties it.",
   "start": {
     "scene": "res://race/race.tscn",
-    "seed": 1
+    "seed": 1,
+    "args": [
+      "--no-opponents"
+    ]
   },
   "steps": [
     {

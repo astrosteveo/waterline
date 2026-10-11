@@ -11,11 +11,12 @@ A jet ski racer in Godot 4.7 (Forward+, typed GDScript, Jolt physics), a spiritu
 | 2. Jet ski on open water | Done (session 1) |
 | 3. A course | Done (session 2) |
 | 4. The race rules | Done (session 2) |
-| 5–8 | Not started |
+| 5. Opponents | Done (session 2) |
+| 6–8 | Not started |
 
 Run the game: `godot --path /home/astrosteveo/Projects/waterline` (or open the project in the
 editor and press F5). The main scene is `res://race/race.tscn`: a 3-lap race on the Gull Cove
-course. `res://levels/open_water.tscn` is the milestone-2 free ride (one jet ski on open water
+course against three computer riders (`-- --no-opponents` races alone). `res://levels/open_water.tscn` is the milestone-2 free ride (one jet ski on open water
 with rolling swells, islands, rocks and floating crates; `godot --path . --scene
 res://levels/open_water.tscn -- --demo` rides a fixed sequence of controls by itself).
 `res://levels/water_test.tscn` is the milestone-1 water scene with a free camera.
@@ -42,7 +43,8 @@ debug/          WaterProbe, DebugHud (F3 readout), RideRecorder (ride statistics
 course/         Course (centre line, walls, gates, progress), CourseGate, CourseProgress, Buoy,
                 Ramp, StartGate (all code-built and swappable), wall_float.gdshader
 race/           Race (race.tscn is the main scene), RacerState, RaceRules (rules/default_rules.tres),
-                RaceHud, PowerMeter (HUD widget), GateMarker; RacingLine (for milestone 5)
+                RaceHud, PowerMeter (HUD widget), GateMarker, ResultsScreen, RacingLine, AIDriver
+riders/         RiderProfile and the four riders (marina, koa, ines, dax .tres)
 levels/         gull_cove.tscn (course), open_water.tscn (free ride), water_test.tscn
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
@@ -306,6 +308,71 @@ blend)` places the rider's pelvis in the world while off the craft, with tumblin
 (crawl strokes) and climbing poses blended from joint positions. The chase camera looks between
 the craft and the rider while the rider is off it (`JetSki.camera_focus()`).
 
+## Computer riders
+
+`Race` spawns the player (`player_rider`) and one computer rider per entry in `opponents`, each
+on its own grid slot, all on `jetski/jetski.tscn` with the same physics. A computer rider's craft
+gets an `AIDriver` (`race/ai_driver.gd`) instead of a `PlayerInput`; it writes the same
+`RiderControls` every physics tick. `-- --no-opponents` on the command line races the player
+alone.
+
+- **Riders** (`riders/*.tres`, `RiderProfile`): Marina (the player), Koa (skill 0.9), Ines (0.8)
+  and Dax (0.7), each with its own hull, trim, suit, vest and helmet colours. Milestone 6 adds their
+  top speed, acceleration, handling and grip and the rider select screen.
+- **The racing line** (`RacingLine`, built once per race from the course) is a sideways offset
+  from the centre line at every sample. Each buoy gives a key point 4 m past it on its marked side;
+  real turns without a buoy (radius under 30 m, 35° or more) give a key point on the inside. The
+  line holds each key from 12 m before to 6 m after and eases between them, then is fitted round
+  the rocks (`Course.obstacles()`: every `Rock`, radius grown by its lumps, plus 2.2 m): ten
+  rounds of averaging each sample with its neighbours 6 m either side, then pushing it back out
+  of the rocks' way, so the line bends round each rock over several meters instead of jumping
+  sideways at its edge. It also keeps a free gap per sample
+  (walls, rocks, and at least 2.6 m on each buoy's passing side) that bounds every sideways shift a
+  rider makes. Its curvature gives the speed it can be taken at. On Gull Cove it passes every buoy
+  2.6–3.9 m on its marked side and runs over both ramps.
+- **Steering:** pure pursuit toward the line 6 m + 0.45 s ahead, never past the next buoy (so the
+  rider passes it before turning for the next). Any sideways shift from the line is kept inside the
+  narrowest free gap all the way from the craft to that point, not only at the point, so a move
+  round another craft can't cut across a rock. The needed yaw rate is turned into a steer value
+  with the craft's own turn rate; the rider carves (leans forward) when full lock isn't enough.
+- **Speed:** looking 2 s ahead, the rider lifts off the throttle (and leans forward to drag more)
+  if the line's curvature needs a lower speed than it could brake to, at 3.5 m/s², counting on the
+  craft's turn rate and on 15 m/s² of sideways grip. Without the grip limit the riders entered the
+  hairpin too fast, ran wide and hit the pillar after it.
+- **In the air** the rider levels the nose to 4° up for a flat landing.
+- **Skill** (0 to 1): the throttle cap (80% at 0, full at 1), the grip it counts on (80–100%), how
+  late it reacts (0.16 s at 0, 0.04 s at 1), a slow wander off the line (up to 3 m at 0), and how
+  boldly it takes the turns each lap (cautious on the whole at low skill, but sometimes overcooking
+  a lap and running wide).
+- **Mistakes:** once per lap, with a chance of 80% × (1 − skill), the rider picks one buoy to take
+  on the wrong side (aiming for the wrong side of that buoy ignores the 2.6 m it otherwise
+  keeps from buoys, but still keeps clear of rocks). Crashes come from the
+  physics, as for the player: running wide into a rock, bumping in a pack.
+  The mistakes are seeded from the rider's seed plus `randi()` at the start of each race, so
+  every race differs but a gdh replay with the same `--seed` repeats.
+- **Traffic:** a craft within 14 m ahead and 2.5 m to the side moves the rider's target 3.5 m to
+  the other side to pass it, shrinking to nothing in turns tighter than about 25 m. A craft
+  alongside (within 3 m back to 4 m ahead) moves it 2.4 m away. Alongside a craft that is further
+  round the course, with a buoy within 30 m or a tight turn, the rider eases to 60% throttle and
+  drops in behind it; closing more than 2 m/s faster on a craft right in front, to 30%. Without
+  these, four riders reached the slalom side by side and missed five buoys in three seconds, and
+  the pack pushed riders wide into the rock after the hairpin.
+- **Stuck:** under 1.5 m/s or going the wrong way for 1.8 s, with the rider aboard, it resets
+  itself (`Race.rescue`).
+- **Catch-up:** a computer rider gets up to 5% more thrust when 120 m or more behind the player
+  and 5% less when that far ahead (`RaceRules.catch_up`), so races stay close.
+- After finishing (or being disqualified) a computer rider rides on at 70% throttle. When the
+  player finishes, the computer takes the player's craft round at the same easy pace.
+  `Race.autopilot(racer, skill)` puts the computer in charge of any racer, for tests and demos.
+
+## Results
+
+`ResultsScreen` opens 3.3 s after the player finishes or is disqualified (after the FINISH call
+has faded): each rider by place with total time and best lap, the player's row in yellow; riders
+still out show RACING and fill in as they finish; DQ for disqualified riders. RACE AGAIN reloads
+the race scene; QUIT quits (milestone 7 adds a main menu). The focused button takes ui_accept, so
+a gamepad works.
+
 ## Race rules (race/race_rules.gd, values in race/rules/default_rules.tres)
 
 | Rule | Value | Why |
@@ -313,6 +380,7 @@ the craft and the rider while the rider is off it (`JetSki.camera_focus()`).
 | Power levels | 5 | As in the original. Each buoy passed on its marked side adds one; a miss (wrong side or skipped) empties the meter. Crashes leave it as it is (the brief doesn't say). |
 | Thrust per level | 1.00, 1.07, 1.14, 1.22, 1.30, 1.38 | Top speed grows with about the square root of the thrust: 59 km/h at level 0, 69 km/h at level 5 (+17%) on open water; 57 and 68 km/h on Gull Cove's start straight. Enough to matter, not so much that the hairpin becomes impossible at full power. |
 | Disqualification | 5 misses in a race | As in the original. The race ends for the player (results come up), no more buoys are judged, the clock stops. |
+| Catch-up | ±5% thrust at 120 m behind or ahead of the player | Computer riders only. Keeps the pack within reach without the player noticing a push. |
 
 A buoy is a moored `RigidBody3D` (80 kg): springs pull it to its anchor, to the water height and
 upright along the waves. A head-on hit at 50 km/h costs the craft 30% of its speed and pushes the
@@ -433,6 +501,31 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 - **Regression scenarios** added: `race_power`, `race_disqualify`, `race_crash`; `course_reset`
   now also checks that reset waits for the rider. All 13 pass.
 
+### Milestone 5 (opponents)
+
+- **Computer riders alone** (player idle): three 3-lap races, all within 2.1 s of each other at
+  2:02–2:05, 0–1 misses each, no crashes after the fixes below.
+- **Against the player's craft on the computer driver** (skill 0.95), five races on seeds 11–55:
+  the player 1st in four (1:59.9–2:03.4), Koa winning one; the field within 2:00–2:10; no crashes;
+  1–5 misses in all per race (planned mistakes and the odd one in traffic); riders within 1.4 m of
+  each other (touching) in 0.7–0.9% of samples.
+- **Places** update every tick; the playtester matched the HUD place with the distance order in
+  1,503 samples over 3 races and about 20 lead changes.
+- **Frame time** with four craft: GPU median 0.62 ms; game scripts and physics 1.6 ms a frame
+  (median), most of it the wave solver (`WaveSet.find_rest_position`).
+- **Playtester agent:** goals 1, 3, 4, 5 and 7 passed (computer riders complete clean races on
+  smooth lines, places live, a keyboard-driven player won by 1.3 s and 1.4 s, so the field is
+  within reach, results screen with RACING rows filling in, focus and ui_accept, no errors). It
+  found: Koa's overtaking move sending it into the rock after the hairpin in 2 of 5 races and then
+  sitting against it for 3 s; the wrong-side mistake never happening with fixed seeds; riders
+  riding hull to hull for long stretches; Koa pushing a stopped player 35 m; places not shown before
+  the start. All are fixed and re-measured above.
+- **Regression scenarios** added: `race_opponents` (riders, line, places) and `race_results`
+  (results rows, RACE AGAIN). Single-racer scenarios start with `-- --no-opponents`; those that
+  teleport past buoys turn disqualification off. All 15 pass.
+- Screenshots: `docs/screenshots/m5_*.png` (the grid with opponents, racing 2nd in a pack, the
+  results).
+
 ## Controls (Input Map actions)
 
 | Action | Keyboard | Gamepad |
@@ -480,8 +573,12 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
   turquoise, because the water's depth colour treats it as shallow water. It reads like a cyan
   shadow under rocks. A milestone-8 polish item: darken or desaturate the shallow colour where the
   depth comes from a moving or vertical object rather than the seabed.
-- The racing line the test driver follows comes from the buoys only; it doesn't plan for the
-  ramps, which now sit on that line.
+- The test driver (`test/tools/autodrive.py`) follows a line through the buoys only; it knows
+  nothing of rocks. The computer riders' `RacingLine` does.
+- A computer rider close behind can come between the chase camera and the player's craft.
+- Koa's and Dax's craft both look mostly white from behind (the hull's white bottom band
+  dominates); their suits tell them apart. Give riders their own bottom colour in milestone 6.
+- Computer riders don't aim for ramps; they ride over them because the ramps sit on the line.
 
 - The terrain is flat-shaded with 4 m cells, so the edges of shallow areas show straight facets
   through the water. A finer grid near shores would smooth this.
@@ -498,7 +595,29 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 - No spray, wake or sound yet (milestone 8). `JetSki.carving` and `JetSki.airborne` are there for
   them.
 
-## Next: milestone 5 (this session)
+## For the next session (milestones 6–8)
 
-- Opponents: fill `JetSki.controls` from an AI node instead of `PlayerInput`; the physics is the
-  same. `RacingLine` is written; `AIDriver` and a results screen are drafted.
+- **Riders (milestone 6):** `RiderProfile` (`riders/`) already holds each rider's name, colours
+  and computer skill; add top speed, acceleration, handling and grip and apply them to the craft
+  (a per-rider copy of `JetSkiTuning`, or multipliers on `max_thrust`, the drag, `turn_rate_*` and
+  `grip_g`). `Race.player_rider` and `Race.opponents` choose who races; a rider select screen sets
+  them. Marina is the player's default today.
+- **Stunts (milestone 6):** landings are already judged in `JetSki._judge_landing` and kept in
+  `JetSki.last_landing` (pitch, roll, slip, air time); today only crash-worthy landings do anything.
+  Add the speed loss for untidy landings and the stunt inputs there. The air pitch and yaw control
+  is in `_integrate_forces`; a barrel roll or handstand needs its own input actions (and the model's
+  pose code, `JetSkiModel._riding_joints`, for the rider).
+- **Courses (milestone 7):** copy `tools/courses/gull_cove.json`, lay out the new course with
+  `tools/courses/course_tool.py SPEC --map captures/x.png --scene`, and give the race scene's
+  `course_scene` the new scene. Water conditions are a `WaveSet` preset per course
+  (`water/presets/`); `Ocean.level` is the water's rest height for the course whose level changes
+  between laps (connect to `Race.lap_completed`; the wall floats and buoys already follow
+  `Ocean.level` and the waves). Night needs its own environment and sun (`course_tool` takes
+  `environment` and `sun` in the spec).
+- **Modes (milestone 7):** `Race` runs one race from its exports; a championship or time trial
+  can set `course_scene`, `player_rider`, `opponents` and `laps_override` before adding a race
+  scene to the tree. `-- --no-opponents` is already a solo race. Ghost replay needs the player's
+  transform recorded per tick.
+- **Polish (milestone 8):** `JetSki.carving`, `airborne`, `last_landing`, `thrust` and
+  `rider_state` are there for spray, wakes, engine pitch and splash sounds; `RaceHud.show_message`
+  and `show_sub_message` are the announcer's text.

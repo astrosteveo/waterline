@@ -2,7 +2,10 @@
   "description": "Crashes: hitting a pillar at speed or landing nose first throws the rider off; the rider swims back, climbs on and rides again within a few seconds. A clean landing off a ramp and scraping a wall don't crash.",
   "start": {
     "scene": "res://race/race.tscn",
-    "seed": 1
+    "seed": 1,
+    "args": [
+      "--no-opponents"
+    ]
   },
   "steps": [
     {

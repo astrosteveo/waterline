@@ -5,3 +5,5 @@ captures/
 # Exports
 build/
 *.tmp
+# Python bytecode
+__pycache__/

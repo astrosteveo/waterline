@@ -2,7 +2,10 @@
   "description": "A lap counts only after going round the course and crossing the finish line forward; its time is the race time at the crossing. Riding against the course shows the wrong-way warning.",
   "start": {
     "scene": "res://race/race.tscn",
-    "seed": 1
+    "seed": 1,
+    "args": [
+      "--no-opponents"
+    ]
   },
   "steps": [
     {

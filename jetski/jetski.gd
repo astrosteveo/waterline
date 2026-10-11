@@ -87,8 +87,10 @@ var crash_count: int = 0
 ## pitch below the surface, roll and slip in degrees, and the air time.
 var last_crash_reason: StringName = &""
 var last_landing: Dictionary = {}
-## The largest speed change from an impact seen in the last physics tick, m/s.
+## The largest speed change from an impact seen in the last physics tick, m/s, and what
+## the craft hit.
 var last_impact_speed: float = 0.0
+var last_impact_with: Object = null
 
 var _hull_points := PackedVector3Array()
 var _is_intake := PackedByteArray()
@@ -623,7 +625,9 @@ func _check_impacts(state: PhysicsDirectBodyState3D, b: Basis, can_crash: bool) 
 		if state.get_contact_local_normal(i).dot(b.y) > 0.7:
 			continue
 		var change := state.get_contact_impulse(i).length() / t.mass
-		last_impact_speed = maxf(last_impact_speed, change)
+		if change > last_impact_speed:
+			last_impact_speed = change
+			last_impact_with = other
 		var limit := t.crash_craft_impact_speed if other is JetSki else t.crash_impact_speed
 		if can_crash and change > limit:
 			_crash_reason = &"impact"

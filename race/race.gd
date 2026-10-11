@@ -24,6 +24,8 @@ signal power_changed(racer: RacerState, level: int)
 signal racer_disqualified(racer: RacerState)
 ## A racer's rider was thrown off.
 signal racer_crashed(racer: RacerState, reason: StringName)
+## Every racer has finished or been disqualified.
+signal all_finished
 ## The player finished or was disqualified; the race is over for them.
 signal finished
 
@@ -46,10 +48,16 @@ enum Phase {
 @export_range(0, 9, 1) var laps_override: int = 0
 ## Seconds of countdown before the start.
 @export_range(0.0, 10.0, 0.1, "suffix:s") var countdown_time: float = 3.0
+## The player's rider.
+@export var player_rider: RiderProfile
+## The computer riders, one per remaining starting slot.
+@export var opponents: Array[RiderProfile] = []
 ## Starting slot of the player, counted from the left.
 @export_range(0, 7, 1) var player_slot: int = 1
 ## Slots on the starting grid.
 @export_range(1, 8, 1) var grid_slots: int = 4
+## Print crashes, misses and laps to the output, for tuning computer riders.
+@export var log_events: bool = false
 ## Seconds of moving against the course before the racer is told it is going the wrong way.
 @export_range(0.1, 5.0, 0.1, "suffix:s") var wrong_way_delay: float = 1.0
 
@@ -60,6 +68,8 @@ enum Phase {
 @export var camera_switcher: CameraSwitcher
 
 var course: Course
+## The line the computer riders follow.
+var racing_line: RacingLine
 var racers: Array[RacerState] = []
 var player: RacerState
 var phase: Phase = Phase.COUNTDOWN
@@ -88,18 +98,35 @@ func _ready() -> void:
 	add_child(course)
 	move_child(course, 0)
 	laps = laps_override if laps_override > 0 else course.laps
+	racing_line = RacingLine.new(course)
 	_spawn_player()
+	# `-- --no-opponents` races the player alone, for tests and practice.
+	var riders: Array[RiderProfile] = opponents
+	if "--no-opponents" in OS.get_cmdline_user_args():
+		riders = []
+	var slot := 0
+	for profile in riders:
+		if slot == player_slot:
+			slot += 1
+		if slot >= grid_slots:
+			break
+		_spawn_computer(profile, slot)
+		slot += 1
 	for racer in racers:
 		course.track(racer.progress, racer.craft.global_position)
 		racer.last_position = _flat(racer.craft.global_position)
 	_countdown_left = countdown_time
 	phase = Phase.COUNTDOWN
+	_update_places()
 
 
 func _spawn_player() -> void:
 	var craft := craft_scene.instantiate() as JetSki
 	craft.name = "Player"
-	var racer := _add_racer(craft, "You", player_slot)
+	if player_rider != null:
+		player_rider.apply_colors(craft.get_node_or_null(^"Model"))
+	var racer := _add_racer(craft, player_rider.display_name if player_rider != null else "You", player_slot)
+	racer.profile = player_rider
 	racer.is_player = true
 	player = racer
 	var input := PlayerInput.new()
@@ -114,6 +141,22 @@ func _spawn_player() -> void:
 		ride_recorder.reset()
 	if camera_switcher != null:
 		camera_switcher.player_input = input
+
+
+func _spawn_computer(profile: RiderProfile, slot: int) -> void:
+	var craft := craft_scene.instantiate() as JetSki
+	craft.name = profile.display_name.validate_node_name()
+	profile.apply_colors(craft.get_node_or_null(^"Model"))
+	var racer := _add_racer(craft, profile.display_name, slot)
+	racer.profile = profile
+	var driver := AIDriver.new()
+	driver.name = "AIDriver"
+	driver.skill = profile.ai_skill
+	# Different mistakes each race; the same ones again in a replay with the same seed.
+	driver.mistake_seed = profile.ai_seed + randi()
+	driver.race = self
+	driver.racer = racer
+	craft.add_child(driver)
 
 
 ## Adds a racer riding [param craft] (not yet in the tree) in starting slot [param slot].
@@ -150,12 +193,25 @@ func _physics_process(delta: float) -> void:
 			_start()
 		for racer in racers:
 			_follow(racer)
+		_update_places()
 		return
 	_ticks += 1
 	race_time = _ticks * delta
 	for racer in racers:
 		_update_racer(racer, delta)
 	_update_places()
+	_update_thrust()
+
+
+## Applies each racer's power level and, for computer riders, the catch-up.
+func _update_thrust() -> void:
+	for racer in racers:
+		if not racer.is_player and player != null and rules.catch_up > 0.0 and racer.is_racing():
+			var gap := (player.progress.distance - racer.progress.distance) / rules.catch_up_distance
+			racer.thrust_bias = 1.0 + clampf(gap, -1.0, 1.0) * rules.catch_up
+		else:
+			racer.thrust_bias = 1.0
+		racer.craft.power_multiplier = rules.thrust_for(racer.power) * racer.thrust_bias
 
 
 func _start() -> void:
@@ -233,6 +289,8 @@ func _judge(racer: RacerState, gate: CourseGate, correct: bool) -> void:
 	if racer.is_player and gate.buoy != null:
 		gate.buoy.flash(Color(1.0, 1.0, 1.0) if correct else Color(0.1, 0.1, 0.1), 0.7)
 	gate_judged.emit(racer, gate, correct)
+	if log_events and not correct:
+		print("%.2f miss %s buoy %d at %.0f m" % [race_time, racer.display_name, gate.index, gate.offset])
 	if not correct and rules.misses_to_disqualify > 0 and racer.buoys_missed >= rules.misses_to_disqualify:
 		_disqualify(racer)
 
@@ -241,7 +299,7 @@ func _set_power(racer: RacerState, level: int) -> void:
 	if level == racer.power:
 		return
 	racer.power = level
-	racer.craft.power_multiplier = rules.thrust_for(level)
+	racer.craft.power_multiplier = rules.thrust_for(level) * racer.thrust_bias
 	power_changed.emit(racer, level)
 
 
@@ -251,12 +309,19 @@ func _disqualify(racer: RacerState) -> void:
 	racer.next_gate = 0
 	racer_disqualified.emit(racer)
 	if racer.is_player:
-		phase = Phase.FINISHED
-		finished.emit()
+		_player_done()
+	else:
+		_ease_off(racer)
+	_check_all_done()
 
 
 func _on_crashed(reason: StringName, racer: RacerState) -> void:
 	racer.crashes += 1
+	if log_events:
+		var hit: Object = racer.craft.last_impact_with
+		print("%.2f crash %s %s at %.0f m (lateral %.1f), speed change %.1f m/s, hit %s" % [race_time,
+				racer.display_name, reason, racer.progress.offset, racer.progress.lateral,
+				racer.craft.last_impact_speed, (hit as Node).name if hit is Node else "-"])
 	racer_crashed.emit(racer, reason)
 
 
@@ -271,8 +336,44 @@ func _complete_lap(racer: RacerState, at_time: float) -> void:
 		racer.finish_time = at_time
 		racer_finished.emit(racer)
 		if racer.is_player:
-			phase = Phase.FINISHED
-			finished.emit()
+			_player_done()
+		else:
+			_ease_off(racer)
+		_check_all_done()
+
+
+## The race is over for the player: the computer takes the player's craft round at an easy
+## pace, and the results come up.
+func _player_done() -> void:
+	phase = Phase.FINISHED
+	var craft := player.craft
+	var input := craft.get_node_or_null(^"PlayerInput")
+	if input != null:
+		input.process_mode = Node.PROCESS_MODE_DISABLED
+	var driver := craft.get_node_or_null(^"AIDriver") as AIDriver
+	if driver == null:
+		driver = AIDriver.new()
+		driver.name = "AIDriver"
+		driver.race = self
+		driver.racer = player
+		craft.add_child(driver)
+	driver.skill = 1.0
+	driver.cruise = true
+	finished.emit()
+
+
+## A computer rider who is out of the race rides on at an easy pace.
+func _ease_off(racer: RacerState) -> void:
+	var driver := racer.craft.get_node_or_null(^"AIDriver") as AIDriver
+	if driver != null:
+		driver.cruise = true
+
+
+func _check_all_done() -> void:
+	for racer in racers:
+		if racer.is_racing():
+			return
+	all_finished.emit()
 
 
 func _update_wrong_way(racer: RacerState, before: Vector3, here: Vector3, delta: float) -> void:
@@ -331,6 +432,24 @@ func _clear_spot(offset: float, lateral: float, craft: JetSki) -> Transform3D:
 			if space.intersect_shape(query, 1).is_empty():
 				return spot
 	return course.transform_at(offset, 0.0)
+
+
+## Puts the computer in charge of [param racer]'s craft (for tests and demos), at
+## [param skill]. Returns the driver.
+func autopilot(racer: RacerState, skill: float = 1.0) -> AIDriver:
+	var input := racer.craft.get_node_or_null(^"PlayerInput")
+	if input != null:
+		input.process_mode = Node.PROCESS_MODE_DISABLED
+	var driver := racer.craft.get_node_or_null(^"AIDriver") as AIDriver
+	if driver == null:
+		driver = AIDriver.new()
+		driver.name = "AIDriver"
+		driver.race = self
+		driver.racer = racer
+		racer.craft.add_child(driver)
+	driver.skill = skill
+	driver.cruise = false
+	return driver
 
 
 ## Moves [param racer] to the course point [param offset] meters past the start line and

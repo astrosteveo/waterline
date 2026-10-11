@@ -12,6 +12,8 @@ extends Control
 @export_range(0, 10, 1) var value: int = 0:
 	set(new_value):
 		new_value = clampi(new_value, 0, levels)
+		if new_value == value:
+			return
 		if new_value > value:
 			_flash_index = new_value - 1
 			_flash_time = FLASH_TIME

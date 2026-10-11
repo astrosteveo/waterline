@@ -37,6 +37,10 @@ var disqualified: bool = false
 var crashes: int = 0
 ## True while the racer has been heading against the course for a while.
 var wrong_way: bool = false
+## The rider, or null.
+var profile: RiderProfile
+## Extra thrust factor on top of the power meter's, set by a computer rider's catch-up.
+var thrust_bias: float = 1.0
 
 ## Horizontal position at the last tick, for gate crossings.
 var last_position: Vector3 = Vector3.ZERO

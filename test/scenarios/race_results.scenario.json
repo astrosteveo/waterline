@@ -1,0 +1,22 @@
+{
+  "description": "A one-lap race ends with the results screen listing every rider by place with times; Race again starts a new race.",
+  "start": {"scene": "res://race/race.tscn", "seed": 1},
+  "steps": [
+    {"eval": "set('laps', 1)"},
+    {"until": "phase == 1", "max": 400},
+    {"eval": "autopilot(player, 1.0)"},
+    {"until": "player.finished", "max": 4000, "name": "the player finishes the lap"},
+    {"expect": "phase", "equals": 2},
+    {"until": "get_node('ResultsScreen').is_open()", "max": 400, "name": "the results come up"},
+    {"until": "racers[1].finished and racers[2].finished and racers[3].finished", "max": 2400, "name": "the computer riders finish too"},
+    "step 5",
+    {"expect": "get_node('ResultsScreen')._rows.get_child_count()", "equals": 4, "name": "four rows"},
+    {"expect": "get_node('ResultsScreen')._rows.get_child(0).get_child(0).text", "equals": "1st"},
+    {"expect": "get_node('ResultsScreen')._rows.get_child(player.place - 1).get_child(1).text", "equals": "MARINA", "name": "the player's row in its place"},
+    {"expect": "get_node('ResultsScreen')._rows.get_child(3).get_child(2).text != 'RACING'", "name": "every time filled in"},
+    {"step": 2, "click_text": "RACE AGAIN"},
+    "step 5",
+    {"expect": "phase", "equals": 0, "name": "a new race is counting down"},
+    {"expect": "not get_node('ResultsScreen').is_open()"}
+  ]
+}

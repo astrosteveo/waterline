@@ -1,20 +1,71 @@
 {
   "description": "On Gull Cove, passing a buoy on its marked side counts a pass; the wrong side or skipping it counts a miss. Crossing the start line at the start doesn't count a lap.",
-  "start": {"scene": "res://race/race.tscn", "seed": 1},
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1,
+    "args": [
+      "--no-opponents"
+    ]
+  },
   "steps": [
-    {"until": "phase == 1", "max": 400, "name": "the countdown ends"},
-    {"step": 240, "hold": "throttle"},
-    {"expect": "player.progress.distance > 10", "name": "the player crossed the start line"},
-    {"expect": "player.laps_done", "equals": 0, "name": "crossing at the start is not a lap"},
-    {"eval": "place_racer(player, 112, 8.5, 15)"},
-    {"step": 150, "hold": "throttle"},
-    {"expect": "player.buoys_passed", "equals": 1, "name": "yellow buoy passed on its right counts"},
-    {"expect": "player.buoys_missed", "equals": 1, "name": "the skipped first buoy counts as missed"},
-    {"expect": "player.next_gate", "equals": 2},
-    {"eval": "place_racer(player, 150, 0, 15)"},
-    {"step": 90, "hold": "throttle"},
-    {"expect": "player.buoys_passed", "equals": 1},
-    {"expect": "player.buoys_missed", "equals": 2, "name": "red buoy passed on its right counts as missed"},
-    {"expect": "player.next_gate", "equals": 3}
+    {
+      "until": "phase == 1",
+      "max": 400,
+      "name": "the countdown ends"
+    },
+    {
+      "step": 240,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.progress.distance > 10",
+      "name": "the player crossed the start line"
+    },
+    {
+      "expect": "player.laps_done",
+      "equals": 0,
+      "name": "crossing at the start is not a lap"
+    },
+    {
+      "eval": "place_racer(player, 112, 8.5, 15)"
+    },
+    {
+      "step": 150,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.buoys_passed",
+      "equals": 1,
+      "name": "yellow buoy passed on its right counts"
+    },
+    {
+      "expect": "player.buoys_missed",
+      "equals": 1,
+      "name": "the skipped first buoy counts as missed"
+    },
+    {
+      "expect": "player.next_gate",
+      "equals": 2
+    },
+    {
+      "eval": "place_racer(player, 150, 0, 15)"
+    },
+    {
+      "step": 90,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.buoys_passed",
+      "equals": 1
+    },
+    {
+      "expect": "player.buoys_missed",
+      "equals": 2,
+      "name": "red buoy passed on its right counts as missed"
+    },
+    {
+      "expect": "player.next_gate",
+      "equals": 3
+    }
   ]
 }

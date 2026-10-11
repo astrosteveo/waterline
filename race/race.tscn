@@ -10,11 +10,19 @@
 [ext_resource type="Script" path="res://debug/ride_recorder.gd" id="8"]
 [ext_resource type="Script" path="res://race/gate_marker.gd" id="9"]
 [ext_resource type="Resource" path="res://race/rules/default_rules.tres" id="10"]
+[ext_resource type="Script" path="res://race/results_screen.gd" id="11"]
+[ext_resource type="Resource" path="res://riders/marina.tres" id="12"]
+[ext_resource type="Resource" path="res://riders/koa.tres" id="13"]
+[ext_resource type="Resource" path="res://riders/ines.tres" id="14"]
+[ext_resource type="Resource" path="res://riders/dax.tres" id="15"]
+[ext_resource type="Script" path="res://riders/rider_profile.gd" id="16"]
 
 [node name="Race" type="Node3D" node_paths=PackedStringArray("chase_camera", "debug_hud", "ride_recorder", "camera_switcher")]
 script = ExtResource("1")
 course_scene = ExtResource("2")
 rules = ExtResource("10")
+player_rider = ExtResource("12")
+opponents = Array[ExtResource("16")]([ExtResource("13"), ExtResource("14"), ExtResource("15")])
 chase_camera = NodePath("ChaseCamera")
 debug_hud = NodePath("DebugHud")
 ride_recorder = NodePath("RideRecorder")
@@ -55,3 +63,7 @@ start_visible = false
 [node name="RideRecorder" type="Node" parent="." node_paths=PackedStringArray("chase_camera")]
 script = ExtResource("8")
 chase_camera = NodePath("../ChaseCamera")
+
+[node name="ResultsScreen" type="CanvasLayer" parent="." node_paths=PackedStringArray("race")]
+script = ExtResource("11")
+race = NodePath("..")

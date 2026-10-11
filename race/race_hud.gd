@@ -231,6 +231,8 @@ func _on_started() -> void:
 
 
 func _on_gate_judged(racer: RacerState, gate: CourseGate, correct: bool) -> void:
+	if race.phase == Race.Phase.FINISHED:
+		return
 	if not racer.is_player:
 		return
 	var power_before := _shown_power

@@ -2,12 +2,19 @@
   "description": "Reset (R) on Gull Cove: a craft stopped against a pillar is put back clear of it, facing along the course, and rides away; reset on a ramp puts the craft beside the ramp; reset does nothing while the rider is in the water.",
   "start": {
     "scene": "res://race/race.tscn",
-    "seed": 1
+    "seed": 1,
+    "args": [
+      "--no-opponents"
+    ]
   },
   "steps": [
     {
       "until": "phase == 1",
       "max": 400
+    },
+    {
+      "eval": "rules.set('misses_to_disqualify', 0)",
+      "name": "no disqualification: this test skips buoys"
     },
     {
       "eval": "place_racer(player, 311, -9, 12)"

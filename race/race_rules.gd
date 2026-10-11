@@ -12,6 +12,11 @@ extends Resource
 @export var miss_resets_power: bool = true
 ## Missing this many buoys in one race disqualifies a racer. 0 turns disqualification off.
 @export_range(0, 50, 1) var misses_to_disqualify: int = 5
+## Computer riders get up to this much more thrust when far behind the player, and this
+## much less when far ahead, so races stay close. 0 turns it off.
+@export_range(0.0, 0.5, 0.01) var catch_up: float = 0.05
+## Distance gap, in meters, at which the catch-up is at its full amount.
+@export_range(10.0, 1000.0, 1.0, "suffix:m") var catch_up_distance: float = 120.0
 
 
 ## The thrust multiplier for [param level], clamped to the table.

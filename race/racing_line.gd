@@ -10,10 +10,20 @@ extends RefCounted
 var clearance: float = 4.0
 ## Distance kept from the walls.
 var wall_margin: float = 3.0
+## Distance kept from rocks, past their radius.
+var obstacle_margin: float = 2.2
+## Least distance from a buoy's centre on its passing side, near the buoy.
+var buoy_margin: float = 2.6
 
 var _course: Course
 ## Sideways offset from the centre line at each centre-line sample.
 var _lateral := PackedFloat32Array()
+## The free gap around the line at each sample: walls and rocks either side...
+var _low := PackedFloat32Array()
+var _high := PackedFloat32Array()
+## ...and the same gap that also keeps each buoy on its passing side.
+var _keep_low := PackedFloat32Array()
+var _keep_high := PackedFloat32Array()
 ## Curvature of the line itself at each sample, 1/m (positive: turning right).
 var _curvature := PackedFloat32Array()
 ## The line's points, at the water's rest level.
@@ -39,9 +49,47 @@ func curvature_at(offset: float) -> float:
 	return _lerp(_curvature, offset)
 
 
-## The point of the line at course [param offset], with an extra sideways [param shift].
-func point_at(offset: float, shift: float = 0.0) -> Vector3:
-	return _course.point_at(offset) + _course.right_at(offset) * (lateral_at(offset) + shift)
+## The point of the line at course [param offset], moved sideways by [param shift] but kept
+## clear of walls and rocks and on each buoy's passing side. With [param any_side] true the
+## buoys don't count, for a rider who means to take one on the wrong side.
+func point_at(offset: float, shift: float = 0.0, any_side: bool = false) -> Vector3:
+	var low := _lerp(_low if any_side else _keep_low, offset)
+	var high := _lerp(_high if any_side else _keep_high, offset)
+	var lateral := clampf(lateral_at(offset) + shift, low, high)
+	return _course.point_at(offset) + _course.right_at(offset) * lateral
+
+
+## The narrowest free gap (walls, rocks and buoys' passing sides) between course offsets
+## [param from] and [param to], sampled every 2 m: Vector2(highest low side, lowest high side).
+func gap_between(from: float, to: float) -> Vector2:
+	var low := -INF
+	var high := INF
+	var span := fposmod(to - from, _course.length)
+	var s := 0.0
+	while true:
+		low = maxf(low, _lerp(_keep_low, from + s))
+		high = minf(high, _lerp(_keep_high, from + s))
+		if s >= span:
+			break
+		s = minf(s + 2.0, span)
+	return Vector2(low, maxf(high, low))
+
+
+## How far the line can move sideways at [param offset] before meeting a wall or a rock:
+## Vector2(lowest lateral, highest lateral).
+func free_gap_at(offset: float) -> Vector2:
+	return Vector2(_lerp(_low, offset), _lerp(_high, offset))
+
+
+## The line every [param spacing] meters as [offset, lateral, lowest, highest] rows, for tools.
+func table(spacing: float = 2.0) -> Array:
+	var rows := []
+	var offset := 0.0
+	while offset < _course.length:
+		var gap := free_gap_at(offset)
+		rows.append([offset, lateral_at(offset), gap.x, gap.y])
+		offset += spacing
+	return rows
 
 
 ## The buoy passing points as [offset, lateral] pairs, for tools.
@@ -52,11 +100,15 @@ func key_points() -> Array:
 	return out
 
 
-## The highest speed, in m/s, at which a craft turning at up to [param turn_rate] rad/s
-## can follow the line at [param offset] (it needs speed × curvature ≤ turn rate).
-func speed_limit(offset: float, turn_rate: float) -> float:
+## The highest speed, in m/s, at which a craft can follow the line at [param offset]: it
+## needs speed × curvature ≤ [param turn_rate] (rad/s) to turn the nose fast enough, and
+## speed² × curvature ≤ [param side_accel] (m/s²) for the hull to hold the line without
+## sliding wide.
+func speed_limit(offset: float, turn_rate: float, side_accel: float = INF) -> float:
 	var k := absf(curvature_at(offset))
-	return turn_rate / k if k > 1e-4 else INF
+	if k < 1e-4:
+		return INF
+	return minf(turn_rate / k, sqrt(side_accel / k))
 
 
 func _lerp(values: PackedFloat32Array, offset: float) -> float:
@@ -76,14 +128,22 @@ func _build() -> void:
 	for gate in _course.gates:
 		var buoy_lateral := (gate.position - _course.point_at(gate.offset)).dot(_course.right_at(gate.offset))
 		keys.append(Vector2(gate.offset, buoy_lateral + gate.required_side * clearance))
-	# Turns without a buoy near their apex: cut to the inside, half way to the wall.
+	# Real turns (tighter than 30 m, at least 35 degrees) without a buoy near their apex:
+	# cut to the inside, half way to the wall. Gentle bends keep the line between buoys.
 	var turn_keys: Array[Vector2] = []
 	for i in n:
 		var offset := i * step
 		var k := _course.curvature_at(offset)
-		if absf(k) < 1.0 / 60.0:
+		if absf(k) < 1.0 / 30.0:
 			continue
 		if absf(k) < absf(_course.curvature_at(offset - step)) or absf(k) < absf(_course.curvature_at(offset + step)):
+			continue
+		var turned := 0.0
+		var d := -20.0
+		while d <= 20.0:
+			turned += _course.curvature_at(offset + d) * 2.0
+			d += 2.0
+		if absf(turned) < deg_to_rad(35.0):
 			continue
 		var near_buoy := false
 		for key in keys:
@@ -106,10 +166,34 @@ func _build() -> void:
 	_lateral.resize(n)
 	for i in n:
 		_lateral[i] = _lateral_from_keys(i * step, keys)
-	# Keep off the walls.
+	# Keep off the walls and round the rocks, then smooth what that bent.
+	_low.resize(n)
+	_high.resize(n)
+	var rocks := _course.obstacles()
 	for i in n:
-		var limits := _course.limits_at(i * step)
-		_lateral[i] = clampf(_lateral[i], limits.x + wall_margin, limits.y - wall_margin)
+		_fit_gap(i, step, rocks)
+	_keep_low = _low.duplicate()
+	_keep_high = _high.duplicate()
+	for gate in _course.gates:
+		var buoy_lateral := (gate.position - _course.point_at(gate.offset)).dot(_course.right_at(gate.offset))
+		var first := int(floor((gate.offset - 4.0) / step))
+		for j in range(first, first + int(8.0 / step) + 1):
+			var i := posmod(j, n)
+			if gate.required_side > 0:
+				_keep_low[i] = minf(maxf(_keep_low[i], buoy_lateral + buoy_margin), _keep_high[i])
+			elif gate.required_side < 0:
+				_keep_high[i] = maxf(minf(_keep_high[i], buoy_lateral - buoy_margin), _keep_low[i])
+	# Blur and clamp in turns, like an elastic band pulled round the rocks, so the line moves
+	# over gradually before a rock instead of jumping at its edge.
+	var reach := maxi(int(6.0 / step), 1)
+	for _round in 10:
+		var smoothed := _lateral.duplicate()
+		for i in n:
+			var total := 0.0
+			for d in range(-reach, reach + 1):
+				total += _lateral[posmod(i + d, n)]
+			smoothed[i] = clampf(total / (2 * reach + 1), _keep_low[i], _keep_high[i])
+		_lateral = smoothed
 	# Points and curvature of the line itself.
 	_points.resize(n)
 	for i in n:
@@ -130,6 +214,39 @@ func _build() -> void:
 			total += _curvature[posmod(i + d, n)]
 		smoothed[i] = total / (2 * span + 1)
 	_curvature = smoothed
+
+
+## Moves the line at sample [param i] out of any rock's way and records the free gap round it.
+func _fit_gap(i: int, step: float, rocks: Array[Vector3]) -> void:
+	var offset := i * step
+	var centre := _course.point_at(offset)
+	var forward := _course.tangent_at(offset)
+	var right := forward.cross(Vector3.UP)
+	var limits := _course.limits_at(offset)
+	var low := limits.x + wall_margin
+	var high := limits.y - wall_margin
+	var lateral := clampf(_lateral[i], low, high)
+	var blocked: Array[Vector2] = []
+	for rock in rocks:
+		var to_rock := Vector3(rock.x, 0.0, rock.y) - centre
+		var along := to_rock.dot(forward)
+		var reach := rock.z + obstacle_margin
+		if absf(along) >= reach:
+			continue
+		var half := sqrt(reach * reach - along * along)
+		var side := to_rock.dot(right)
+		blocked.append(Vector2(side - half, side + half))
+	for gap in blocked:
+		if lateral > gap.x and lateral < gap.y:
+			lateral = gap.x if lateral - gap.x < gap.y - lateral else gap.y
+	for gap in blocked:
+		if gap.y <= lateral:
+			low = maxf(low, gap.y)
+		elif gap.x >= lateral:
+			high = minf(high, gap.x)
+	_low[i] = low
+	_high[i] = maxf(high, low)
+	_lateral[i] = clampf(lateral, _low[i], _high[i])
 
 
 func _lateral_from_keys(offset: float, keys: Array[Vector2]) -> float:

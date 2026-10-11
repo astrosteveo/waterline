@@ -1,18 +1,59 @@
 {
   "description": "The invisible walls keep the craft on Gull Cove: steering hard into the right wall on the start straight and into the outside of the hairpin, it stays inside the wall line.",
-  "start": {"scene": "res://race/race.tscn", "seed": 1},
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1,
+    "args": [
+      "--no-opponents"
+    ]
+  },
   "steps": [
-    {"until": "phase == 1", "max": 400},
-    {"eval": "place_racer(player, 600, 0, 15)"},
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "eval": "rules.set('misses_to_disqualify', 0)",
+      "name": "no disqualification: this test skips buoys"
+    },
+    {
+      "eval": "place_racer(player, 600, 0, 15)"
+    },
     "step 3",
-    {"step": 40, "hold": ["throttle", "steer_right"]},
-    {"step": 120, "hold": "throttle"},
-    {"expect": "player.progress.lateral > 15", "name": "the craft reached the right wall"},
-    {"expect": "player.progress.lateral < course.limits_at(player.progress.offset).y", "name": "and stayed inside it"},
-    {"eval": "place_racer(player, 255, 0, 16)"},
+    {
+      "step": 40,
+      "hold": [
+        "throttle",
+        "steer_right"
+      ]
+    },
+    {
+      "step": 120,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.progress.lateral > 15",
+      "name": "the craft reached the right wall"
+    },
+    {
+      "expect": "player.progress.lateral < course.limits_at(player.progress.offset).y",
+      "name": "and stayed inside it"
+    },
+    {
+      "eval": "place_racer(player, 255, 0, 16)"
+    },
     "step 3",
-    {"step": 150, "hold": "throttle"},
-    {"expect": "player.progress.lateral > course.limits_at(player.progress.offset).x - 0.5 and player.progress.lateral < course.limits_at(player.progress.offset).y + 0.5", "name": "riding straight at the hairpin, the wall holds the craft"},
-    {"expect": "abs(player.craft.global_position.x - 0.0) < 400 and abs(player.craft.global_position.z) < 400", "name": "nowhere near leaving the course area"}
+    {
+      "step": 150,
+      "hold": "throttle"
+    },
+    {
+      "expect": "player.progress.lateral > course.limits_at(player.progress.offset).x - 0.5 and player.progress.lateral < course.limits_at(player.progress.offset).y + 0.5",
+      "name": "riding straight at the hairpin, the wall holds the craft"
+    },
+    {
+      "expect": "abs(player.craft.global_position.x - 0.0) < 400 and abs(player.craft.global_position.z) < 400",
+      "name": "nowhere near leaving the course area"
+    }
   ]
 }

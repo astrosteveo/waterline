@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RiderProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://riders/rider_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Dax"
+hull_color = Color(1, 0.45, 0.1, 1)
+trim_color = Color(0.96, 0.96, 0.96, 1)
+suit_color = Color(0.15, 0.15, 0.18, 1)
+vest_color = Color(0.7, 0.95, 0.2, 1)
+helmet_color = Color(1, 0.5, 0.1, 1)
+ai_skill = 0.7
+ai_seed = 41
