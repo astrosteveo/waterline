@@ -309,7 +309,8 @@ func _physics_process(delta: float) -> void:
 			_start()
 		for racer in racers:
 			_follow(racer)
-		_update_places()
+		# Places stay in grid order until the start: craft bobbing side by side on the grid
+		# would otherwise swap places every few ticks.
 		return
 	_ticks += 1
 	race_time = _ticks * delta
