@@ -1,0 +1,24 @@
+{
+  "description": "Reset (R) on Gull Cove: a craft stopped against a pillar is put back clear of it, facing along the course, and rides away; reset on a ramp puts the craft beside the ramp.",
+  "start": {"scene": "res://race/race.tscn", "seed": 1},
+  "steps": [
+    {"until": "phase == 1", "max": 400},
+    {"eval": "place_racer(player, 311, -9, 12)"},
+    "step 3",
+    {"step": 40, "hold": "throttle"},
+    {"expect": "player.craft.speed < 3", "name": "the pillar stopped the craft"},
+    {"step": 2, "tap": "reset_craft"},
+    "step 3",
+    {"expect": "abs(player.progress.lateral - (-9)) > 5", "name": "reset moved it clear of the pillar"},
+    {"expect": "course.tangent_at(player.progress.offset).dot(-player.craft.global_basis.z) > 0.99", "name": "facing along the course"},
+    {"expect": "player.craft.global_basis.y.y > 0.95", "name": "upright"},
+    {"step": 120, "hold": "throttle"},
+    {"expect": "player.craft.speed > 8", "name": "and rides away (over 29 km/h)"},
+    {"eval": "place_racer(player, 405, -1, 0)"},
+    "step 3",
+    {"step": 2, "tap": "reset_craft"},
+    "step 3",
+    {"expect": "player.progress.lateral < -5 or player.progress.lateral > 5", "name": "reset on the ramp moves the craft beside it"},
+    {"expect": "player.craft.global_position.y < 0.5", "name": "on the water, not on the ramp"}
+  ]
+}

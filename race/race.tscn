@@ -1,0 +1,55 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/race.gd" id="1"]
+[ext_resource type="PackedScene" path="res://levels/gull_cove.tscn" id="2"]
+[ext_resource type="Script" path="res://cameras/chase_camera.gd" id="3"]
+[ext_resource type="Script" path="res://cameras/free_camera.gd" id="4"]
+[ext_resource type="Script" path="res://cameras/camera_switcher.gd" id="5"]
+[ext_resource type="Script" path="res://race/race_hud.gd" id="6"]
+[ext_resource type="Script" path="res://debug/debug_hud.gd" id="7"]
+[ext_resource type="Script" path="res://debug/ride_recorder.gd" id="8"]
+[ext_resource type="Script" path="res://race/gate_marker.gd" id="9"]
+
+[node name="Race" type="Node3D" node_paths=PackedStringArray("chase_camera", "debug_hud", "ride_recorder", "camera_switcher")]
+script = ExtResource("1")
+course_scene = ExtResource("2")
+chase_camera = NodePath("ChaseCamera")
+debug_hud = NodePath("DebugHud")
+ride_recorder = NodePath("RideRecorder")
+camera_switcher = NodePath("CameraSwitcher")
+
+[node name="ChaseCamera" type="Camera3D" parent="."]
+current = true
+fov = 70.0
+near = 0.05
+far = 6000.0
+script = ExtResource("3")
+
+[node name="FreeCamera" type="Camera3D" parent="."]
+position = Vector3(0, 6, 20)
+fov = 70.0
+near = 0.05
+far = 6000.0
+script = ExtResource("4")
+
+[node name="CameraSwitcher" type="Node" parent="." node_paths=PackedStringArray("chase_camera", "free_camera")]
+script = ExtResource("5")
+chase_camera = NodePath("../ChaseCamera")
+free_camera = NodePath("../FreeCamera")
+
+[node name="GateMarker" type="Node3D" parent="." node_paths=PackedStringArray("race")]
+script = ExtResource("9")
+race = NodePath("..")
+
+[node name="RaceHud" type="CanvasLayer" parent="." node_paths=PackedStringArray("race")]
+script = ExtResource("6")
+race = NodePath("..")
+
+[node name="DebugHud" type="CanvasLayer" parent="." node_paths=PackedStringArray("chase_camera")]
+script = ExtResource("7")
+chase_camera = NodePath("../ChaseCamera")
+start_visible = false
+
+[node name="RideRecorder" type="Node" parent="." node_paths=PackedStringArray("chase_camera")]
+script = ExtResource("8")
+chase_camera = NodePath("../ChaseCamera")

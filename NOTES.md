@@ -9,13 +9,15 @@ A jet ski racer in Godot 4.7 (Forward+, typed GDScript, Jolt physics), a spiritu
 |---|---|
 | 1. Water | Done (session 1) |
 | 2. Jet ski on open water | Done (session 1) |
-| 3–8 | Not started |
+| 3. A course | Done (session 2) |
+| 4–8 | Not started |
 
 Run the game: `godot --path /home/astrosteveo/Projects/waterline` (or open the project in the
-editor and press F5). The main scene is `res://levels/open_water.tscn`: one jet ski on open water
-with rolling swells, islands, rocks and floating crates. `godot --path . -- --demo` rides a fixed
-sequence of controls by itself. `res://levels/water_test.tscn` is the milestone-1 water scene with
-a free camera.
+editor and press F5). The main scene is `res://race/race.tscn`: a 3-lap race on the Gull Cove
+course. `res://levels/open_water.tscn` is the milestone-2 free ride (one jet ski on open water
+with rolling swells, islands, rocks and floating crates; `godot --path . --scene
+res://levels/open_water.tscn -- --demo` rides a fixed sequence of controls by itself).
+`res://levels/water_test.tscn` is the milestone-1 water scene with a free camera.
 
 Checks use `gdh`, a command-line harness that runs the game off-screen on the GPU, steps it frame
 by frame with scripted input, takes screenshots and evaluates expressions in the running game.
@@ -36,8 +38,15 @@ cameras/        ChaseCamera, FreeCamera, CameraSwitcher
 props/          crate.tscn (a Floater)
 debug/          WaterProbe, DebugHud (F3 readout), RideRecorder (ride statistics),
                 DemoDriver (scripted ride, --demo)
-levels/         open_water.tscn (main), water_test.tscn
-test/           water_match.tscn (GPU/CPU height comparison), wave_bench.gd
+course/         Course (centre line, walls, gates, progress), CourseGate, CourseProgress, Buoy,
+                Ramp, StartGate (all code-built and swappable), wall_float.gdshader
+race/           Race (race.tscn is the main scene), RacerState, RaceHud, GateMarker; RaceRules,
+                PowerMeter and RacingLine (written for milestones 4 and 5, not used yet)
+levels/         gull_cove.tscn (course), open_water.tscn (free ride), water_test.tscn
+physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
+tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
+test/           water_match.tscn (GPU/CPU height comparison), wave_bench.gd,
+                scenarios/ (regression scenarios), tools/autodrive.py (test driver)
 docs/screenshots/  evidence screenshots for finished milestones
 captures/       gdh output, git-ignored and hidden from Godot (.gdignore)
 ```
@@ -165,6 +174,111 @@ cast pulls it in front of islands and rocks. FOV widens from 70° to 79° with s
 | Air control delay | 0.35 s | The lean's air pitch fades in over this much air time, so a hop while carving with a forward lean keeps the nose above −16° (it dived to −38°). |
 | Air roll | level toward 10° × steer, stiffness 12/s², damping 5/s | Without it, a turn that launched off a swell kept rolling to 46–80° and landed on its side; now under 26° in the air and 14° at touchdown. |
 
+## How a course works
+
+A course is a scene whose root is a `Course` node (`course/course.gd`), with the water, sun,
+terrain and scenery as children. `levels/gull_cove.tscn` is the first one. `Race`
+(`race/race.tscn`, the main scene) instantiates the course scene named in its `course_scene`,
+spawns the racers on the starting grid and runs the race, so one race scene serves every course.
+
+- **Centre line.** `Course.control_points` (world x, z) and `half_widths` (one per point) define
+  a closed centripetal Catmull-Rom curve, sampled every 1 m and turned so that sample 0 lies on the
+  `StartLine` marker. Offsets along it (0 at the start line, up to `Course.length`) are how the
+  game measures progress, places things and draws the racing line. Keep the course node at the
+  origin, unrotated: everything is in world space.
+- **Walls.** Invisible `StaticBody3D` boxes (physics layer 3, no friction, slight bounce) stand
+  `half_width` either side of the centre line. On the inside of a turn tighter than the half
+  width, the offset line would cross itself; those loops are cut out where the line crosses
+  (`Course._remove_loops`), so the wall follows the inside of the turn. The walls reach from 6 m
+  under the water to 18 m above it, above any jump.
+- **Progress.** `Course.track()` finds the nearest centre-line sample, searching only ±24 samples
+  around the last one, so a racer can't jump to another part of the course that lies close by
+  (the legs either side of the hairpin spit are 45 m apart). It refines between samples and keeps
+  `distance`, which grows by one course length per lap; race positions sort by it.
+  `Course.relocate()` searches the whole line after a teleport and keeps `distance` continuous.
+- **Gates.** Each `Buoy` under the course's `Buoys` node (in order of travel) becomes a
+  `CourseGate`: a line through the buoy, square to the centre line there, reaching to both walls
+  plus 6 m. A racer passes it when its movement between two physics ticks crosses the line going
+  forward; the crossing point says which side it passed on. Red buoys are kept on the racer's
+  right (pass to their left), yellow buoys on the left. The race checks the next three gates, so
+  crossing a later gate first counts the skipped ones as missed; a gate left 30 m behind without
+  a crossing (after a teleport) is missed too. The finish line is a gate at offset 0; a lap counts
+  when the racer crosses it forward having travelled at least one course length minus 60 m since
+  the last lap, so crossing it at the start, backwards, or back and forth never counts.
+- **Timing.** The race clock counts physics ticks from "go", and a crossing is placed inside its
+  tick by interpolating the movement, so lap times don't depend on the frame rate.
+- **Buoys** are `AnimatableBody3D`s (physics layer 4) placed at the water height and tilted 60%
+  toward the wave normal every physics tick, so racers bump into them where they are drawn. They
+  flash white when the player passes them and dark on a miss. `GateMarker` floats an arrow in
+  the buoy's colour over the player's next buoy, pointing to the side to pass on.
+- **Ramps** (`course/ramp.gd`) are code-built wedges (physics layer 1, friction 0.05) from 2 m
+  under the water's rest level to a 1.8 m lip over 12 m (17.6°), so a craft always meets the
+  slope even in a 1.36 m trough. The jet has no water on the ramp, so the craft coasts up it.
+- **Physics layers:** 1 scenery (terrain, rocks, ramps, gate pylons; the chase camera's ray
+  stops at these), 2 craft, 3 course walls, 4 floating things (buoys, crates). Jet skis collide
+  with all four.
+
+## Gull Cove
+
+A 636 m clockwise loop around a central island, laid out on a top-down map with a design script
+before building it (start straight north, a sweeping right, a three-buoy slalom east, a 155°
+right hairpin around a rock spit, two rock pillars on a narrow leg, a left kink, the ramp leg
+south, a right, the second ramp on the bottom leg, a right onto the start straight). Nine buoys
+a lap (5 red, 4 yellow); the slalom buoys sit 4 m either side of the centre line, so the
+racing line has to weave. Corridor half widths 16–22 m. The hairpin's centre line has a 10.8 m
+radius, about the craft's full-lock radius at top speed, so it needs a lift or a carve.
+
+Islands, sandbars and rocks fill the inside of the loop; every wall point is at least 2.5 m
+deep even with the islands' random coastline variation at its largest (`coast_noise`,
+checked on the map), so the walls, not the seabed,
+stop a craft. The water is `water/presets/cove_swell.tres`: the open-water swell at 75%
+amplitude (troughs to −1.36 m), calmer than open water but still enough to catch air heading
+into the swell on the bottom leg.
+
+Measured with the test driver (`test/tools/autodrive.py`, below), which steers with the gamepad
+stick through each buoy's passing side: one lap in 44.8 s, 9 of 9 buoys passed. Holding a
+lateral line over ramp 1 at 54 km/h: the craft leaves the lip at 17.5° nose up, rises 2.8 m above
+the water, flies 1.4 s and lands at 45 km/h. Steering into the start straight's wall at 52 km/h:
+the craft stops 0.6 m inside the wall line (half the hull's width) and slides along it at
+35 km/h.
+
+## How a race works
+
+`Race` (`race/race.gd`) loads the course, spawns the player's craft (with a `PlayerInput`) in a
+grid slot, holds it there during a 3 s countdown (`JetSki.hold()`: a spring to the slot, engine
+idle) and then, every physics tick (priority 50, after the riders' input), tracks each racer,
+judges gate crossings, counts laps and sorts the racers by distance travelled into places.
+`RacerState` holds a racer's progress, laps and lap times, buoys passed and missed and its place.
+
+- **Reset (R)** calls `Race.rescue()` through `JetSki.reset_handler`: the craft goes back on the
+  course at its current offset, facing along the course, stopped, at the first spot with nothing
+  solid (scenery, buoys, other craft) within 3 m: where it was across the course, else the centre
+  line, else either side, else up to 30 m further on. Gate checks pause for two ticks so the jump
+  isn't read as a crossing.
+- **Wrong way:** moving against the course faster than 1.5 m/s for 1 s shows WRONG WAY.
+- **HUD** (`RaceHud`, built in code): lap, race time and each lap's time (best marked), speed,
+  the countdown, and short calls (NICE / MISSED BUOY, LAP 2, FINAL LAP, FINISH) in the upper third,
+  clear of the rider. `GateMarker` floats an arrow over the player's next buoy pointing to its
+  passing side, in the buoy's colour.
+- **`Race.place_racer(racer, offset, lateral, speed, backwards)`** puts a racer anywhere on the
+  course with a given speed, for tests; its distance is set to that offset in its current lap.
+- **The test driver** `test/tools/autodrive.py` rides the player's craft through gdh with real
+  input (gamepad stick, or `--keyboard` for the digital steer actions): every few frames it reads
+  the craft's position and steers toward a point ahead on a line through each buoy's passing side.
+  `--laps`, `--shots OFFSETS`, `--start-offset/--start-lateral/--start-speed`, `--lateral` and
+  `--wrong-side INDEX` set up tests; `--out` saves a log of position, speed, airborne and lateral.
+
+## Course design tool
+
+`tools/courses/course_tool.py SPEC.json --map out.png --scene` lays out a course from a JSON spec
+(`tools/courses/gull_cove.json`): control points with half widths, buoys, ramps and rocks by
+course offset and lateral offset, and terrain islands. It uses the same spline as the game, so
+offsets match, draws a top-down map (walls with the inside loops cut out, buoys with a tick toward
+their passing side, ramps, rocks, islands and shallows) and circles every wall point that lies over
+water shallower than 2.5 m, and writes the course scene. Writing the scene overwrites it, so edit
+the spec, not the scene, for layout changes. Session 3 needs three more courses; start from a copy
+of the Gull Cove spec.
+
 ## Verification done
 
 - **GPU vs CPU height, numerically.** `res://test/water_match.tscn` draws the water from straight
@@ -218,6 +332,36 @@ changes the yaw rate within 1 frame of the input. The bank settles at 10–15° 
 - Screenshots: `docs/screenshots/m2_*.png` (turn with bank over the sandbar, airborne, model, rock
   pass, a contact sheet of the 20 s demo ride).
 
+### Milestone 3 (a course)
+
+Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
+
+- **Laps and buoys.** The test driver (stick input) rode a lap in 44.8 s passing 9 of 9 buoys;
+  with keyboard steering, a full race in 2:14.02 (laps 45.83, 43.72, 44.44 s), 27 of 27 buoys,
+  ending in FINISH. Passing buoy 3 on the wrong side counted a miss (8 passed, 1 missed).
+- **Ramps.** Riding over ramp 1 at 54 km/h: off the lip at 17.5° nose up, 2.8 m above the water,
+  1.4 s in the air, landing at 45 km/h. `airborne` turns on only past the lip (418.7 m, lip at
+  418 m), because a hull touching anything solid isn't in the air.
+- **Walls.** Steering into the start straight's wall at 52 km/h, the craft stops 0.6 m inside
+  the wall line and slides along it at 35 km/h.
+- **Reset.** Stopped against the pillar at 318 m, reset puts the craft on the centre line facing
+  along the course, and it rides away at 42 km/h within 2 s; reset on a ramp puts it beside the ramp.
+- **Playtester agent:** passed all 7 goals (keyboard lap 44.33 s and a full race in 2:08.00, buoy
+  judging both ways for red and yellow, both ramps, walls in three places including the hairpin,
+  rocks and pillars solid, reset, no engine errors or warnings). It found: reset pointing the craft
+  back at a pillar or into a ramp, `airborne` turning on while still on the ramp face, ramps off
+  the buoy line, walls with nothing marking them, the start banner behind the HUD, buoy calls on
+  top of the rider, a wrong camera view on the first frame and a test helper moving distance
+  backwards. All are fixed and re-checked above; the underwater look it noted is listed under
+  known issues.
+- **Frame time** on the race: GPU median 0.60 ms, p99 0.82 ms; CPU (render) 0.09 ms.
+- **Regression scenarios:** `course_buoys`, `course_laps`, `course_ramps`, `course_walls`,
+  `course_reset` (49 checks) plus the five from milestone 2: all 10 pass. The playtester's own
+  scenarios replayed exact inputs and checked exact values (a lap time to 0.05 s, rocks by node
+  name), so any physics change would break them; they are kept in `captures/` as evidence only.
+- Screenshots: `docs/screenshots/m3_*.png` (start grid, slalom with the buoy arrow, hairpin,
+  pillars, ramp jump, wall floats, the course map).
+
 ## Controls (Input Map actions)
 
 | Action | Keyboard | Gamepad |
@@ -225,7 +369,7 @@ changes the yaw rate within 1 frame of the input. The bank settles at 10–15° 
 | throttle | Space, J | A, right trigger |
 | steer_left / steer_right | A / D, Left / Right | left stick X, D-pad |
 | lean_forward / lean_back | W / S, Up / Down | left stick Y (up = forward), D-pad |
-| reset_craft | R | Back |
+| reset_craft | R (in a race: back on the course, clear of obstacles) | Back |
 | toggle_camera | C | Y |
 | toggle_debug | F3 | |
 | cam_forward/back/left/right | W S A D (free camera only) | |
@@ -261,6 +405,13 @@ changes the yaw rate within 1 frame of the input. The bank settles at 10–15° 
 
 ## Known issues and rough edges
 
+- Anything just under the water (the underwater part of rocks, ramp posts) is drawn bright
+  turquoise, because the water's depth colour treats it as shallow water. It reads like a cyan
+  shadow under rocks. A milestone-8 polish item: darken or desaturate the shallow colour where the
+  depth comes from a moving or vertical object rather than the seabed.
+- The racing line the test driver follows comes from the buoys only; it doesn't plan for the
+  ramps, which now sit on that line.
+
 - The terrain is flat-shaded with 4 m cells, so the edges of shallow areas show straight facets
   through the water. A finer grid near shores would smooth this.
 - Eight waves repeat visibly when seen from high above; at riding height it isn't noticeable.
@@ -269,25 +420,18 @@ changes the yaw rate within 1 frame of the input. The bank settles at 10–15° 
   landings.
 - Off the throttle the craft slows quickly (42 to 7 km/h in 3 s). Real jet skis do, but it may
   feel abrupt; lower `linear_drag` if so.
-- The craft beaches itself on island sand and can't reverse; R resets it. Courses (milestone 3)
-  need walls or rocks around islands.
+- The craft beaches itself on island sand and can't reverse; R resets it. Course walls keep
+  racers 2.5 m deep or more.
 - A replay of a gdh session reaches the same state, but screenshots differ in about 0.5% of
   pixels around the rider (the pose eases in `_process`), so screenshot baselines need a tolerance.
 - No spray, wake or sound yet (milestone 8). `JetSki.carving` and `JetSki.airborne` are there for
   them.
 
-## For the next session (milestones 3–5)
+## Next: milestones 4 and 5 (this session)
 
-- Courses: build them as scenes like `open_water.tscn`. `Terrain.islands` makes islands and
-  shoals; `Rock` makes rocks and pillars (set `height_scale` above 1). Buoys should be `Floater`s
-  (or kinematic nodes placed with `Ocean.height_at_time(pos, Ocean.end_time)` in
-  `_physics_process`). Each course needs a `ShoreMap` covering it; keep static scenery on visual
-  layer 1 and anything that moves on layer 2, or it will get shoreline foam.
-- Ramps: the craft has a box collider (1.0 × 0.55 × 2.7 m) and no thrust out of the water, so it
-  coasts up a ramp on its speed. Start ramps below the waterline.
-- Power meter: raise `JetSki.power_multiplier` (thrust). Top speed grows with its square root, so
-  +44% thrust is +20% top speed; lowering drag is the other lever.
+- Power meter: raise `JetSki.power_multiplier` (thrust). Top speed grows with about its square
+  root, so +44% thrust is +20% top speed; lowering drag is the other lever.
 - Opponents: fill `JetSki.controls` from an AI node instead of `PlayerInput`; the physics is the
-  same.
-- Crashes: `JetSki.respawn_here()` is the current capsize recovery; replace it with the rider
-  falling off and remounting.
+  same. `RacingLine` and `AIDriver` are drafted.
+- Crashes: replace the capsize recovery (`JetSki.respawn_here()`) with the rider falling off,
+  swimming back and remounting.

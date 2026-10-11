@@ -1,6 +1,6 @@
 {
   "description": "With no input the jet ski floats upright on the rolling swell and drifts slowly.",
-  "start": {"seed": 1},
+  "start": {"scene": "res://levels/open_water.tscn", "seed": 1},
   "steps": [
     "step 600",
     {"expect": "abs(scene.get_node('JetSki').telemetry().roll_degrees) < 25", "name": "roll within 25 degrees"},

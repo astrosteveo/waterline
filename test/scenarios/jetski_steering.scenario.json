@@ -1,6 +1,6 @@
 {
   "description": "Steering right turns and banks right; a forward lean makes the same turn tighter.",
-  "start": {"seed": 1},
+  "start": {"scene": "res://levels/open_water.tscn", "seed": 1},
   "steps": [
     {"eval": "scene.get_node('JetSki').respawn(Transform3D(Basis(Vector3(0,1,0), PI), Vector3(0,0,0)))"},
     "step 2",

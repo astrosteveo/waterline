@@ -34,7 +34,7 @@ func _physics_process(delta: float) -> void:
 	controls.lean = _ease(controls.lean, Input.get_axis(&"lean_back", &"lean_forward"), delta,
 			lean_rise_time, steer_fall_time)
 	if Input.is_action_just_pressed(&"reset_craft"):
-		_craft.respawn()
+		_craft.request_reset()
 
 
 ## Moves [param current] toward [param target], taking [param rise] seconds for a full

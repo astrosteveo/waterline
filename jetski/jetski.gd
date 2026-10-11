@@ -25,6 +25,9 @@ signal respawned
 
 ## What the rider asks for this tick. [PlayerInput] or a computer rider writes it.
 var controls := RiderControls.new()
+## Called instead of [method respawn] when the rider asks for a reset ([method request_reset]).
+## A race sets it to put the craft back on the course.
+var reset_handler: Callable
 
 # Telemetry, refreshed every physics tick.
 ## Horizontal speed over the ground, m/s.
@@ -60,8 +63,11 @@ var _samples: Array[WaterSample] = []
 var _spawn_transform := Transform3D.IDENTITY
 var _respawn_target := Transform3D.IDENTITY
 var _pending_respawn := false
+var _respawn_speed := 0.0
 var _capsized_time := 0.0
 var _model: Node3D
+var _held := false
+var _hold_transform := Transform3D.IDENTITY
 
 
 func _ready() -> void:
@@ -69,6 +75,9 @@ func _ready() -> void:
 		tuning = JetSkiTuning.new()
 	can_sleep = false
 	continuous_cd = true
+	# Contacts tell a craft riding a ramp from one in the air.
+	contact_monitor = true
+	max_contacts_reported = 8
 	custom_integrator = false
 	linear_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
 	linear_damp = 0.0
@@ -117,9 +126,10 @@ func _collect_hull_points() -> void:
 
 
 ## Puts the craft back upright on the water at [param where] (its spawn point by default),
-## stopped.
-func respawn(where: Transform3D = _spawn_transform) -> void:
+## moving forward at [param speed] m/s through the water.
+func respawn(where: Transform3D = _spawn_transform, speed: float = 0.0) -> void:
 	_respawn_target = where
+	_respawn_speed = speed
 	_pending_respawn = true
 
 
@@ -130,6 +140,31 @@ func respawn_here() -> void:
 	if heading.length_squared() < 0.01:
 		heading = Vector3.FORWARD
 	respawn(Transform3D(Basis.looking_at(heading.normalized(), Vector3.UP), global_position))
+
+
+## Asks for the craft to be put back: [member reset_handler] if set, else [method respawn].
+func request_reset() -> void:
+	if reset_handler.is_valid():
+		reset_handler.call()
+	else:
+		respawn()
+
+
+## Keeps the craft floating at [param where] with the engine idle, for example on the
+## starting grid. The waves still move it up and down.
+func hold(where: Transform3D) -> void:
+	_held = true
+	_hold_transform = where
+
+
+## Ends [method hold]: the rider has control again.
+func release() -> void:
+	_held = false
+
+
+## True while [method hold] keeps the craft in place.
+func is_held() -> bool:
+	return _held
 
 
 ## The telemetry as a dictionary, for the debug overlay and for tests.
@@ -230,8 +265,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	slip_angle = atan2(side_speed, absf(forward_speed)) if absf(forward_speed) > 1.0 else 0.0
 
 	# --- The rider: lean and carving change grip, turning and drag. ---
-	var steer := clampf(controls.steer, -1.0, 1.0)
-	var lean := clampf(controls.lean, -1.0, 1.0)
+	var steer := 0.0 if _held else clampf(controls.steer, -1.0, 1.0)
+	var lean := 0.0 if _held else clampf(controls.lean, -1.0, 1.0)
 	var lean_forward := maxf(lean, 0.0)
 	var lean_back := maxf(-lean, 0.0)
 	var grip_multiplier := lerpf(1.0, t.lean_forward_grip, lean_forward) * lerpf(1.0, t.lean_back_grip, lean_back)
@@ -246,7 +281,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var speed_ratio := clampf(absf(forward_speed) / t.reference_top_speed, 0.0, 1.5)
 
 	# --- Thrust: the jet pushes along the surface while the intake is under water. ---
-	thrust = move_toward(thrust, clampf(controls.throttle, 0.0, 1.0), t.throttle_response * dt)
+	var throttle := 0.0 if _held else clampf(controls.throttle, 0.0, 1.0)
+	thrust = move_toward(thrust, throttle, t.throttle_response * dt)
 	var intake_depth := intake_depth_sum / maxf(intake_count, 1)
 	var intake_wet := clampf(intake_depth / t.intake_depth, 0.0, 1.0)
 	var thrust_force := t.max_thrust * thrust * intake_wet * power_multiplier
@@ -333,8 +369,11 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		state.apply_torque(-ang * t.air_angular_damping * t.inertia.z * air_share)
 	state.apply_central_force(-lin * lin.length() * t.air_drag)
 
+	if _held:
+		_apply_hold(state)
+
 	# --- Airtime and capsizing. ---
-	airborne = clearance > 0.02
+	airborne = clearance > 0.02 and state.get_contact_count() == 0
 	air_time = air_time + dt if airborne else 0.0
 	if in_water and b.y.dot(Vector3.UP) < 0.0:
 		_capsized_time += dt
@@ -345,6 +384,20 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		_capsized_time = 0.0
 
 
+## Pulls the craft toward the hold point and heading with a spring and a damper.
+func _apply_hold(state: PhysicsDirectBodyState3D) -> void:
+	var gap := _hold_transform.origin - state.transform.origin
+	gap.y = 0.0
+	var velocity := state.linear_velocity
+	velocity.y = 0.0
+	state.apply_central_force((gap * 4.0 - velocity * 3.0) * tuning.mass)
+	var nose := -state.transform.basis.z
+	var want := -_hold_transform.basis.z
+	var yaw_error := atan2(nose.cross(want).y, nose.dot(want))
+	var yaw_rate := state.angular_velocity.y
+	state.apply_torque(Vector3.UP * (yaw_error * 9.0 - yaw_rate * 5.0) * tuning.inertia.y)
+
+
 func _do_respawn(state: PhysicsDirectBodyState3D) -> void:
 	_pending_respawn = false
 	var target := _respawn_target
@@ -352,13 +405,13 @@ func _do_respawn(state: PhysicsDirectBodyState3D) -> void:
 	target.origin.y = water.height - 0.08
 	state.transform = target
 	# Move with the water, so the craft doesn't drop off a falling surface.
-	state.linear_velocity = water.velocity
+	state.linear_velocity = water.velocity - target.basis.z * _respawn_speed
 	state.angular_velocity = Vector3.ZERO
 	thrust = 0.0
 	air_time = 0.0
 	airborne = false
-	speed = Vector2(water.velocity.x, water.velocity.z).length()
-	forward_speed = 0.0
+	speed = Vector2(state.linear_velocity.x, state.linear_velocity.z).length()
+	forward_speed = _respawn_speed
 	side_speed = 0.0
 	slip_angle = 0.0
 	grip_usage = 0.0

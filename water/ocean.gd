@@ -19,8 +19,11 @@ signal wave_set_changed
 ## The waves in use. Never null: a flat sea until a scene sets one.
 var wave_set: WaveSet = WaveSet.new():
 	set(value):
+		if wave_set.changed.is_connected(_on_waves_changed):
+			wave_set.changed.disconnect(_on_waves_changed)
 		wave_set = value if value != null else WaveSet.new()
-		wave_set_changed.emit()
+		wave_set.changed.connect(_on_waves_changed)
+		_on_waves_changed()
 
 ## Rest height of the water in world space. A course can raise or lower it between laps.
 var level: float = 0.0
@@ -31,6 +34,8 @@ var time: float = 0.0
 ## Wave time at the end of the current physics step.
 var end_time: float = 0.0
 
+var _followers: Array[ShaderMaterial] = []
+
 
 func _ready() -> void:
 	# Run before every other node's _physics_process.
@@ -40,6 +45,45 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	time = end_time
 	end_time += delta
+
+
+func _process(_delta: float) -> void:
+	if _followers.is_empty():
+		return
+	var phases := wave_set.get_shader_wave_phases(render_time())
+	for material in _followers:
+		material.set_shader_parameter(&"wave_phase", phases)
+		material.set_shader_parameter(&"water_level", level)
+
+
+## Keeps [param material]'s wave uniforms (wave_count, wave_dir_k, wave_shape, wave_phase
+## and water_level) in step with the water every frame, so a shader that includes
+## res://water/gerstner.gdshaderinc can move things with the drawn waves.
+func add_follower(material: ShaderMaterial) -> void:
+	if material in _followers:
+		return
+	_followers.append(material)
+	_push_wave_data(material)
+
+
+## Stops updating [param material].
+func remove_follower(material: ShaderMaterial) -> void:
+	_followers.erase(material)
+
+
+func _on_waves_changed() -> void:
+	for material in _followers:
+		_push_wave_data(material)
+	wave_set_changed.emit()
+
+
+func _push_wave_data(material: ShaderMaterial) -> void:
+	var data := wave_set.get_shader_wave_data()
+	material.set_shader_parameter(&"wave_count", data["count"])
+	material.set_shader_parameter(&"wave_dir_k", data["wave_dir_k"])
+	material.set_shader_parameter(&"wave_shape", data["wave_shape"])
+	material.set_shader_parameter(&"wave_phase", wave_set.get_shader_wave_phases(render_time()))
+	material.set_shader_parameter(&"water_level", level)
 
 
 ## The wave time to draw the current frame at. With physics interpolation on, bodies are

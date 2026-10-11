@@ -1,6 +1,6 @@
 {
   "description": "Holding the throttle from rest reaches racing speed within 6 seconds.",
-  "start": {"seed": 1},
+  "start": {"scene": "res://levels/open_water.tscn", "seed": 1},
   "steps": [
     {"eval": "scene.get_node('JetSki').respawn(Transform3D(Basis(Vector3(0,1,0), PI), Vector3(0,0,0)))"},
     "step 2",
