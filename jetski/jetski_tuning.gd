@@ -188,9 +188,9 @@ extends Resource
 ## Seconds each stunt takes. A stunt still going at touchdown fails (see
 ## [member stunt_landing_tolerance]), so a longer stunt needs a bigger jump.
 @export_range(0.1, 3.0, 0.01, "suffix:s") var barrel_roll_time: float = 0.75
-@export_range(0.1, 3.0, 0.01, "suffix:s") var backflip_time: float = 0.9
+@export_range(0.1, 3.0, 0.01, "suffix:s") var backflip_time: float = 0.8
 @export_range(0.1, 3.0, 0.01, "suffix:s") var spin_time: float = 0.7
-@export_range(0.1, 3.0, 0.01, "suffix:s") var handstand_time: float = 0.9
+@export_range(0.1, 3.0, 0.01, "suffix:s") var handstand_time: float = 0.8
 ## A roll, flip or spin this close to finished at touchdown still counts (the landing is
 ## untidy); further from it, the rider is thrown off.
 @export_range(0.0, 180.0, 0.1, "degrees") var stunt_landing_tolerance: float = 45.0

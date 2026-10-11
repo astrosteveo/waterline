@@ -46,6 +46,9 @@ static func button(text: String, size: int = 38, min_size: Vector2 = Vector2(300
 		var style := StyleBoxFlat.new()
 		style.set_corner_radius_all(10)
 		style.skew = Vector2(0.15, 0.0)
+		# Room for the slant, so text never touches the edge.
+		style.content_margin_left = 26
+		style.content_margin_right = 26
 		match state:
 			&"normal":
 				style.bg_color = Color(0.08, 0.24, 0.62)

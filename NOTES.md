@@ -509,6 +509,26 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 - **Regression scenarios** added: `race_power`, `race_disqualify`, `race_crash`; `course_reset`
   now also checks that reset waits for the rider. All 13 pass.
 
+### Milestone 6 (stunts and riders)
+
+- **Stunts:** `race_stunts` (27 checks): a barrel roll and a handstand started early land
+  clean, score 100 and 120 and add a power level; stunt on the water does nothing; a backflip
+  started 0.5 s into the jump throws the rider off (`stunt_failed`); 0.5 s of forward lean
+  lands about 20° nose down, untidy, losing 5–36% of the speed.
+- **Riders:** `riders_select` (15 checks): the stats shown per rider, the list wrapping,
+  confirming races as Ines against the other three with Ines's handling and weight, and the
+  computer riders on their own stats. The flat-water and Gull Cove numbers are in "Riders".
+- **Playtester agent:** goals 2–6 passed (every stunt binding including gamepad B and X,
+  stunt directions, scores and the combo, late stunts failing, landing quality matching the
+  speed lost to the percent, rider stats in the expected order, computer riders landing 6
+  barrel rolls in 18 ramp jumps, results buttons, no engine errors). Goal 1 failed on one
+  point: gamepad A didn't confirm, because `ui_accept` had only its keyboard defaults. Also
+  found: rider names touching the button edge, the stats panel jumping 13 px between one- and
+  two-line descriptions, early backflips and handstands landing untidy on short jumps, and no
+  call for a failed stunt. All fixed: `ui_accept`/`ui_cancel` now include gamepad A/B, buttons
+  have side padding, the description keeps two lines' height, the two stunts take 0.8 s, and
+  the HUD calls WIPEOUT on any crash. All 17 scenarios pass.
+
 ### Milestone 5 (opponents)
 
 - **Computer riders alone** (player idle): three 3-lap races, all within 2.1 s of each other at
@@ -550,10 +570,11 @@ while a stunt runs; a second stunt can follow the first in the same jump.
   (`JetSkiModel.set_stunt`): the body swings forward over the bars, upside down, legs up. A
   replacement model only needs `set_stunt(stunt, progress)` for the handstand; the turn works
   on any model.
-- **Timing.** Roll 0.75 s, backflip 0.9 s, spin 0.7 s, handstand 0.9 s. A ramp jump at full
-  speed gives about 1.05 s of air, so any one stunt fits if started within about 0.1–0.3 s of
-  the lip; two need a big swell or more speed. 1.1 s for the handstand and 0.95 s for the flip
-  left no time to react off a ramp.
+- **Timing.** Roll 0.75 s, backflip 0.8 s, spin 0.7 s, handstand 0.8 s. A ramp jump on Gull
+  Cove gives 0.85–1.25 s of air (waves and power), so any one stunt fits if started within
+  about 0.1–0.2 s of the lip; two need more air (Ebb Reef's ramps at low tide, big swells). At
+  0.9 s a backflip or handstand started at the first moment still landed untidy on a third of
+  the shorter jumps; at 0.8 s, ten such jumps (1.00–1.27 s of air) all landed clean.
 - **Touchdown mid-stunt.** A roll, flip or spin within `stunt_landing_tolerance` (45°) of
   finished, or a handstand past 85%, counts: the model finishes the turn in 0.12 s and the
   landing is at least untidy. Otherwise the rider is thrown off (`stunt_failed`).
@@ -628,6 +649,7 @@ The results screen has RACE AGAIN, RIDERS (back to rider select) and QUIT.
 | lean_forward / lean_back | W / S, Up / Down | left stick Y (up = forward), D-pad |
 | stunt | K, Left Shift (in the air; the held direction picks the stunt) | B, X |
 | reset_craft | R (in a race: back on the course, clear of obstacles; not while swimming) | Back |
+| ui_accept / ui_cancel (menus) | Enter, Space / Escape | A / B |
 | toggle_camera | C | Y |
 | watch_next | Tab (watch mode only: follow the next rider) | right shoulder |
 | toggle_debug | F3 | |

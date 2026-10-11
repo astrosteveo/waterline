@@ -138,7 +138,8 @@ func _build_ui() -> void:
 	_name = MenuStyle.label("", 64, MenuStyle.YELLOW)
 	column.add_child(_name)
 	_tagline = MenuStyle.label("", 26, MenuStyle.DIM)
-	_tagline.custom_minimum_size = Vector2(500, 0)
+	# Two lines tall, so the panel doesn't jump between short and long descriptions.
+	_tagline.custom_minimum_size = Vector2(500, 70)
 	_tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(_tagline)
 	for i in RiderProfile.STATS.size():
