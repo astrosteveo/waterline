@@ -26,6 +26,8 @@ var _message: Label
 var _sub_message: Label
 var _wrong_way: Label
 var _watch_label: Label
+var _info: Label
+var _modes_connected := false
 var _message_tween: Tween
 var _shown_power := 0
 var _sub_tween: Tween
@@ -48,6 +50,7 @@ func _ready() -> void:
 		race.racer_disqualified.connect(_on_disqualified)
 		race.racer_landed.connect(_on_landed)
 		race.racer_crashed.connect(_on_crashed)
+		race.tide_turned.connect(_on_tide_turned)
 
 
 func _build() -> void:
@@ -76,6 +79,10 @@ func _build() -> void:
 	_lap_value = _label("1/3", 60, WHITE)
 	lap_row.add_child(_lap_value)
 	left_box.add_child(lap_row)
+	# Under the lap: the stunt run's clock and rings, or the time trial's record.
+	_info = _label("", 30, CYAN)
+	_info.visible = false
+	left_box.add_child(_info)
 
 	# Bottom left: power meter and missed buoys.
 	var rules := race.rules if race != null and race.rules != null else RaceRules.new()
@@ -192,8 +199,22 @@ func _process(_delta: float) -> void:
 		_watch_label.text = "WATCHING %s     TAB / RB: NEXT RIDER" % race.watched.display_name.to_upper()
 	# The rider the camera follows: the player, unless watching a race.
 	var racer := race.watched
+	_connect_modes()
 	_place_value.text = Race.ordinal(racer.place) if not racer.disqualified else "DQ"
 	_place_total.text = "/%d" % race.racers.size()
+	if race.stunt_mode != null:
+		var run := race.stunt_mode
+		_place_value.text = str(run.score)
+		_place_total.text = " PTS"
+		_info.visible = true
+		_info.text = "TIME %s\nRINGS %d/%d   x%.2f" % [Race.format_time(run.time_left()).trim_suffix(".00"),
+				run.rings_taken, run.rings.size(), run.multiplier()]
+	elif race.time_trial != null:
+		_place_value.text = "TT"
+		_place_total.text = ""
+		_info.visible = true
+		var trial := race.time_trial
+		_info.text = "RECORD %s\nBEST LAP %s" % [Race.format_time(trial.record_race), Race.format_time(trial.record_lap)]
 	_lap_value.text = "%d/%d" % [mini(racer.laps_done + 1, race.laps), race.laps]
 	_power.value = racer.power
 	_misses.value = racer.buoys_missed
@@ -207,6 +228,27 @@ func _process(_delta: float) -> void:
 		var mark := "  BEST" if racer.lap_times.size() > 1 and racer.lap_times[i] == best else ""
 		lines.append("L%d  %s%s" % [i + 1, Race.format_time(racer.lap_times[i]), mark])
 	_lap_list.text = "\n".join(lines)
+
+
+## Connects to the stunt run or the time trial once the race has set them up.
+func _connect_modes() -> void:
+	if _modes_connected:
+		return
+	_modes_connected = true
+	if race.stunt_mode != null:
+		race.stunt_mode.ring_taken.connect(func(ring: StuntRing, points: int, multiplier: float) -> void:
+			var text := ("AIR RING +%d" if not ring.floating else "RING +%d") % points
+			if multiplier > 1.0:
+				text += "  x%.2f" % multiplier
+			show_sub_message(text, YELLOW if ring.floating else CYAN, 0.9))
+		race.stunt_mode.ring_missed.connect(func(_ring: StuntRing) -> void:
+			show_sub_message("RING MISSED", ORANGE, 0.8))
+	if race.time_trial != null:
+		race.time_trial.split.connect(func(_lap: int, lap_time: float, difference: float) -> void:
+			if not is_nan(difference):
+				# Under the lap call, against the record lap: green ahead of it, red behind.
+				show_sub_message("%s   %s%.2f" % [Race.format_time(lap_time), "+" if difference >= 0.0 else "-",
+						absf(difference)], RED if difference >= 0.0 else Color(0.3, 1.0, 0.45), 1.8))
 
 
 ## Shows [param text] big in the middle of the screen for [param duration] seconds.
@@ -284,6 +326,11 @@ func _on_landed(racer: RacerState, quality: StringName, stunts: Array[StringName
 func _on_crashed(racer: RacerState, _reason: StringName) -> void:
 	if racer == race.watched and racer.is_racing():
 		show_sub_message("WIPEOUT", RED, 1.2)
+
+
+func _on_tide_turned(level: float) -> void:
+	var falling := level < Ocean.level
+	show_sub_message("THE TIDE IS GOING OUT" if falling else "THE TIDE IS COMING IN", CYAN, 2.5)
 
 
 func _on_lap_completed(racer: RacerState, lap: int, lap_time: float) -> void:

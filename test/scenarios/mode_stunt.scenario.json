@@ -1,0 +1,101 @@
+{
+  "description": "Stunt mode: one lap against the clock with rings along the course and past each ramp; a ring scores 100 times the chain multiplier and adds power; landed stunts score; the run ends at the finish or when time runs out, with a saved best score.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 3,
+    "user_data": "fresh",
+    "args": [
+      "--mode",
+      "stunt",
+      "--course",
+      "gull_cove"
+    ]
+  },
+  "steps": [
+    {
+      "expect": "[laps, racers.size(), stunt_mode.rings.size() >= 8, stunt_mode.time_limit]",
+      "equals": [
+        1,
+        1,
+        true,
+        65.0
+      ],
+      "name": "one lap, alone, rings out, 65 s on Gull Cove"
+    },
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "eval": "place_racer(player, stunt_mode._ring_offsets[0] - 25.0, racing_line.lateral_at(stunt_mode._ring_offsets[0]), 14)"
+    },
+    "step 3",
+    {
+      "step": 150,
+      "hold": "throttle"
+    },
+    {
+      "expect": "stunt_mode.rings_taken",
+      "equals": 1,
+      "name": "riding the line goes through the first ring"
+    },
+    {
+      "expect": "stunt_mode.score",
+      "equals": 100
+    },
+    {
+      "expect": "player.power >= 1",
+      "name": "a ring adds power"
+    },
+    {
+      "expect": "stunt_mode.chain",
+      "equals": 1
+    },
+    {
+      "eval": "place_racer(player, 394, -1, 15)"
+    },
+    "step 3",
+    {
+      "until": "player.craft.airborne",
+      "hold": "throttle",
+      "max": 240
+    },
+    {
+      "step": 4,
+      "hold": "throttle"
+    },
+    {
+      "step": 1,
+      "hold": [
+        "throttle",
+        "steer_right"
+      ],
+      "tap": "stunt"
+    },
+    {
+      "until": "not player.craft.airborne",
+      "hold": "throttle",
+      "max": 180
+    },
+    "step 2",
+    {
+      "expect": "stunt_mode.stunt_score",
+      "equals": 100,
+      "name": "a landed barrel roll scores 100"
+    },
+    {
+      "until": "get_node('SoloResults').is_open()",
+      "hold": "throttle",
+      "max": 5000,
+      "name": "the run ends"
+    },
+    {
+      "expect": "stunt_mode.over",
+      "equals": true
+    },
+    {
+      "expect": "Game.records.best_stunt_score('gull_cove') == stunt_mode.score",
+      "name": "the score is saved as the best"
+    }
+  ]
+}

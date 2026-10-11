@@ -1,0 +1,55 @@
+{
+  "description": "Lantern Harbor: night, lit by harbour lamps, lit buoys and a dim moon, with darker water; a computer rider laps it cleanly.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 5,
+    "args": [
+      "--no-opponents",
+      "--course",
+      "lantern_harbor"
+    ]
+  },
+  "steps": [
+    "step 3",
+    {
+      "expect": "[course.course_name, course.gates.size(), racers.size()]",
+      "equals": [
+        "Lantern Harbor",
+        9,
+        1
+      ]
+    },
+    {
+      "expect": "course.get_node('WorldEnvironment').environment.resource_path",
+      "equals": "res://environment/night_environment.tres"
+    },
+    {
+      "expect": "course.find_children('*', 'OmniLight3D', true, false).size() > 20",
+      "name": "harbour lamps and buoy lights"
+    },
+    {
+      "expect": "course.get_node('Sun').light_energy < 1.0",
+      "name": "a dim moon instead of the sun"
+    },
+    {
+      "expect": "course.get_node('OceanSurface').water_material.get_shader_parameter('crest_strength') < 0.2",
+      "name": "darker water at night"
+    },
+    {
+      "eval": "autopilot(player, 1.0)"
+    },
+    {
+      "until": "player.laps_done >= 1",
+      "max": 4500,
+      "name": "the computer rides 1 lap"
+    },
+    {
+      "expect": "[player.buoys_missed, player.crashes]",
+      "equals": [
+        0,
+        0
+      ],
+      "name": "without missing a buoy or crashing"
+    }
+  ]
+}

@@ -13,13 +13,15 @@ A jet ski racer in Godot 4.7 (Forward+, typed GDScript, Jolt physics), a spiritu
 | 4. The race rules | Done (session 2) |
 | 5. Opponents | Done (session 2) |
 | 6. Stunts and riders | Done (session 3) |
-| 7–8 | Not started |
+| 7. Game modes and courses | Done (session 3) |
+| 8. Polish | Not started |
 
 Run the game: `godot --path /home/astrosteveo/Projects/waterline` (or open the project in the
-editor and press F5). The game opens on the rider select screen (`res://menus/rider_select.tscn`),
-which starts `res://race/race.tscn`: a 3-lap race on the Gull Cove course against the three
-other riders. The race scene also runs on its own (`--scene res://race/race.tscn`, as Marina, or
-`-- --rider koa`) (`-- --no-opponents` races alone; `-- --watch` lets the
+editor and press F5). The game opens on the main menu (`res://menus/main_menu.tscn`):
+championship, quick race, time trial, stunt mode. The race scene also runs on its own
+(`--scene res://race/race.tscn`: a quick race on Gull Cove as Marina; `-- --rider koa`,
+`--course whitecap_point`, `--mode time_trial` (or `stunt`, `championship`) and `--laps 1` choose
+the rest) (`-- --no-opponents` races alone; `-- --watch` lets the
 computer ride the player's craft too, and Tab or the right shoulder button moves the camera
 from rider to rider, with the HUD and buoy arrow following that rider). `res://levels/open_water.tscn` is the milestone-2 free ride (one jet ski on open water
 with rolling swells, islands, rocks and floating crates; `godot --path . --scene
@@ -37,7 +39,8 @@ water/          WaveSet + GerstnerWave resources, the CPU wave math, the Ocean a
                 OceanSurface (the drawn water), the water shader, Floater (floating props),
                 ShoreMap (static scenery heights for shoreline foam)
 water/presets/  WaveSet presets: open_sea.tres (choppy), rolling_swell.tres (open-water level)
-environment/    sky shader, day environment, Sun, Terrain (seabed + islands), Rock
+environment/    sky shader (with stars), day and night environments, Sun, Terrain (seabed +
+                islands), Rock, Pier, LampPost, HarborBuilding
 jetski/         JetSki (RigidBody3D physics), JetSkiTuning (every tuning number),
                 RiderControls, PlayerInput; tuning/default.tres; model/ (placeholder craft
                 and rider, swappable)
@@ -45,14 +48,18 @@ cameras/        ChaseCamera, FreeCamera, CameraSwitcher
 props/          crate.tscn (a Floater)
 debug/          WaterProbe, DebugHud (F3 readout), RideRecorder (ride statistics),
                 DemoDriver (scripted ride, --demo)
-course/         Course (centre line, walls, gates, progress), CourseGate, CourseProgress, Buoy,
-                Ramp, StartGate (all code-built and swappable), wall_float.gdshader
-game/           Game autoload (riders, the player's choice, scene changes)
-menus/          RiderSelect (rider_select.tscn, the main scene), MenuStyle (shared look), StatBar
-race/           Race (race.tscn), RacerState, RaceRules (rules/default_rules.tres),
+course/         Course (centre line, walls, gates, progress, tide), CourseGate, CourseProgress,
+                CourseInfo, Buoy (with an optional lamp), Ramp, StartGate, StuntRing (all
+                code-built and swappable), wall_float.gdshader
+game/           Game autoload (riders, courses, modes, scene flow), Championship, Records
+menus/          MainMenu (main_menu.tscn, the main scene), RiderSelect, CourseSelect, Standings,
+                MenuBackdrop (a course behind a menu), MenuStyle (shared look), StatBar
+race/           Race (race.tscn), StuntMode, TimeTrial, GhostRecorder, GhostRider, SoloResults,
+                RacerState, RaceRules (rules/default_rules.tres),
                 RaceHud, PowerMeter (HUD widget), GateMarker, ResultsScreen, RacingLine, AIDriver
 riders/         RiderProfile (colours, craft stats, computer skill) and the four riders (.tres)
-levels/         gull_cove.tscn (course), open_water.tscn (free ride), water_test.tscn
+levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.png = menu map),
+                open_water.tscn (free ride), water_test.tscn
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
 test/           water_match.tscn (GPU/CPU height comparison), wave_bench.gd,
@@ -241,9 +248,9 @@ radius, about the craft's full-lock radius at top speed, so it needs a lift or a
 Islands, sandbars and rocks fill the inside of the loop; every wall point is at least 2.5 m
 deep even with the islands' random coastline variation at its largest (`coast_noise`,
 checked on the map), so the walls, not the seabed,
-stop a craft. The water is `water/presets/cove_swell.tres`: the open-water swell at 75%
-amplitude (troughs to −1.36 m), calmer than open water but still enough to catch air heading
-into the swell on the bottom leg.
+stop a craft. Since milestone 7 the water is `water/presets/cove_calm.tres` (the calm course):
+`cove_swell.tres` (the open-water swell at 75%, troughs to −1.36 m) at half height. The
+milestone 3–5 measurements below were made on `cove_swell`.
 
 Measured with the test driver (`test/tools/autodrive.py`, below), which steers with the gamepad
 stick through each buoy's passing side: one lap in 44.8 s, 9 of 9 buoys passed. Holding a
@@ -509,26 +516,6 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
 - **Regression scenarios** added: `race_power`, `race_disqualify`, `race_crash`; `course_reset`
   now also checks that reset waits for the rider. All 13 pass.
 
-### Milestone 6 (stunts and riders)
-
-- **Stunts:** `race_stunts` (27 checks): a barrel roll and a handstand started early land
-  clean, score 100 and 120 and add a power level; stunt on the water does nothing; a backflip
-  started 0.5 s into the jump throws the rider off (`stunt_failed`); 0.5 s of forward lean
-  lands about 20° nose down, untidy, losing 5–36% of the speed.
-- **Riders:** `riders_select` (15 checks): the stats shown per rider, the list wrapping,
-  confirming races as Ines against the other three with Ines's handling and weight, and the
-  computer riders on their own stats. The flat-water and Gull Cove numbers are in "Riders".
-- **Playtester agent:** goals 2–6 passed (every stunt binding including gamepad B and X,
-  stunt directions, scores and the combo, late stunts failing, landing quality matching the
-  speed lost to the percent, rider stats in the expected order, computer riders landing 6
-  barrel rolls in 18 ramp jumps, results buttons, no engine errors). Goal 1 failed on one
-  point: gamepad A didn't confirm, because `ui_accept` had only its keyboard defaults. Also
-  found: rider names touching the button edge, the stats panel jumping 13 px between one- and
-  two-line descriptions, early backflips and handstands landing untidy on short jumps, and no
-  call for a failed stunt. All fixed: `ui_accept`/`ui_cancel` now include gamepad A/B, buttons
-  have side padding, the description keeps two lines' height, the two stunts take 0.8 s, and
-  the HUD calls WIPEOUT on any crash. All 17 scenarios pass.
-
 ### Milestone 5 (opponents)
 
 - **Computer riders alone** (player idle): three 3-lap races, all within 2.1 s of each other at
@@ -553,6 +540,26 @@ Measured with gdh on `race/race.tscn` (Gull Cove, seed 1):
   teleport past buoys turn disqualification off. All 15 pass.
 - Screenshots: `docs/screenshots/m5_*.png` (the grid with opponents, racing 2nd in a pack, the
   results).
+
+### Milestone 6 (stunts and riders)
+
+- **Stunts:** `race_stunts` (27 checks): a barrel roll and a handstand started early land
+  clean, score 100 and 120 and add a power level; stunt on the water does nothing; a backflip
+  started 0.5 s into the jump throws the rider off (`stunt_failed`); 0.5 s of forward lean
+  lands about 20° nose down, untidy, losing 5–36% of the speed.
+- **Riders:** `riders_select` (15 checks): the stats shown per rider, the list wrapping,
+  confirming races as Ines against the other three with Ines's handling and weight, and the
+  computer riders on their own stats. The flat-water and Gull Cove numbers are in "Riders".
+- **Playtester agent:** goals 2–6 passed (every stunt binding including gamepad B and X,
+  stunt directions, scores and the combo, late stunts failing, landing quality matching the
+  speed lost to the percent, rider stats in the expected order, computer riders landing 6
+  barrel rolls in 18 ramp jumps, results buttons, no engine errors). Goal 1 failed on one
+  point: gamepad A didn't confirm, because `ui_accept` had only its keyboard defaults. Also
+  found: rider names touching the button edge, the stats panel jumping 13 px between one- and
+  two-line descriptions, early backflips and handstands landing untidy on short jumps, and no
+  call for a failed stunt. All fixed: `ui_accept`/`ui_cancel` now include gamepad A/B, buttons
+  have side padding, the description keeps two lines' height, the two stunts take 0.8 s, and
+  the HUD calls WIPEOUT on any crash. All 17 scenarios pass.
 
 ## Stunts and landings
 
@@ -640,6 +647,74 @@ steps). ui_accept sets `Game.player_rider` and opens the race. `Race` then races
 against `Game.opponents_for()` the rest; the command line `-- --rider NAME` does the same.
 The results screen has RACE AGAIN, RIDERS (back to rider select) and QUIT.
 
+## Game flow and modes
+
+`Game` (`game/game.gd`, an autoload) holds the riders, the courses (`CourseInfo` resources:
+id, name, conditions line, scene), the chosen rider, course and mode, the championship under
+way and the records, and changes scenes: main menu → rider select → course select (or the
+championship's next course) → race → results → back. Each screen calls Game
+(`start_mode`, `rider_chosen`, `course_chosen`, `goto_standings`, `next_championship_race`,
+`goto_main_menu`...), so screens don't know about each other. ui_cancel goes back a screen.
+`Race` reads `Game.mode` and sets itself up; `-- --mode NAME` sets the mode from the command
+line for tests.
+
+- **Quick race:** one race against the other three riders. Results: RACE AGAIN, COURSES,
+  MAIN MENU.
+- **Championship** (`Championship`): the four courses in menu order, points 10/6/3/1 by place
+  (none when disqualified), standings after each race (`menus/standings.tscn`: this race's
+  points and the totals, then the next course), the champion after the last; equal points go
+  to the better place in the last race. The results screen adds a POINTS column and CONTINUE
+  records the order as it stands (riders still out are placed where they are). The original
+  needed a points total to go on; this one always runs all four races, so a bad race isn't
+  the end.
+- **Time trial** (`TimeTrial`): alone from the middle of the grid, 3 laps. The HUD shows the
+  record and the best lap, and each lap call adds the difference from the record lap (green
+  ahead, red behind). At the finish `Records` keeps the race time and best lap if they are
+  better (with the rider), and a race record saves the run as the course's ghost.
+- **Ghosts:** `GhostRecorder` stores, every physics tick, the model's transform (so stunts
+  show), steer, lean, airborne and the stunt with its progress: 12 floats a tick, about 350 KB
+  for a 2-minute run, zstd-compressed in `user://ghosts/<course>.ghost`. `GhostRider` plays it
+  back on a see-through `JetSkiModel` (`ghost = true`: alpha 0.38, a faint blue glow, no
+  shadows) in step with the race clock, interpolated between ticks. Every race now starts the
+  wave clock at 0 (`Ocean.reset_time` in `Race._ready`), so the ghost rides the water it was
+  recorded on; before that the ghost floated a metre off the surface on a retry.
+- **Stunt mode** (`StuntMode`): one lap against a clock of 0.1 s per meter of the lap, rounded
+  up to 5 s (Gull Cove 65 s). Rings (`StuntRing`) float along the racing line every 50 m,
+  clear of buoys and ramps by 18 m, and an air ring hangs 9 m past each ramp's lip, 1.2 m
+  above it, where a full-speed jump flies. A ring scores 100 (an air ring 200) times a chain
+  multiplier (+0.25 per ring in a row, up to ×3, reset by a ring missed) and adds a power
+  level; landed stunts score as in a race; finishing adds 10 per second left. Buoys still
+  count for the power meter but can't disqualify. The best score per course is saved.
+- **Records** (`game/records.gd`): `user://records.cfg`, a ConfigFile with the best race and
+  lap per course (and who set them) and the best stunt score. gdh runs keep `user://` in their
+  own folder, so tests never touch a player's records.
+- **Results for the solo modes** are `SoloResults` (rows of label and value; RETRY, COURSES,
+  MAIN MENU) instead of the race results.
+
+## The four courses
+
+| Course | Conditions | Lap | How |
+|---|---|---|---|
+| Gull Cove | calm | 636 m | `cove_calm.tres`: the cove swell at half height (troughs to about −0.7 m). The first course, for learning the buoys. |
+| Whitecap Point | choppy open sea | 908 m | `whitecap_chop.tres`: `open_sea` with a lower main swell (0.62 m) and stronger chop (0.19, 0.13, 0.07 m). The craft hops off the chop on every straight. Long start straight with a ramp, a sweeping top, a chicane past a rock, a long bottom sweep. |
+| Lantern Harbor | night, harbour lights | 1021 m | `night_environment.tres` (dark sky with stars, a moon disc, colour ambient light, glow), a dim blue moon low in the sky so its glitter shows the swells, `harbor_swell.tres` (cove swell at 55%). Piers with lamps and lit buildings along the north shore, a breakwater with red and green entrance lights, lit buoys (`Buoy.lamp_energy`) and darker water (`OceanSurface.shader_overrides`). The course leaves through the breakwater gap and comes back round its east end. |
+| Ebb Reef | the tide goes out each lap | 852 m | `Course.lap_levels` 0, −0.9, −1.8 m: when the leader starts lap 2 and 3 the rest level falls at 0.15 m/s and the HUD calls THE TIDE IS GOING OUT. Reef flats break the surface, four rocks hidden 0.6 m under the water on lap 1 stand up to 1.2 m above it on lap 3 (the computer riders' line avoids them from the start), and the ramps' lips rise from 1.8 m to 3.6 m above the water, so the jumps grow. The ramps start 4.2 m under the high-tide level (19 m long, same 17.6° slope): with the default 2 m, a trough at low tide exposed the ramp's front edge and riders hit it head-on. Walls stay 4.3 m deep at high tide (2.5 m at low tide). |
+
+Computer races (four riders, 3 laps): Whitecap Point 58–60 s laps, 0–1 misses each, no crashes;
+Lantern Harbor about 60 s laps, Koa about 10 s ahead of the rest (top speed and skill on long
+straights), 0–1 misses, no crashes; Ebb Reef 50–59 s laps, 0–2 misses, no crashes.
+
+**Water level and other systems.** `Ocean.level` is set by each course at load (and reset to 0
+by every `OceanSurface`, since the autoload outlives scenes). Buoys, wall floats, rings, the
+chase camera and the physics all read it through `Ocean`; the ramps and rocks are fixed, which
+is what makes them taller at low tide.
+
+**Course tool additions** (`tools/courses/course_tool.py`): `props` (pier, lamp and building
+entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_levels`,
+`ramp_bottom` (deeper ramps at the same slope), `wall_depth` (the map's depth check), and
+`--thumb`, which draws the menu map (`levels/<id>_map.png`). Edit the JSON and rerun
+`--scene --thumb`, never the scene.
+
 ## Controls (Input Map actions)
 
 | Action | Keyboard | Gamepad |
@@ -709,29 +784,13 @@ The results screen has RACE AGAIN, RIDERS (back to rider select) and QUIT.
 - No spray, wake or sound yet (milestone 8). `JetSki.carving` and `JetSki.airborne` are there for
   them.
 
-## For the next session (milestones 6–8)
+## For the next session (milestone 8)
 
-- **Riders (milestone 6):** `RiderProfile` (`riders/`) already holds each rider's name, colours
-  and computer skill; add top speed, acceleration, handling and grip and apply them to the craft
-  (a per-rider copy of `JetSkiTuning`, or multipliers on `max_thrust`, the drag, `turn_rate_*` and
-  `grip_g`). `Race.player_rider` and `Race.opponents` choose who races; a rider select screen sets
-  them. Marina is the player's default today.
-- **Stunts (done in milestone 6):** landings are judged in `JetSki._judge_landing` and kept in
-  `JetSki.last_landing` (pitch, roll, slip, air time); today only crash-worthy landings do anything.
-  Add the speed loss for untidy landings and the stunt inputs there. The air pitch and yaw control
-  is in `_integrate_forces`; a barrel roll or handstand needs its own input actions (and the model's
-  pose code, `JetSkiModel._riding_joints`, for the rider).
-- **Courses (milestone 7):** copy `tools/courses/gull_cove.json`, lay out the new course with
-  `tools/courses/course_tool.py SPEC --map captures/x.png --scene`, and give the race scene's
-  `course_scene` the new scene. Water conditions are a `WaveSet` preset per course
-  (`water/presets/`); `Ocean.level` is the water's rest height for the course whose level changes
-  between laps (connect to `Race.lap_completed`; the wall floats and buoys already follow
-  `Ocean.level` and the waves). Night needs its own environment and sun (`course_tool` takes
-  `environment` and `sun` in the spec).
-- **Modes (milestone 7):** `Race` runs one race from its exports; a championship or time trial
-  can set `course_scene`, `player_rider`, `opponents` and `laps_override` before adding a race
-  scene to the tree. `-- --no-opponents` is already a solo race. Ghost replay needs the player's
-  transform recorded per tick.
-- **Polish (milestone 8):** `JetSki.carving`, `airborne`, `last_landing`, `thrust` and
-  `rider_state` are there for spray, wakes, engine pitch and splash sounds; `RaceHud.show_message`
-  and `show_sub_message` are the announcer's text.
+- **Spray and wakes:** `JetSki.carving`, `airborne`, `last_landing` (with `quality`),
+  `thrust`, `speed` and `rider_state` are there to drive them; `JetSki.landed` fires at each
+  judged touchdown.
+- **Sound:** no audio yet. Engine pitch from `JetSki.thrust` and `speed`; splash on `landed`.
+- **Announcer:** `RaceHud.show_message` / `show_sub_message`, and the race signals
+  (`started`, `lap_completed`, `racer_finished`, `racer_crashed`, `racer_landed`,
+  `tide_turned`, places from `RacerState.place`).
+- **Options:** add to the main menu; `Records.clear()` exists for a "clear records" option.

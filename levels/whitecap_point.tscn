@@ -1,0 +1,149 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://course/course.gd" id="course"]
+[ext_resource type="Environment" path="res://environment/day_environment.tres" id="env"]
+[ext_resource type="Script" path="res://environment/sun.gd" id="sun"]
+[ext_resource type="Script" path="res://water/ocean_surface.gd" id="ocean"]
+[ext_resource type="Resource" path="res://water/presets/whitecap_chop.tres" id="waves"]
+[ext_resource type="Material" path="res://water/ocean_material.tres" id="water_mat"]
+[ext_resource type="Script" path="res://water/shore_map.gd" id="shore"]
+[ext_resource type="Script" path="res://environment/terrain.gd" id="terrain"]
+[ext_resource type="Script" path="res://environment/rock.gd" id="rock"]
+[ext_resource type="PackedScene" path="res://course/buoy.tscn" id="buoy"]
+[ext_resource type="PackedScene" path="res://course/ramp.tscn" id="ramp"]
+[ext_resource type="PackedScene" path="res://course/start_gate.tscn" id="gate"]
+
+[node name="WhitecapPoint" type="Node3D"]
+script = ExtResource("course")
+course_name = "Whitecap Point"
+laps = 3
+grid_distance = 28
+control_points = PackedVector3Array(0, 0, 80, 0, 0, 0, 0, 0, -70, -15, 0, -130, -60, 0, -165, -120, 0, -170, -175, 0, -150, -205, 0, -105, -200, 0, -50, -175, 0, -15, -200, 0, 25, -195, 0, 80, -160, 0, 125, -100, 0, 150, -40, 0, 140)
+half_widths = PackedFloat32Array(24, 24, 22, 20, 20, 20, 19, 18, 17, 17, 17, 18, 20, 22, 22)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-50, 205, 0)
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 1.25
+shadow_enabled = true
+directional_shadow_max_distance = 220.0
+script = ExtResource("sun")
+
+[node name="OceanSurface" type="MeshInstance3D" parent="."]
+script = ExtResource("ocean")
+wave_set = ExtResource("waves")
+water_material = ExtResource("water_mat")
+
+[node name="ShoreMap" type="Node3D" parent="."]
+script = ExtResource("shore")
+
+[node name="Terrain" type="MeshInstance3D" parent="."]
+script = ExtResource("terrain")
+size = 800
+cells = 200
+islands = Array[Vector4]([Vector4(-85, -10, 74, 22), Vector4(-100, 95, 45, 6), Vector4(-75, -105, 48, 9), Vector4(120, -60, 70, 14), Vector4(-330, 40, 100, 16), Vector4(-60, 290, 80, 9), Vector4(90, 110, 50, 7), Vector4(-60, -260, 60, 10)])
+coast_noise = 0.2
+
+[node name="StartLine" type="Marker3D" parent="."]
+transform = Transform3D(0.99778, 0, 0.06652, 0, 1, 0, -0.06652, 0, 0.99778, 2.670, 0.000, 40.262)
+
+[node name="StartGate" parent="." instance=ExtResource("gate")]
+transform = Transform3D(0.99778, 0, 0.06652, 0, 1, 0, -0.06652, 0, 0.99778, 2.670, 0.000, 40.262)
+span = 50
+height = 13
+
+[node name="Buoys" type="Node3D" parent="."]
+
+[node name="Buoy01" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.072, 0, -107.660)
+kind = 1
+
+[node name="Buoy02" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -57.767, 0, -169.495)
+
+[node name="Buoy03" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -127.815, 0, -163.683)
+kind = 1
+
+[node name="Buoy04" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -198.108, 0, -130.044)
+
+[node name="Buoy05" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -202.867, 0, -90.199)
+kind = 1
+
+[node name="Buoy06" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -204.128, 0, -49.646)
+
+[node name="Buoy07" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -195.206, 0, 32.042)
+kind = 1
+
+[node name="Buoy08" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -184.097, 0, 109.811)
+
+[node name="Buoy09" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -129.607, 0, 136.643)
+kind = 1
+
+[node name="Ramps" type="Node3D" parent="."]
+
+[node name="Ramp1" parent="Ramps" instance=ExtResource("ramp")]
+transform = Transform3D(0.99291, 0, 0.11888, 0, 1, 0, -0.11888, 0, 0.99291, 0.038, 0.000, -69.692)
+
+[node name="Ramp2" parent="Ramps" instance=ExtResource("ramp")]
+transform = Transform3D(-0.96390, 0, -0.26627, 0, 1, 0, 0.26627, 0, -0.96390, -198.024, 0.000, 70.897)
+
+[node name="Rocks" type="Node3D" parent="."]
+
+[node name="Rock1" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -180.32, -1.5, -157.26)
+script = ExtResource("rock")
+radius = 2.6
+height_scale = 2.4
+rock_seed = 11
+
+[node name="Rock2" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -176.58, -1.5, -34.01)
+script = ExtResource("rock")
+radius = 2.4
+height_scale = 2.6
+rock_seed = 5
+
+[node name="Rock3" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.00, -1.5, -40.00)
+script = ExtResource("rock")
+radius = 5
+height_scale = 1.2
+rock_seed = 17
+
+[node name="Rock4" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -240.00, -1.5, 0.00)
+script = ExtResource("rock")
+radius = 6
+height_scale = 1.3
+rock_seed = 23
+
+[node name="Rock5" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90.00, -1.5, 205.00)
+script = ExtResource("rock")
+radius = 5
+height_scale = 1.1
+rock_seed = 29
+
+[node name="Rock6" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45.00, -1.5, 60.00)
+script = ExtResource("rock")
+radius = 4
+height_scale = 1.5
+rock_seed = 31
+
+[node name="Rock7" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -250.00, -1.5, -150.00)
+script = ExtResource("rock")
+radius = 5
+height_scale = 1.4
+rock_seed = 37

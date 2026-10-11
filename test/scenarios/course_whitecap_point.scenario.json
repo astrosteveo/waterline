@@ -1,0 +1,54 @@
+{
+  "description": "Whitecap Point: open sea with choppy water; the craft spends more time in the air than on the calm cove; a computer rider laps it cleanly.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 5,
+    "args": [
+      "--no-opponents",
+      "--course",
+      "whitecap_point"
+    ]
+  },
+  "steps": [
+    "step 3",
+    {
+      "expect": "[course.course_name, course.gates.size(), racers.size()]",
+      "equals": [
+        "Whitecap Point",
+        9,
+        1
+      ]
+    },
+    {
+      "expect": "Ocean.wave_set.resource_path",
+      "equals": "res://water/presets/whitecap_chop.tres"
+    },
+    {
+      "expect": "Ocean.wave_set.max_height() > 1.5",
+      "name": "choppy: the waves add up to over 1.5 m"
+    },
+    {
+      "eval": "get_node('RideRecorder').reset()"
+    },
+    {
+      "eval": "autopilot(player, 1.0)"
+    },
+    {
+      "until": "player.laps_done >= 1",
+      "max": 4500,
+      "name": "the computer rides 1 lap"
+    },
+    {
+      "expect": "[player.buoys_missed, player.crashes]",
+      "equals": [
+        0,
+        0
+      ],
+      "name": "without missing a buoy or crashing"
+    },
+    {
+      "expect": "get_node('RideRecorder').report().airborne_share > 0.05",
+      "name": "the chop throws the craft into the air"
+    }
+  ]
+}

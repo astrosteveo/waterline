@@ -1,0 +1,131 @@
+{
+  "description": "The menus: the main menu leads to each mode through the rider select and the course select (or straight to the championship's first race); back goes back; a quick race starts on the chosen course.",
+  "start": {
+    "scene": "res://menus/main_menu.tscn",
+    "seed": 1
+  },
+  "steps": [
+    "step 5",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "Championship",
+      "name": "the first mode has the focus"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 3",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "QuickRace"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60,
+      "name": "quick race opens the rider select"
+    },
+    {
+      "expect": "Game.mode",
+      "equals": 0
+    },
+    {
+      "step": 3,
+      "tap": "ui_cancel"
+    },
+    {
+      "until": "scene.name == 'MainMenu'",
+      "max": 60,
+      "name": "back returns to the main menu"
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60
+    },
+    {
+      "expect": "Game.mode",
+      "equals": 2,
+      "name": "time trial chosen"
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 3",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60,
+      "name": "the rider select leads to the course select"
+    },
+    "step 5",
+    {
+      "expect": "scene.selected.id",
+      "equals": "gull_cove"
+    },
+    {
+      "expect": "scene._records.text.begins_with('RECORD')",
+      "name": "a time trial shows the course records"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 3",
+    {
+      "expect": "scene.selected.id",
+      "equals": "lantern_harbor"
+    },
+    {
+      "expect": "scene._map.texture != null",
+      "name": "the course map shows"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 120,
+      "name": "confirming starts the race"
+    },
+    "step 5",
+    {
+      "expect": "[scene.course.course_name, scene.player.display_name, scene.racers.size()]",
+      "equals": [
+        "Lantern Harbor",
+        "Koa",
+        1
+      ],
+      "name": "a time trial on the chosen course, alone, as the chosen rider"
+    },
+    {
+      "expect": "scene.time_trial != null"
+    }
+  ]
+}

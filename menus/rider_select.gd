@@ -1,8 +1,9 @@
 class_name RiderSelect
 extends Node3D
 ## The rider select screen: the four riders down the left, the chosen rider's craft
-## floating on the water behind, its stats on the right. Choosing a rider and confirming
-## starts the race with that rider; the others race against them.
+## floating on the water behind, its stats on the right. Confirming hands the rider to
+## [method Game.rider_chosen], which moves on to the course select (or the championship's
+## first race); backing out returns to the main menu.
 
 ## Emitted when the player confirms a rider.
 signal rider_chosen(rider: RiderProfile)
@@ -11,10 +12,6 @@ signal cancelled
 
 ## The water and scenery behind the menu.
 @export var backdrop_scene: PackedScene = preload("res://levels/gull_cove.tscn")
-## Scene to open after choosing.
-@export_file("*.tscn") var next_scene: String = "res://race/race.tscn"
-## Scene to open on cancel, or "" to stay.
-@export_file("*.tscn") var back_scene: String = ""
 ## How fast the camera circles the craft, in radians per second.
 @export var orbit_speed: float = 0.18
 
@@ -76,18 +73,15 @@ func select(rider: RiderProfile) -> void:
 func confirm() -> void:
 	if selected == null:
 		return
-	Game.player_rider = selected
 	rider_chosen.emit(selected)
-	if next_scene != "":
-		get_tree().change_scene_to_file(next_scene)
+	Game.rider_chosen(selected)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
-		cancelled.emit()
-		if back_scene != "":
-			get_tree().change_scene_to_file(back_scene)
 		get_viewport().set_input_as_handled()
+		cancelled.emit()
+		Game.goto_main_menu()
 
 
 func _build_ui() -> void:
@@ -102,13 +96,16 @@ func _build_ui() -> void:
 	var title := MenuStyle.label("CHOOSE YOUR RIDER", 76, MenuStyle.YELLOW)
 	root.add_child(title)
 	title.position = Vector2(72, 44)
+	var mode := MenuStyle.label(Game.mode_name(), 32, MenuStyle.CYAN)
+	root.add_child(mode)
+	mode.position = Vector2(80, 150)
 
 	# Left: the riders.
 	var list := VBoxContainer.new()
 	list.name = "Riders"
 	list.add_theme_constant_override(&"separation", 18)
 	root.add_child(list)
-	list.position = Vector2(80, 210)
+	list.position = Vector2(80, 230)
 	for rider in Game.riders:
 		var button := MenuStyle.button(rider.display_name.to_upper(), 46, Vector2(360, 86))
 		button.name = rider.display_name
@@ -155,7 +152,7 @@ func _build_ui() -> void:
 		_bars.append(bar)
 		column.add_child(row)
 
-	var hint := MenuStyle.label("UP / DOWN: CHOOSE     ENTER / A: RACE", 28, MenuStyle.DIM)
+	var hint := MenuStyle.label("UP / DOWN: CHOOSE     ENTER / A: SELECT     ESC / B: BACK", 28, MenuStyle.DIM)
 	root.add_child(hint)
 	hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	hint.grow_horizontal = Control.GROW_DIRECTION_BOTH

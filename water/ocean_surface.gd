@@ -28,6 +28,10 @@ extends MeshInstance3D
 		material_override = value
 		_push_static_uniforms()
 
+## Shader parameters this surface sets on its own copy of [member water_material], for a
+## course whose water should look different (darker at night, say), as {name: value}.
+@export var shader_overrides: Dictionary = {}
+
 @export_group("Grid")
 ## Grid cells along each side of the mesh. The vertex count is about this squared.
 @export_range(64, 2048, 2) var grid_cells: int = 1024:
@@ -63,11 +67,19 @@ func _ready() -> void:
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	layers = ShoreMap.WATER_LAYER
+	if not shader_overrides.is_empty() and water_material != null:
+		var copy := water_material.duplicate() as ShaderMaterial
+		for key: String in shader_overrides:
+			copy.set_shader_parameter(key, shader_overrides[key])
+		water_material = copy
 	material_override = water_material
 	_rebuild_mesh()
 	_on_wave_set_changed()
-	if not Engine.is_editor_hint() and wave_set != null:
-		Ocean.wave_set = wave_set
+	if not Engine.is_editor_hint():
+		# A new scene starts at the rest level; a course may set its own.
+		Ocean.level = 0.0
+		if wave_set != null:
+			Ocean.wave_set = wave_set
 
 
 func _process(delta: float) -> void:

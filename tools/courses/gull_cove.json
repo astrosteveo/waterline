@@ -3,7 +3,7 @@
   "root": "GullCove",
   "scene": "levels/gull_cove.tscn",
   "laps": 3,
-  "waves": "res://water/presets/cove_swell.tres",
+  "waves": "res://water/presets/cove_calm.tres",
   "start": [0, 0],
   "gate_span": 46,
   "gate_height": 13,

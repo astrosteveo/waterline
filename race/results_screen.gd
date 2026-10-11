@@ -12,8 +12,6 @@ signal quit_pressed
 @export var race: Race
 ## Seconds after the player finishes before the results appear.
 @export_range(0.0, 10.0, 0.1, "suffix:s") var delay: float = 3.3
-## Scene the RIDERS button opens.
-@export_file("*.tscn") var rider_select_scene: String = "res://menus/rider_select.tscn"
 
 const YELLOW := Color(1.0, 0.86, 0.12)
 const WHITE := Color(1.0, 1.0, 1.0)
@@ -23,7 +21,10 @@ const RED := Color(1.0, 0.3, 0.22)
 var _root: Control
 var _rows: VBoxContainer
 var _again: Button
+var _course_name: Label
 var _shown := false
+## False in the modes with their own results screen.
+var active := true
 
 
 func _ready() -> void:
@@ -40,6 +41,8 @@ func open() -> void:
 	if _shown:
 		return
 	_shown = true
+	if race.course != null:
+		_course_name.text = race.course.course_name.to_upper()
 	_root.visible = true
 	_root.modulate.a = 0.0
 	create_tween().tween_property(_root, ^"modulate:a", 1.0, 0.35)
@@ -54,7 +57,7 @@ func is_open() -> bool:
 ## Opens the results after [member delay]: when the player finishes, or, when watching a
 ## race, once everyone has ([param everyone]).
 func _on_race_finished(everyone: bool) -> void:
-	if race.watching != everyone:
+	if not active or race.watching != everyone:
 		return
 	if delay <= 0.0:
 		open()
@@ -88,18 +91,16 @@ func _build() -> void:
 	var title := _label("RESULTS", 72, YELLOW)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
-	if race != null and race.course_scene != null:
-		var course_name := _label("", 30, DIM)
-		course_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		column.add_child(course_name)
-		course_name.ready.connect(func() -> void:
-			if race.course != null:
-				course_name.text = race.course.course_name.to_upper())
+	_course_name = _label("", 30, DIM)
+	_course_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(_course_name)
 	var header := _row_box()
 	header.add_child(_cell("", 90, 26, DIM))
 	header.add_child(_cell("RIDER", 300, 26, DIM))
 	header.add_child(_cell("TIME", 220, 26, DIM, HORIZONTAL_ALIGNMENT_RIGHT))
 	header.add_child(_cell("BEST LAP", 220, 26, DIM, HORIZONTAL_ALIGNMENT_RIGHT))
+	if _championship():
+		header.add_child(_cell("POINTS", 140, 26, DIM, HORIZONTAL_ALIGNMENT_RIGHT))
 	column.add_child(header)
 	_rows = VBoxContainer.new()
 	_rows.add_theme_constant_override(&"separation", 6)
@@ -109,16 +110,24 @@ func _build() -> void:
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override(&"separation", 40)
 	column.add_child(buttons)
-	_again = _button("RACE AGAIN")
-	_again.pressed.connect(_on_again)
-	buttons.add_child(_again)
-	var riders := _button("RIDERS")
-	riders.name = "Riders"
-	riders.pressed.connect(_on_riders)
-	buttons.add_child(riders)
-	var quit := _button("QUIT")
-	quit.pressed.connect(_on_quit)
-	buttons.add_child(quit)
+	if _championship():
+		# The championship moves on to the standings.
+		_again = _button("CONTINUE")
+		_again.name = "Continue"
+		_again.pressed.connect(_on_continue)
+		buttons.add_child(_again)
+	else:
+		_again = _button("RACE AGAIN")
+		_again.pressed.connect(_on_again)
+		buttons.add_child(_again)
+		var courses := _button("COURSES")
+		courses.name = "Courses"
+		courses.pressed.connect(func() -> void: Game.goto_course_select())
+		buttons.add_child(courses)
+		var menu := _button("MAIN MENU")
+		menu.name = "MainMenu"
+		menu.pressed.connect(func() -> void: Game.goto_main_menu())
+		buttons.add_child(menu)
 
 
 func _refresh() -> void:
@@ -132,6 +141,8 @@ func _refresh() -> void:
 		row.add_child(_cell("", 300, 44, WHITE))
 		row.add_child(_cell("", 220, 44, WHITE, HORIZONTAL_ALIGNMENT_RIGHT))
 		row.add_child(_cell("", 220, 44, WHITE, HORIZONTAL_ALIGNMENT_RIGHT))
+		if _championship():
+			row.add_child(_cell("", 140, 44, YELLOW, HORIZONTAL_ALIGNMENT_RIGHT))
 		_rows.add_child(row)
 	for i in order.size():
 		var racer: RacerState = order[i]
@@ -144,6 +155,9 @@ func _refresh() -> void:
 		_set_cell(cells[1], racer.display_name.to_upper(), color)
 		_set_cell(cells[2], time_text, RED if racer.disqualified else color)
 		_set_cell(cells[3], Race.format_time(racer.best_lap()), color)
+		if _championship():
+			var award := 0 if racer.disqualified else Championship.POINTS[mini(racer.place - 1, Championship.POINTS.size() - 1)]
+			_set_cell(cells[4], "+%d" % award, YELLOW)
 
 
 func _set_cell(cell: Node, text: String, color: Color) -> void:
@@ -179,8 +193,23 @@ func _on_again() -> void:
 	get_tree().reload_current_scene()
 
 
-func _on_riders() -> void:
-	get_tree().change_scene_to_file(rider_select_scene)
+func _championship() -> bool:
+	return Game.mode == Game.Mode.CHAMPIONSHIP and Game.championship != null
+
+
+## Records the race's order in the championship (riders still out are placed where they
+## are) and goes to the standings.
+func _on_continue() -> void:
+	var order := race.racers.duplicate()
+	order.sort_custom(func(a: RacerState, b: RacerState) -> bool: return a.place < b.place)
+	var names: Array[String] = []
+	var disqualified: Array[String] = []
+	for racer: RacerState in order:
+		names.append(racer.display_name)
+		if racer.disqualified:
+			disqualified.append(racer.display_name)
+	Game.championship.record(names, disqualified)
+	Game.goto_standings()
 
 
 func _on_quit() -> void:

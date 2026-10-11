@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CourseInfo" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://course/course_info.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "ebb_reef"
+display_name = "Ebb Reef"
+conditions = "The tide goes out every lap: reefs and hidden rocks break the surface, and the ramps stand taller."
+scene = "res://levels/ebb_reef.tscn"

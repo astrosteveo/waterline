@@ -1,0 +1,88 @@
+{
+  "description": "Time trial: alone on the course; the finish saves the race time and best lap as records and the run as a ghost; the next attempt shows the record and rides the ghost alongside.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 2,
+    "user_data": "fresh",
+    "args": [
+      "--mode",
+      "time_trial",
+      "--course",
+      "gull_cove",
+      "--rider",
+      "dax"
+    ]
+  },
+  "steps": [
+    {
+      "expect": "[racers.size(), time_trial != null, time_trial.ghost == null, time_trial.record_race > 1e9]",
+      "equals": [
+        1,
+        true,
+        true,
+        true
+      ],
+      "name": "no opponents, no record, no ghost yet"
+    },
+    {
+      "eval": "autopilot(player, 0.9)"
+    },
+    {
+      "until": "get_node('SoloResults').is_open()",
+      "max": 12000,
+      "name": "the run ends with the time trial results"
+    },
+    {
+      "expect": "time_trial.new_records",
+      "equals": {
+        "race": true,
+        "lap": true
+      },
+      "name": "a first run sets both records"
+    },
+    {
+      "expect": "abs(Game.records.best_race('gull_cove') - player.finish_time) < 0.001",
+      "name": "the race record is the finish time"
+    },
+    {
+      "expect": "abs(Game.records.best_lap('gull_cove') - player.best_lap()) < 0.001",
+      "name": "the lap record is the best lap"
+    },
+    {
+      "expect": "Game.records.load_ghost('gull_cove').size() > 0",
+      "name": "the ghost is saved"
+    },
+    {
+      "expect": "time_trial.recorder.frame_count() > 6000",
+      "name": "a frame per tick of the run"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    "step 30",
+    {
+      "expect": "[time_trial.ghost != null, time_trial.record_race < 1000]",
+      "equals": [
+        true,
+        true
+      ],
+      "name": "retry: the record shows and the ghost rides"
+    },
+    {
+      "eval": "autopilot(player, 0.9)"
+    },
+    {
+      "step": 900
+    },
+    {
+      "expect": "player.craft.global_position.distance_to(time_trial.ghost.get_child(0).global_position) < 4.0",
+      "name": "the ghost rides the recorded line beside the same driver"
+    },
+    {
+      "expect": "time_trial.ghost.get_child(0).ghost",
+      "equals": true,
+      "name": "drawn as a ghost"
+    }
+  ]
+}

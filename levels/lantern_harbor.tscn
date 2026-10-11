@@ -1,0 +1,744 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://course/course.gd" id="course"]
+[ext_resource type="Environment" path="res://environment/night_environment.tres" id="env"]
+[ext_resource type="Script" path="res://environment/sun.gd" id="sun"]
+[ext_resource type="Script" path="res://water/ocean_surface.gd" id="ocean"]
+[ext_resource type="Resource" path="res://water/presets/harbor_swell.tres" id="waves"]
+[ext_resource type="Material" path="res://water/ocean_material.tres" id="water_mat"]
+[ext_resource type="Script" path="res://water/shore_map.gd" id="shore"]
+[ext_resource type="Script" path="res://environment/terrain.gd" id="terrain"]
+[ext_resource type="Script" path="res://environment/rock.gd" id="rock"]
+[ext_resource type="PackedScene" path="res://course/buoy.tscn" id="buoy"]
+[ext_resource type="PackedScene" path="res://course/ramp.tscn" id="ramp"]
+[ext_resource type="PackedScene" path="res://course/start_gate.tscn" id="gate"]
+[ext_resource type="Script" path="res://environment/pier.gd" id="pier"]
+[ext_resource type="Script" path="res://environment/lamp_post.gd" id="lamp"]
+[ext_resource type="Script" path="res://environment/harbor_building.gd" id="building"]
+
+[node name="LanternHarbor" type="Node3D"]
+script = ExtResource("course")
+course_name = "Lantern Harbor"
+laps = 3
+grid_distance = 28
+control_points = PackedVector3Array(150, 0, 45, 130, 0, -40, 105, 0, -92, 50, 0, -114, -30, 0, -118, -100, 0, -108, -145, 0, -70, -155, 0, -10, -130, 0, 45, -100, 0, 95, -60, 0, 140, 20, 0, 160, 110, 0, 160, 185, 0, 130, 195, 0, 92)
+half_widths = PackedFloat32Array(20, 20, 18, 18, 18, 18, 17, 17, 16, 15, 17, 19, 19, 18, 18)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-22, 165, 0)
+light_color = Color(0.6, 0.7, 1, 1)
+light_energy = 0.55
+shadow_enabled = true
+directional_shadow_max_distance = 220.0
+script = ExtResource("sun")
+
+[node name="OceanSurface" type="MeshInstance3D" parent="."]
+script = ExtResource("ocean")
+wave_set = ExtResource("waves")
+water_material = ExtResource("water_mat")
+shader_overrides = {"crest_strength": 0.12, "shallow_color": Color(0.03, 0.17, 0.21, 1), "deep_color": Color(0.01, 0.05, 0.13, 1), "crest_color": Color(0.06, 0.28, 0.34, 1)}
+
+[node name="ShoreMap" type="Node3D" parent="."]
+script = ExtResource("shore")
+
+[node name="Terrain" type="MeshInstance3D" parent="."]
+script = ExtResource("terrain")
+size = 800
+cells = 200
+islands = Array[Vector4]([Vector4(-260, -265, 190, 14), Vector4(-90, -265, 190, 14), Vector4(80, -265, 190, 14), Vector4(250, -265, 190, 14), Vector4(-330, 60, 90, 10), Vector4(330, 40, 100, 12), Vector4(10, -10, 48, 6)])
+coast_noise = 0.1
+
+[node name="StartLine" type="Marker3D" parent="."]
+transform = Transform3D(0.98881, 0, 0.14918, 0, 1, 0, -0.14918, 0, 0.98881, 138.075, 0.000, -0.255)
+
+[node name="StartGate" parent="." instance=ExtResource("gate")]
+transform = Transform3D(0.98881, 0, 0.14918, 0, 1, 0, -0.14918, 0, 0.98881, 138.075, 0.000, -0.255)
+span = 42
+height = 12
+
+[node name="Buoys" type="Node3D" parent="."]
+
+[node name="Buoy01" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112.157, 0, -93.266)
+lamp_energy = 2.5
+
+[node name="Buoy02" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47.762, 0, -109.366)
+kind = 1
+lamp_energy = 2.5
+
+[node name="Buoy03" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.997, 0, -123.640)
+lamp_energy = 2.5
+
+[node name="Buoy04" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.472, 0, -110.446)
+kind = 1
+lamp_energy = 2.5
+
+[node name="Buoy05" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -133.208, 0, -93.568)
+lamp_energy = 2.5
+
+[node name="Buoy06" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -151.820, 0, -21.655)
+kind = 1
+lamp_energy = 2.5
+
+[node name="Buoy07" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -121.900, 0, 72.260)
+lamp_energy = 2.5
+
+[node name="Buoy08" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -72.665, 0, 122.966)
+kind = 1
+lamp_energy = 2.5
+
+[node name="Buoy09" parent="Buoys" instance=ExtResource("buoy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.090, 0, 164.431)
+lamp_energy = 2.5
+
+[node name="Ramps" type="Node3D" parent="."]
+
+[node name="Ramp1" parent="Ramps" instance=ExtResource("ramp")]
+transform = Transform3D(-0.87129, 0, -0.49077, 0, 1, 0, 0.49077, 0, -0.87129, -140.979, 0.000, 25.493)
+
+[node name="Ramp2" parent="Ramps" instance=ExtResource("ramp")]
+transform = Transform3D(-0.26576, 0, -0.96404, 0, 1, 0, 0.96404, 0, -0.26576, -33.248, 0.000, 149.804)
+
+[node name="Rocks" type="Node3D" parent="."]
+
+[node name="Rock1" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -113.22, -1.5, -111.43)
+script = ExtResource("rock")
+radius = 2.4
+height_scale = 2.6
+rock_seed = 11
+
+[node name="Rock2" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -55.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 5
+
+[node name="Rock3" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 17
+
+[node name="Rock4" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 23
+
+[node name="Rock5" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 29
+
+[node name="Rock6" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 31
+
+[node name="Rock7" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 37
+
+[node name="Rock8" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 41
+
+[node name="Rock9" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 43
+
+[node name="Rock10" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 47
+
+[node name="Rock11" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 53
+
+[node name="Rock12" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 59
+
+[node name="Rock13" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 61
+
+[node name="Rock14" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 3
+
+[node name="Rock15" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 11
+
+[node name="Rock16" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 5
+
+[node name="Rock17" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 17
+
+[node name="Rock18" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 57.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 23
+
+[node name="Rock19" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 29
+
+[node name="Rock20" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 71.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 31
+
+[node name="Rock21" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 78.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 37
+
+[node name="Rock22" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 85.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 41
+
+[node name="Rock23" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 43
+
+[node name="Rock24" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 99.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 47
+
+[node name="Rock25" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 106.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 53
+
+[node name="Rock26" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 113.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 59
+
+[node name="Rock27" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 120.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 61
+
+[node name="Rock28" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 127.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 3
+
+[node name="Rock29" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 134.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 11
+
+[node name="Rock30" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 141.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 5
+
+[node name="Rock31" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 148.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 17
+
+[node name="Rock32" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -250.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 23
+
+[node name="Rock33" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -243.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 29
+
+[node name="Rock34" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -236.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 31
+
+[node name="Rock35" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -229.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 37
+
+[node name="Rock36" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -222.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 41
+
+[node name="Rock37" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -215.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 43
+
+[node name="Rock38" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -208.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 47
+
+[node name="Rock39" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -201.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 53
+
+[node name="Rock40" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -194.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 59
+
+[node name="Rock41" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -187.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 61
+
+[node name="Rock42" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -180.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 3
+
+[node name="Rock43" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -173.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 11
+
+[node name="Rock44" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -166.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 5
+
+[node name="Rock45" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -159.00, -1.5, 94.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 17
+
+[node name="Rock46" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -152.00, -1.5, 95.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 23
+
+[node name="Rock47" type="StaticBody3D" parent="Rocks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -145.00, -1.5, 96.00)
+script = ExtResource("rock")
+radius = 4.2
+height_scale = 0.55
+rock_seed = 29
+
+[node name="Props" type="Node3D" parent="."]
+
+[node name="Lamp1" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -142.000, 1.800, 95.000)
+script = ExtResource("lamp")
+light_color = Color(1, 0.15, 0.1, 1)
+light_energy = 5
+light_range = 26
+
+[node name="Lamp2" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -53.000, 1.800, 95.000)
+script = ExtResource("lamp")
+light_color = Color(0.15, 1, 0.3, 1)
+light_energy = 5
+light_range = 26
+
+[node name="Lamp3" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 150.000, 1.800, 95.000)
+script = ExtResource("lamp")
+light_color = Color(1, 0.85, 0.5, 1)
+light_energy = 4
+light_range = 24
+
+[node name="Pier4" type="StaticBody3D" parent="Props"]
+transform = Transform3D(-1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, -1.00000, -80.000, 0.000, -172.000)
+script = ExtResource("pier")
+length = 30
+width = 4
+lamp_spacing = 9
+
+[node name="Pier5" type="StaticBody3D" parent="Props"]
+transform = Transform3D(-1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, -1.00000, -20.000, 0.000, -172.000)
+script = ExtResource("pier")
+length = 30
+width = 4
+lamp_spacing = 9
+
+[node name="Pier6" type="StaticBody3D" parent="Props"]
+transform = Transform3D(-1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, -1.00000, 40.000, 0.000, -172.000)
+script = ExtResource("pier")
+length = 30
+width = 4
+lamp_spacing = 9
+
+[node name="Pier7" type="StaticBody3D" parent="Props"]
+transform = Transform3D(-1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, -1.00000, 95.000, 0.000, -172.000)
+script = ExtResource("pier")
+length = 30
+width = 4
+lamp_spacing = 9
+
+[node name="Building8" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -200.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(12, 7, 9)
+wall_color = Color(0.85, 0.8, 0.7, 1)
+roof_color = Color(0.55, 0.2, 0.15, 1)
+building_seed = 1
+
+[node name="Building9" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -182.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(9, 10, 8)
+wall_color = Color(0.7, 0.75, 0.82, 1)
+roof_color = Color(0.25, 0.3, 0.4, 1)
+building_seed = 2
+
+[node name="Building10" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -167.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(14, 6, 10)
+wall_color = Color(0.88, 0.7, 0.55, 1)
+roof_color = Color(0.5, 0.35, 0.2, 1)
+building_seed = 3
+
+[node name="Building11" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -147.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(8, 8, 8)
+wall_color = Color(0.75, 0.82, 0.72, 1)
+roof_color = Color(0.55, 0.2, 0.15, 1)
+building_seed = 4
+
+[node name="Building12" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -133.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(11, 12, 9)
+wall_color = Color(0.85, 0.8, 0.7, 1)
+roof_color = Color(0.25, 0.3, 0.4, 1)
+building_seed = 5
+
+[node name="Building13" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -116.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(10, 7, 8)
+wall_color = Color(0.7, 0.75, 0.82, 1)
+roof_color = Color(0.5, 0.35, 0.2, 1)
+building_seed = 6
+
+[node name="Building14" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -100.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(12, 7, 9)
+wall_color = Color(0.88, 0.7, 0.55, 1)
+roof_color = Color(0.55, 0.2, 0.15, 1)
+building_seed = 7
+
+[node name="Building15" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -82.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(9, 10, 8)
+wall_color = Color(0.75, 0.82, 0.72, 1)
+roof_color = Color(0.25, 0.3, 0.4, 1)
+building_seed = 8
+
+[node name="Building16" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -67.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(14, 6, 10)
+wall_color = Color(0.85, 0.8, 0.7, 1)
+roof_color = Color(0.5, 0.35, 0.2, 1)
+building_seed = 9
+
+[node name="Building17" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -47.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(8, 8, 8)
+wall_color = Color(0.7, 0.75, 0.82, 1)
+roof_color = Color(0.55, 0.2, 0.15, 1)
+building_seed = 10
+
+[node name="Building18" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -33.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(11, 12, 9)
+wall_color = Color(0.88, 0.7, 0.55, 1)
+roof_color = Color(0.25, 0.3, 0.4, 1)
+building_seed = 11
+
+[node name="Building19" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -16.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(10, 7, 8)
+wall_color = Color(0.75, 0.82, 0.72, 1)
+roof_color = Color(0.5, 0.35, 0.2, 1)
+building_seed = 12
+
+[node name="Building20" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 0.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(12, 7, 9)
+wall_color = Color(0.85, 0.8, 0.7, 1)
+roof_color = Color(0.55, 0.2, 0.15, 1)
+building_seed = 13
+
+[node name="Building21" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 18.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(9, 10, 8)
+wall_color = Color(0.7, 0.75, 0.82, 1)
+roof_color = Color(0.25, 0.3, 0.4, 1)
+building_seed = 14
+
+[node name="Building22" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 33.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(14, 6, 10)
+wall_color = Color(0.88, 0.7, 0.55, 1)
+roof_color = Color(0.5, 0.35, 0.2, 1)
+building_seed = 15
+
+[node name="Building23" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 53.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(8, 8, 8)
+wall_color = Color(0.75, 0.82, 0.72, 1)
+roof_color = Color(0.55, 0.2, 0.15, 1)
+building_seed = 16
+
+[node name="Building24" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 67.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(11, 12, 9)
+wall_color = Color(0.85, 0.8, 0.7, 1)
+roof_color = Color(0.25, 0.3, 0.4, 1)
+building_seed = 17
+
+[node name="Building25" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 84.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(10, 7, 8)
+wall_color = Color(0.7, 0.75, 0.82, 1)
+roof_color = Color(0.5, 0.35, 0.2, 1)
+building_seed = 18
+
+[node name="Building26" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 100.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(12, 7, 9)
+wall_color = Color(0.88, 0.7, 0.55, 1)
+roof_color = Color(0.55, 0.2, 0.15, 1)
+building_seed = 19
+
+[node name="Building27" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 118.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(9, 10, 8)
+wall_color = Color(0.75, 0.82, 0.72, 1)
+roof_color = Color(0.25, 0.3, 0.4, 1)
+building_seed = 20
+
+[node name="Building28" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 133.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(14, 6, 10)
+wall_color = Color(0.85, 0.8, 0.7, 1)
+roof_color = Color(0.5, 0.35, 0.2, 1)
+building_seed = 21
+
+[node name="Building29" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 153.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(8, 8, 8)
+wall_color = Color(0.7, 0.75, 0.82, 1)
+roof_color = Color(0.55, 0.2, 0.15, 1)
+building_seed = 22
+
+[node name="Building30" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 167.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(11, 12, 9)
+wall_color = Color(0.88, 0.7, 0.55, 1)
+roof_color = Color(0.25, 0.3, 0.4, 1)
+building_seed = 23
+
+[node name="Building31" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 184.000, 1.000, -196.000)
+script = ExtResource("building")
+size = Vector3(10, 7, 8)
+wall_color = Color(0.75, 0.82, 0.72, 1)
+roof_color = Color(0.5, 0.35, 0.2, 1)
+building_seed = 24
+
+[node name="Building32" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 200.000, 1.000, -190.000)
+script = ExtResource("building")
+size = Vector3(12, 7, 9)
+wall_color = Color(0.85, 0.8, 0.7, 1)
+roof_color = Color(0.55, 0.2, 0.15, 1)
+building_seed = 25
+
+[node name="Lamp33" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -138.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp34" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -108.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp35" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -78.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp36" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -48.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp37" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, -18.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp38" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 12.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp39" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 42.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp40" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 72.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp41" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 102.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp42" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 132.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp43" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 162.000, 0.800, -176.000)
+script = ExtResource("lamp")
+
+[node name="Lamp44" type="Node3D" parent="Props"]
+transform = Transform3D(1.00000, 0, 0.00000, 0, 1, 0, -0.00000, 0, 1.00000, 10.000, 5.500, -10.000)
+script = ExtResource("lamp")
+height = 7
+light_color = Color(1, 0.9, 0.7, 1)
+light_energy = 6
+light_range = 40

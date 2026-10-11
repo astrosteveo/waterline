@@ -1,5 +1,5 @@
 {
-  "description": "Riders: the rider select screen shows each rider's stats; choosing one races as that rider, on a craft tuned by its stats, against the other three.",
+  "description": "Riders: the rider select screen shows each rider's stats; choosing one (then a course) races as that rider, on a craft tuned by its stats, against the other three.",
   "start": {
     "scene": "res://menus/rider_select.tscn",
     "seed": 1
@@ -74,9 +74,19 @@
       "tap": "ui_accept"
     },
     {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60,
+      "name": "confirming a rider opens the course select"
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
       "until": "scene.name == 'Race'",
       "max": 60,
-      "name": "confirming starts the race"
+      "name": "confirming the course starts the race"
     },
     "step 5",
     {
