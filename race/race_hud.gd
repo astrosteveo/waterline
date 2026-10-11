@@ -143,13 +143,14 @@ func _build() -> void:
 	_centre(root, _wrong_way, -150.0)
 	_wrong_way.visible = false
 
-	# Top middle, in watch mode: who the camera follows.
+	# Bottom middle, in watch mode: who the camera follows (the announcer has the top).
 	_watch_label = _label("", 34, CYAN)
 	root.add_child(_watch_label)
 	_watch_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_watch_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_watch_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	_watch_label.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_watch_label.position.y += 28.0
+	_watch_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_watch_label.position.y -= 40.0
 	_watch_label.visible = false
 
 
