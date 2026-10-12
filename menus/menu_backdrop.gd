@@ -23,6 +23,8 @@ func _ready() -> void:
 			sum += course.point_at(course.length * i / 16.0)
 		_centre = sum / 16.0
 	_camera = Camera3D.new()
+	# Moved in _process.
+	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_camera.fov = 60.0
 	_camera.far = 6000.0
 	add_child(_camera)
