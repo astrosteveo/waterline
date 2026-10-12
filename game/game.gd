@@ -51,6 +51,8 @@ var championship: Championship
 ## Best times, scores and ghosts.
 var records := Records.new()
 
+var _quitting := false
+
 
 func _ready() -> void:
 	# `-- --mode time_trial` (or stunt, championship, quick_race) starts a race scene in
@@ -60,6 +62,13 @@ func _ready() -> void:
 		var index := Mode.keys().find(named.to_upper())
 		if index >= 0:
 			mode = index as Mode
+	# The window's close button goes through quit() too.
+	get_tree().auto_accept_quit = false
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		quit()
 
 
 func _exit_tree() -> void:
@@ -156,6 +165,32 @@ func goto_course_select() -> void:
 func goto_main_menu() -> void:
 	championship = null
 	_change(MAIN_MENU)
+
+
+## Quits the game. The current scene goes first, so its sounds stop before the audio
+## server shuts down.
+func quit() -> void:
+	if _quitting:
+		return
+	_quitting = true
+	var scene := get_tree().current_scene
+	if scene != null:
+		scene.queue_free()
+	await get_tree().process_frame
+	# The audio server frees a stopped sound on its next mix and the frame after, and frees
+	# none at exit, so a sound still playing is reported as leaked. Wait for two mixes (one
+	# may have been under way), or a second at most.
+	var mixes := 0
+	var last := AudioServer.get_time_since_last_mix()
+	var give_up := Time.get_ticks_msec() + 1000
+	while mixes < 2 and Time.get_ticks_msec() < give_up:
+		await get_tree().process_frame
+		var since := AudioServer.get_time_since_last_mix()
+		if since < last:
+			mixes += 1
+		last = since
+	await get_tree().process_frame
+	get_tree().quit()
 
 
 func _change(path: String) -> void:
