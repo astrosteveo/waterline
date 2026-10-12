@@ -55,7 +55,7 @@ func _build_ui() -> void:
 		["TIME TRIAL", func() -> void: Game.start_mode(Game.Mode.TIME_TRIAL)],
 		["STUNT MODE", func() -> void: Game.start_mode(Game.Mode.STUNT)],
 		["OPTIONS", _open_options],
-		["QUIT", func() -> void: get_tree().quit()],
+		["QUIT", Game.quit],
 	]
 	for entry: Array in entries:
 		var button := MenuStyle.button(entry[0], 42, Vector2(420, 78))

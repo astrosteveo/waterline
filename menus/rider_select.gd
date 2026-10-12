@@ -40,6 +40,8 @@ func _ready() -> void:
 	add_child(_craft)
 	_craft.hold(_anchor)
 	_camera = Camera3D.new()
+	# Moved in _process.
+	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_camera.fov = 55.0
 	_camera.far = 6000.0
 	add_child(_camera)

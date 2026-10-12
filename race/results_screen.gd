@@ -214,4 +214,4 @@ func _on_continue() -> void:
 
 func _on_quit() -> void:
 	quit_pressed.emit()
-	get_tree().quit()
+	Game.quit()
