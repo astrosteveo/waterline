@@ -26,6 +26,9 @@ var record_splits := PackedFloat64Array()
 ## Which records the run set, once over.
 var new_records: Dictionary = {}
 var ghost: GhostRider
+## The craft the ghost rides, or null when the saved ghost names no craft in [member Game.crafts]
+## (a ghost from before craft ids were kept): then it rides [member Race.craft_scene].
+var ghost_craft: CraftProfile
 var recorder: GhostRecorder
 
 
@@ -44,11 +47,13 @@ func setup(p_race: Race, p_course_id: String) -> void:
 	add_child(recorder)
 	var saved := records.load_ghost(course_id)
 	if not saved.is_empty():
+		ghost_craft = Game.craft_named(str(saved.get("craft", "")))
+		var scene := ghost_craft.scene if ghost_craft != null and ghost_craft.scene != null else race.craft_scene
 		ghost = GhostRider.new()
 		ghost.name = "Ghost"
 		ghost.race = race
 		race.add_child(ghost)
-		if not ghost.setup(saved, preload("res://jetski/model/jetski_model.tscn"), Game.rider_named(str(saved.get("rider", "")))):
+		if not ghost.setup(saved, scene, Game.rider_named(str(saved.get("rider", "")))):
 			ghost.queue_free()
 			ghost = null
 	race.started.connect(recorder.start)

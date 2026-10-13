@@ -1,7 +1,8 @@
 class_name GhostRider
 extends Node3D
 ## Plays back a time-trial ghost: a see-through copy of the craft and rider that rides the
-## recorded run in step with the race clock.
+## recorded run in step with the race clock. It draws the Model node of the craft that set the
+## run, without the rest of the craft (no physics, wake, spray or engine sound).
 
 var race: Race
 var _frames := PackedFloat32Array()
@@ -9,15 +10,19 @@ var _count := 0
 var _model: Node3D
 
 
-## Sets up the ghost from a recording ([method Records.load_ghost]). Returns false if it
-## holds no frames.
-func setup(ghost: Dictionary, model_scene: PackedScene, rider: RiderProfile) -> bool:
+## Sets up the ghost from a recording ([method Records.load_ghost]), drawn with the model of
+## [param craft_scene] (a craft scene: its root is a [JetSki] with a Model node) in
+## [param rider]'s colours. Returns false if the recording holds no frames or the craft scene
+## has no Model node.
+func setup(ghost: Dictionary, craft_scene: PackedScene, rider: RiderProfile) -> bool:
 	_frames = ghost.get("frames", PackedFloat32Array())
 	_count = _frames.size() / GhostRecorder.STRIDE
 	if _count == 0:
 		return false
+	_model = model_of(craft_scene)
+	if _model == null:
+		return false
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
-	_model = model_scene.instantiate() as Node3D
 	if "ghost" in _model:
 		_model.set(&"ghost", true)
 	if rider != null:
@@ -25,6 +30,23 @@ func setup(ghost: Dictionary, model_scene: PackedScene, rider: RiderProfile) -> 
 	add_child(_model)
 	_show(0.0)
 	return true
+
+
+## The Model node of a new instance of [param craft_scene], taken out of it, or null when the
+## scene has no Model node. The rest of the instance is freed before it enters the tree. A
+## model with a `seat` property gets the craft's Seat marker in model space, as a [JetSki]
+## gives its own model, so the rider sits where it sat in the run.
+static func model_of(craft_scene: PackedScene) -> Node3D:
+	var craft := craft_scene.instantiate()
+	var model := craft.get_node_or_null(^"Model") as Node3D
+	if model != null:
+		var marker := craft.get_node_or_null(^"Seat") as Node3D
+		if marker != null and &"seat" in model:
+			model.set(&"seat", model.transform.affine_inverse() * marker.position)
+		craft.remove_child(model)
+		model.owner = null
+	craft.free()
+	return model
 
 
 func _process(_delta: float) -> void:
