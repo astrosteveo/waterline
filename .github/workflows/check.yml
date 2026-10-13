@@ -1,0 +1,62 @@
+name: Check
+
+# Imports the project headless with the Godot release it uses, then loads every script, scene
+# and resource (test/check_project.sh). It fails on a script parse or type error, a file that
+# fails to import, and a scene or resource that refers to a missing file. The gdh scenarios in
+# test/scenarios/ need a GPU, so they run locally, not here.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels the check still running for its previous push.
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # The Godot release the project is made with (project.godot lists the "4.7" feature).
+  GODOT_VERSION: 4.7.2-stable
+  # From the release's SHA512-SUMS.txt.
+  GODOT_SHA512: 9aa00f7a605200940bce3027a567b782f49bd8e940dd06ae9e987bd65aee1b1467edd56ed84fcdcbdd44354bf613bdbb4e5d2913e925850368e150c59ed54c65
+
+jobs:
+  godot:
+    name: Godot import and load
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Restore Godot from the cache
+        id: godot-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
+      - name: Download Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          zip="Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/$zip" \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/$zip"
+          echo "$GODOT_SHA512  $RUNNER_TEMP/$zip" | sha512sum --check
+          mkdir -p ~/godot
+          unzip -q "$RUNNER_TEMP/$zip" -d ~/godot
+          mv ~/godot/"Godot_v${GODOT_VERSION}_linux.x86_64" ~/godot/godot
+
+      # Saved straight after the download, so a failing check below still caches it.
+      - name: Save Godot to the cache
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/godot
+          key: ${{ steps.godot-cache.outputs.cache-primary-key }}
+
+      - name: Import and load the project
+        run: GODOT="$HOME/godot/godot" test/check_project.sh
