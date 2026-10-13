@@ -1,7 +1,8 @@
 class_name RiderSelect
 extends CraftShowcase
-## The rider select screen: the four riders down the left, the chosen rider on their default
-## craft floating on the water behind, the craft's name and stats on the right. Confirming
+## The rider select screen: the four riders down the left, the focused rider on their default
+## craft floating on the water behind, and the rider's name, line and weight on the right. How
+## the craft rides belongs to the craft, which the craft select screen chooses next. Confirming
 ## hands the rider to [method Game.rider_chosen], which opens the craft select; backing out
 ## returns to the main menu.
 
@@ -14,8 +15,7 @@ var selected: RiderProfile
 
 var _name: Label
 var _tagline: Label
-var _craft_name: Label
-var _bars: Array[StatBar] = []
+var _weight: StatBar
 
 
 func _ready() -> void:
@@ -25,17 +25,13 @@ func _ready() -> void:
 	_buttons[maxi(Game.riders.find(start), 0)].grab_focus()
 
 
-## Shows [param rider]: the craft in the rider's colours, and the rider's default craft with
-## its stats.
+## Shows [param rider] on their default craft, in their colours, with their weight.
 func select(rider: RiderProfile) -> void:
 	selected = rider
-	var craft := rider.default_craft
-	show_craft(craft, rider)
+	show_craft(rider.default_craft, rider)
 	_name.text = rider.display_name.to_upper()
 	_tagline.text = rider.tagline
-	_craft_name.text = "RIDES THE %s" % craft.display_name.to_upper() if craft != null else ""
-	for i in _bars.size():
-		_bars[i].value = craft.rating(CraftProfile.STATS[i]) if craft != null else 3.0
+	_weight.value = rider.weight_rating()
 
 
 ## Moves on to the craft select with the selected rider.
@@ -61,7 +57,7 @@ func _build_ui() -> void:
 		button.pressed.connect(confirm)
 	_link_focus()
 
-	# Right: the selected rider's name, line and stats.
+	# Right: the focused rider's name, line and weight.
 	var column := _add_panel(root)
 	_name = MenuStyle.label("", 64, MenuStyle.YELLOW)
 	column.add_child(_name)
@@ -70,7 +66,8 @@ func _build_ui() -> void:
 	_tagline.custom_minimum_size = Vector2(500, 70)
 	_tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(_tagline)
-	_craft_name = MenuStyle.label("", 28, MenuStyle.CYAN)
-	column.add_child(_craft_name)
-	for i in CraftProfile.STATS.size():
-		_bars.append(_add_stat_row(column, CraftProfile.STAT_LABELS[i]))
+	_weight = _add_stat_row(column, "WEIGHT")
+	var note := MenuStyle.label("A heavier rider pushes other craft aside and is pushed less.", 22, MenuStyle.DIM)
+	note.custom_minimum_size = Vector2(500, 0)
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(note)

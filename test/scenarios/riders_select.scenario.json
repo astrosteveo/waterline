@@ -1,5 +1,5 @@
 {
-  "description": "Riders: the rider select screen shows each rider and the stats of the rider's default craft; choosing one (then their own craft and a course) races as that rider on that craft, tuned by the craft's stats and the rider's weight, against the other three on their own craft.",
+  "description": "Riders: the rider select screen shows each rider's line and weight, and no craft stats; choosing one (then their own craft and a course) races as that rider on that craft, tuned by the craft's stats and the rider's weight, against the other three on their own craft.",
   "start": {
     "scene": "res://menus/rider_select.tscn",
     "seed": 1
@@ -12,36 +12,16 @@
       "name": "Marina is chosen first"
     },
     {
-      "expect": "[scene._bars[0].value, scene._bars[1].value, scene._bars[2].value, scene._bars[3].value]",
+      "expect": "[scene._weight.value, scene.find_children('*', 'StatBar', true, false).size()]",
       "equals": [
         3.0,
-        3.0,
-        3.0,
-        3.0
+        1
       ],
-      "name": "Marina's craft's stats are all even"
+      "name": "Marina is a middle weight, and the weight is the only bar"
     },
     {
-      "expect": "scene._craft_name.text",
-      "equals": "RIDES THE TRADEWIND",
-      "name": "Marina rides the Tradewind"
-    },
-    {
-      "step": 3,
-      "tap": "ui_down"
-    },
-    "step 5",
-    {
-      "expect": "scene.selected.display_name",
-      "equals": "Koa"
-    },
-    {
-      "expect": "scene._bars[0].value > 3 and scene._bars[1].value < 3 and scene._bars[2].value < 3",
-      "name": "Koa: more top speed, less acceleration and handling"
-    },
-    {
-      "step": 3,
-      "tap": "ui_down"
+      "expect": "scene._tagline.text",
+      "equals": "A middle weight. A safe first pick."
     },
     {
       "step": 3,
@@ -49,12 +29,38 @@
     },
     "step 5",
     {
-      "expect": "scene.selected.display_name",
-      "equals": "Dax"
+      "expect": "[scene.selected.display_name, scene._weight.value]",
+      "equals": [
+        "Koa",
+        5.0
+      ],
+      "name": "Koa is the heaviest (330 kg)"
     },
     {
-      "expect": "scene._bars[1].value > 3 and scene._bars[3].value < 3",
-      "name": "Dax: more acceleration, less grip"
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.display_name, scene._weight.value]",
+      "equals": [
+        "Ines",
+        1.5
+      ],
+      "name": "Ines is the lightest (280 kg)"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.display_name, scene._weight.value]",
+      "equals": [
+        "Dax",
+        2.5
+      ],
+      "name": "Dax is light (290 kg)"
     },
     {
       "step": 3,

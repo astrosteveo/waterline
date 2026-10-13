@@ -33,12 +33,11 @@
     },
     "step 5",
     {
-      "expect": "[scene.selected.display_name, scene._craft.scene_file_path, scene.find_children('*', 'JetSki', false, false).size(), scene._craft_name.text]",
+      "expect": "[scene.selected.display_name, scene._craft.scene_file_path, scene.find_children('*', 'JetSki', false, false).size()]",
       "equals": [
         "Koa",
         "res://test/craft/test_hull.tscn",
-        1,
-        "RIDES THE TEST HULL"
+        1
       ],
       "name": "Koa shows on the test craft's scene, which replaces the craft on the water"
     },
