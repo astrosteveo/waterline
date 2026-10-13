@@ -13,8 +13,9 @@
       "max": 400
     },
     {
-      "expect": "[player.craft.scene_file_path, player.craft.get_node('Collision').shape.size.z, player.craft.boarding_points[2]]",
+      "expect": "[player.craft_profile.id, player.craft.scene_file_path, player.craft.get_node('Collision').shape.size.z, player.craft.boarding_points[2]]",
       "equals": [
+        "long_hull_test",
         "res://craft/long_hull.tscn",
         3.5,
         [0.0, 0.0, 2.1]
