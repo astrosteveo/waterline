@@ -68,7 +68,8 @@ levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
 test/           water_match.tscn (GPU/CPU height comparison), wave_bench.gd,
-                scenarios/ (regression scenarios), tools/autodrive.py (test driver)
+                scenarios/ (regression scenarios), tools/autodrive.py (test driver),
+                craft/ (test-only craft for the craft_scenes scenario)
 docs/screenshots/  evidence screenshots for finished milestones
 captures/       gdh output, git-ignored and hidden from Godot (.gdignore)
 ```
@@ -693,7 +694,10 @@ a default craft and the computer skill. A racer's tuning is built in two steps
 The computer rides each rider's default craft. The player rides `Game.player_craft`, which
 `Game.rider_chosen` sets to the rider's default craft; `-- --craft ID` picks another
 (`Game.craft_named`). `Race.player_craft` and `RacerState.craft_profile` hold the craft in a race.
-Every craft still spawns on `jetski/jetski.tscn` for now.
+Each racer spawns on its craft's scene (`CraftProfile.scene`, a scene whose root is a `JetSki`).
+`Race.craft_scene` (`jetski/jetski.tscn`) is the fallback for a racer with no craft or a craft
+with no scene. The four craft all use `jetski/jetski.tscn` today; the `craft_scenes` scenario
+races a test craft with a scene of its own (`test/craft/`).
 
 | Craft | Default for | Top speed | Accel. | Handling | Grip | Character |
 |---|---|---|---|---|---|---|
@@ -719,8 +723,9 @@ so compare riders on flat water. On Gull Cove, each rider alone on the computer 
 The spread is 1.5%, so the choice is about feel, not a best rider.
 
 **Rider select** (`menus/rider_select.tscn`, the main scene): the riders down the left (focus
-moves with ui_up/ui_down, the list wraps, the mouse works too), the focused rider's craft
-floating on Gull Cove in the middle with the camera circling it, and a panel on the right with
+moves with ui_up/ui_down, the list wraps, the mouse works too), the focused rider on their
+default craft's scene floating on Gull Cove in the middle with the camera circling it (the craft
+is replaced when the next rider's craft has another scene), and a panel on the right with
 the name, the line, the rider's default craft ("RIDES THE SWORDFISH") and its four stat bars
 (`StatBar`; 3 is the base craft, a point per 7%, half steps). ui_accept sets `Game.player_rider`
 and `Game.player_craft` and opens the race. `Race` then races that rider
