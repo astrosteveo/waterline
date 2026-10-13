@@ -62,7 +62,8 @@ race/           Race (race.tscn), StuntMode, TimeTrial, GhostRecorder, GhostRide
                 RaceSounds, Announcer, PauseMenu, RacerState, RaceRules (rules/default_rules.tres),
                 RaceHud, PowerMeter (HUD widget), GateMarker, ResultsScreen, RacingLine, AIDriver
 riders/         RiderProfile (colours, weight, default craft, computer skill) and the four riders (.tres)
-craft/          CraftProfile (scene, base tuning, the four stats) and the four craft (.tres)
+craft/          CraftProfile (scene, base tuning, the four stats) and the four craft (.tres);
+                long_hull.tscn, an example craft scene (not in Game.crafts)
 levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.png = menu map),
                 open_water.tscn (free ride), water_test.tscn
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
@@ -175,6 +176,50 @@ while the craft is in the air, so a jump shows as the craft rising in the frame)
 (12/s). After smoothing it enforces two hard limits: at least 0.9 m above the water under it, and
 high enough that the line of sight to the craft clears the water by 0.3 m at three points. A ray
 cast pulls it in front of islands and rocks. FOV widens from 70° to 79° with speed.
+
+## Craft scenes
+
+A craft scene is `jetski/jetski.tscn` or an inherited scene of it. `JetSki` reads the craft's
+shape from the scene's nodes in `_ready`, so a craft of another shape needs no code:
+
+- `Collision`: the hull's box.
+- `HullPoints`: the buoyancy points, any number of `Marker3D`. Those at least `intake_min_z`
+  (0.5 m) behind the middle feed the jet.
+- `Seat`: where a thrown rider leaves the craft (`JetSki.seat`).
+- `StuntPivot`: the point the model turns about in a roll, flip or spin (`JetSki.stunt_pivot`).
+- `BoardingPoints`: its `Marker3D` children are where the swimming rider can climb on
+  (`JetSki.boarding_points`); the rider swims to the nearest.
+
+A scene without `Seat`, `StuntPivot` or `BoardingPoints` keeps the values `jetski.tscn` has
+(`JetSki.DEFAULT_SEAT` and so on). The model still draws the seated rider, and the climb back
+on, at its own fixed seat (`JetSkiModel.PELVIS_REST`), so a craft that moves `Seat` also needs a
+model that matches it (issue #13).
+
+**The long-hull example** (`craft/long_hull.tscn`) is the base craft stretched by 30% along its
+length. Its collision box is 3.5 m long instead of 2.7 m, its buoyancy points run from 1.63 m
+ahead of the middle to 1.69 m behind it (1.25 m and 1.3 m on the base craft), and its stern
+boarding point is 2.1 m behind the middle instead of 1.7 m. The seat, the stunt pivot, the
+tuning (`jetski/tuning/default.tres`) and the model stay the same, so the collision box reaches
+about 0.3 m past the drawn 2.9 m hull at each end. It isn't in `Game.crafts`.
+`test/craft/long_hull.tres` is a test-only `CraftProfile` for it, and
+`test/craft/race_long_hull.tscn` races it: the `craft_long_hull` scenario runs the `race_crash`
+checks on it and checks that a rider swimming up from behind climbs on at the moved stern point.
+
+Measured on Whitecap Point (choppy water), Marina alone on the computer driver for 3 laps, with
+`RideRecorder`:
+
+| Driver | Craft | Airborne, lap 1 | Airborne, 3 laps | Jumps (of them 0.4 s or longer) | Race time | Misses, crashes |
+|---|---|---|---|---|---|---|
+| Skill 1.0 | base | 23.7% | 26.2% | 110 (51) | 2:58.80 | 0, 0 |
+| Skill 1.0 | long hull | 21.1% | 23.9% | 106 (45) | 2:58.57 | 0, 0 |
+| Skill 0.9, seed 11 | base | 21.9% | 25.0% | 115 (44) | 3:04.63 | 1, 0 |
+| Skill 0.9, seed 11 | long hull | 18.8% | 22.1% | 107 (37) | 3:03.51 | 0, 0 |
+
+The long hull spends about 3 percentage points less of the race in the air and makes fewer long
+jumps, at the same lap times. Its buoyancy points spread further apart, so the hull probably
+spans more of the short chop and pitches less over it. At skill 1.0 the computer driver makes no
+random choices and every race starts the waves at time 0, so the seed changes nothing (seeds 5
+and 11 gave identical runs); at skill 0.9 the driver wanders off the line according to the seed.
 
 ## Jet ski tuning (jetski/jetski_tuning.gd, values in jetski/tuning/default.tres)
 
@@ -313,7 +358,7 @@ throws the rider off on the next tick. The reasons (`JetSki.last_crash_reason`):
 The rider then goes through `JetSki.rider_state`: THROWN (flies on at 65% of the craft's speed
 from before the impact, plus 3 m/s up and 4 m/s sideways, tumbling; a ray stops the rider at
 rocks and walls), SWIMMING (comes up for 0.6 s, then swims at 2 m/s to the nearest boarding
-point: either side of the seat or behind the stern), MOUNTING (0.9 s climb; an upturned craft is
+point, a `BoardingPoints` marker: either side of the seat or behind the stern), MOUNTING (0.9 s climb; an upturned craft is
 turned upright), then ABOARD. Without its rider the craft's engine cuts out, it brakes at 1.1/s
 and drifts gently toward the swimmer. After 7 s in the water the rider climbs on wherever the
 craft is. Every number is in the Crashes and Remount groups of `JetSkiTuning`.
@@ -637,7 +682,7 @@ lean forward a **handstand**, nothing a **spin** (a flat 360°). The rider can't
 while a stunt runs; a second stunt can follow the first in the same jump.
 
 - **The model turns, not the body.** A roll, flip or spin turns the `Model` node about
-  `JetSki.STUNT_PIVOT` (between hull and rider), easing in and out
+  `JetSki.stunt_pivot` (the `StuntPivot` marker, between hull and rider), easing in and out
   (`p - sin(2πp)/2π`); the rigid body keeps its air attitude. Driving the body through 360° in
   under a second fought the air control and the camera, and a body rolled 180° at touchdown
   would be judged by the physics, not the stunt. The handstand is the rider's own pose
