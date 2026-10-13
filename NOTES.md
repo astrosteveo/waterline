@@ -61,7 +61,8 @@ menus/          MainMenu (main_menu.tscn, the main scene), RiderSelect, CourseSe
 race/           Race (race.tscn), StuntMode, TimeTrial, GhostRecorder, GhostRider, SoloResults,
                 RaceSounds, Announcer, PauseMenu, RacerState, RaceRules (rules/default_rules.tres),
                 RaceHud, PowerMeter (HUD widget), GateMarker, ResultsScreen, RacingLine, AIDriver
-riders/         RiderProfile (colours, craft stats, computer skill) and the four riders (.tres)
+riders/         RiderProfile (colours, weight, default craft, computer skill) and the four riders (.tres)
+craft/          CraftProfile (scene, base tuning, the four stats) and the four craft (.tres)
 levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.png = menu map),
                 open_water.tscn (free ride), water_test.tscn
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
@@ -670,34 +671,46 @@ while a stunt runs; a second stunt can follow the first in the same jump.
   roll by a margin that shrinks with skill and has some random misjudgement below skill 1, so a
   weaker rider can land mid-roll. Over two watched races each rider landed 0–4.
 
-## Riders
+## Riders and craft
 
-`RiderProfile` (`riders/*.tres`) holds a rider's name, a one-line description, colours
-(including the hull's bottom, so riders tell apart from behind), four craft factors and a weight,
-and the computer skill. `RiderProfile.tuned(base)` returns a copy of the craft's `JetSkiTuning`:
+A rider and a craft are separate, so any rider can ride any craft.
 
-- **Top speed s, acceleration a:** thrust × a, linear drag × a/s, quadratic drag × a/s². Top
-  speed solves thrust = linear·v + quadratic·v², so a keeps it and s scales it; a scales the push
-  from a standstill.
-- **Handling h:** turn rates, yaw response and yaw acceleration × h. **Grip g:** `grip_g` and
-  `grip_rate` × g; a computer rider counts on `cornering × g` in the turns.
-- **Weight:** every force that scales with the body (thrust, drag, buoyancy, damping, torques)
-  scales with the mass too, so the weight changes collisions (who pushes whom), not the ride.
+`CraftProfile` (`craft/*.tres`) holds a craft's id, name, one-line description, scene, base
+`JetSkiTuning` and four stats. `RiderProfile` (`riders/*.tres`) holds a rider's name, a one-line
+description, colours (including the hull's bottom, so riders tell apart from behind), a weight,
+a default craft and the computer skill. A racer's tuning is built in two steps
+(`CraftProfile.tuning_for(rider)`), the craft's stats first, then the rider's weight:
 
-| Rider | Top speed | Accel. | Handling | Grip | Mass | Character |
+- **`CraftProfile.tuned(base)`.** **Top speed s, acceleration a:** thrust × a, linear drag × a/s,
+  quadratic drag × a/s². Top speed solves thrust = linear·v + quadratic·v², so a keeps it and s
+  scales it; a scales the push from a standstill. **Handling h:** turn rates, yaw response and
+  yaw acceleration × h. **Grip g:** `grip_g` and `grip_rate` × g; a computer rider counts on
+  `cornering × g` in the turns.
+- **`RiderProfile.tuned(base)`, the weight:** every force that scales with the body (thrust,
+  drag, buoyancy, damping, torques) scales with the mass too, so the weight changes collisions
+  (who pushes whom), not the ride.
+
+The computer rides each rider's default craft. The player rides `Game.player_craft`, which
+`Game.rider_chosen` sets to the rider's default craft; `-- --craft ID` picks another
+(`Game.craft_named`). `Race.player_craft` and `RacerState.craft_profile` hold the craft in a race.
+Every craft still spawns on `jetski/jetski.tscn` for now.
+
+| Craft | Default for | Top speed | Accel. | Handling | Grip | Character |
 |---|---|---|---|---|---|---|
-| Marina | 1.00 | 1.00 | 1.00 | 1.00 | 300 kg | the base craft |
-| Koa | 1.06 | 0.86 | 0.92 | 1.00 | 330 kg | fast once going, slow to get there and to turn |
-| Ines | 0.96 | 1.00 | 1.12 | 1.10 | 280 kg | tightest turns, holds the line, lowest top speed |
-| Dax | 1.00 | 1.14 | 1.04 | 0.88 | 290 kg | quickest off the mark, slides in turns |
+| Tradewind | Marina (300 kg) | 1.00 | 1.00 | 1.00 | 1.00 | the base craft |
+| Swordfish | Koa (330 kg) | 1.06 | 0.86 | 0.92 | 1.00 | fast once going, slow to get there and to turn |
+| Petrel | Ines (280 kg) | 0.96 | 1.00 | 1.12 | 1.10 | tightest turns, holds the line, lowest top speed |
+| Skipjack | Dax (290 kg) | 1.00 | 1.14 | 1.04 | 0.88 | quickest off the mark, slides in turns |
 
-Measured on flat water (`test/tools/rider_bench.py --flat`, repeatable to 0.01 s):
+Measured on flat water, each rider on their default craft (`test/tools/rider_bench.py --flat`,
+repeatable to 0.01 s; `--craft ID` puts every rider on one craft). The numbers are the same
+before and after the craft split:
 
 | Rider | 0–40 km/h | 0–50 km/h | Top speed | Full-lock U-turn from top speed | Most slip | Speed after |
 |---|---|---|---|---|---|---|
 | Marina | 1.95 s | 2.98 s | 58.2 km/h | 2.63 s | 8.5° | 49.6 km/h |
 | Koa | 2.18 s | 3.18 s | 61.5 km/h | 2.87 s | 5.9° | 54.4 km/h |
-| Ines | 1.97 s | 3.13 s | 55.9 km/h | 2.38 s | 6.4° | 49.3 km/h |
+| Ines | 2.00 s | 3.20 s | 55.9 km/h | 2.38 s | 6.4° | 49.2 km/h |
 | Dax | 1.72 s | 2.62 s | 58.3 km/h | 2.40 s | 29.4° | 38.5 km/h |
 
 On waves the same runs vary by about 0.2 s between repeats (the craft meets different swells),
@@ -708,8 +721,9 @@ The spread is 1.5%, so the choice is about feel, not a best rider.
 **Rider select** (`menus/rider_select.tscn`, the main scene): the riders down the left (focus
 moves with ui_up/ui_down, the list wraps, the mouse works too), the focused rider's craft
 floating on Gull Cove in the middle with the camera circling it, and a panel on the right with
-the name, the line and four stat bars (`StatBar`; 3 is the base craft, a point per 7%, half
-steps). ui_accept sets `Game.player_rider` and opens the race. `Race` then races that rider
+the name, the line, the rider's default craft ("RIDES THE SWORDFISH") and its four stat bars
+(`StatBar`; 3 is the base craft, a point per 7%, half steps). ui_accept sets `Game.player_rider`
+and `Game.player_craft` and opens the race. `Race` then races that rider
 against `Game.opponents_for()` the rest; the command line `-- --rider NAME` does the same.
 The results screen has RACE AGAIN, RIDERS (back to rider select) and QUIT.
 

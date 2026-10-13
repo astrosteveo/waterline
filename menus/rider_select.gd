@@ -1,7 +1,7 @@
 class_name RiderSelect
 extends Node3D
 ## The rider select screen: the four riders down the left, the chosen rider's craft
-## floating on the water behind, its stats on the right. Confirming hands the rider to
+## floating on the water behind, the rider's default craft and its stats on the right. Confirming hands the rider to
 ## [method Game.rider_chosen], which moves on to the course select (or the championship's
 ## first race); backing out returns to the main menu.
 
@@ -23,6 +23,7 @@ var _anchor := Transform3D.IDENTITY
 var _buttons: Array[Button] = []
 var _name: Label
 var _tagline: Label
+var _craft_name: Label
 var _bars: Array[StatBar] = []
 var _orbit := 0.6
 
@@ -61,14 +62,17 @@ func _process(delta: float) -> void:
 	_camera.look_at(focus + Vector3.DOWN * 0.3, Vector3.UP)
 
 
-## Shows [param rider]: the craft in its colours and its stats.
+## Shows [param rider]: the craft in the rider's colours, and the rider's default craft with
+## its stats.
 func select(rider: RiderProfile) -> void:
 	selected = rider
 	rider.apply_colors(_craft.get_node_or_null(^"Model"))
 	_name.text = rider.display_name.to_upper()
 	_tagline.text = rider.tagline
+	var craft := rider.default_craft
+	_craft_name.text = "RIDES THE %s" % craft.display_name.to_upper() if craft != null else ""
 	for i in _bars.size():
-		_bars[i].value = rider.rating(RiderProfile.STATS[i])
+		_bars[i].value = craft.rating(CraftProfile.STATS[i]) if craft != null else 3.0
 
 
 ## Starts the race with the selected rider.
@@ -141,10 +145,12 @@ func _build_ui() -> void:
 	_tagline.custom_minimum_size = Vector2(500, 70)
 	_tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(_tagline)
-	for i in RiderProfile.STATS.size():
+	_craft_name = MenuStyle.label("", 28, MenuStyle.CYAN)
+	column.add_child(_craft_name)
+	for i in CraftProfile.STATS.size():
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override(&"separation", 20)
-		var stat := MenuStyle.label(RiderProfile.STAT_LABELS[i], 28, MenuStyle.WHITE)
+		var stat := MenuStyle.label(CraftProfile.STAT_LABELS[i], 28, MenuStyle.WHITE)
 		stat.custom_minimum_size = Vector2(230, 0)
 		row.add_child(stat)
 		var bar := StatBar.new()
