@@ -57,6 +57,8 @@ enum Phase {
 @export_range(0.0, 10.0, 0.1, "suffix:s") var countdown_time: float = 3.0
 ## The player's rider.
 @export var player_rider: RiderProfile
+## The player's craft. Empty: the player's rider's default craft.
+@export var player_craft: CraftProfile
 ## The computer riders, one per remaining starting slot.
 @export var opponents: Array[RiderProfile] = []
 ## Starting slot of the player, counted from the left.
@@ -143,6 +145,13 @@ func _ready() -> void:
 	if chosen != null:
 		player_rider = chosen
 		opponents = Game.opponents_for(chosen)
+	# The craft chosen with the rider, or `-- --craft ID`.
+	if Game.player_craft != null:
+		player_craft = Game.player_craft
+	if Game.arg_value("--craft") != "":
+		player_craft = Game.craft_named(Game.arg_value("--craft"))
+	if player_craft == null and player_rider != null:
+		player_craft = player_rider.default_craft
 	racing_line = RacingLine.new(course)
 	_spawn_player()
 	# `-- --no-opponents` races the player alone, for tests and practice.
@@ -223,11 +232,10 @@ func _setup_mode(info: CourseInfo) -> void:
 func _spawn_player() -> void:
 	var craft := craft_scene.instantiate() as JetSki
 	craft.name = "Player"
-	if player_rider != null:
-		player_rider.apply_colors(craft.get_node_or_null(^"Model"))
-		craft.tuning = player_rider.tuned(craft.tuning)
+	_fit(craft, player_rider, player_craft)
 	var racer := _add_racer(craft, player_rider.display_name if player_rider != null else "You", player_slot)
 	racer.profile = player_rider
+	racer.craft_profile = player_craft
 	racer.is_player = true
 	player = racer
 	var input := PlayerInput.new()
@@ -247,10 +255,10 @@ func _spawn_player() -> void:
 func _spawn_computer(profile: RiderProfile, slot: int) -> void:
 	var craft := craft_scene.instantiate() as JetSki
 	craft.name = profile.display_name.validate_node_name()
-	profile.apply_colors(craft.get_node_or_null(^"Model"))
-	craft.tuning = profile.tuned(craft.tuning)
+	_fit(craft, profile, profile.default_craft)
 	var racer := _add_racer(craft, profile.display_name, slot)
 	racer.profile = profile
+	racer.craft_profile = profile.default_craft
 	var driver := AIDriver.new()
 	driver.name = "AIDriver"
 	driver.skill = profile.ai_skill
@@ -259,6 +267,17 @@ func _spawn_computer(profile: RiderProfile, slot: int) -> void:
 	driver.race = self
 	driver.racer = racer
 	craft.add_child(driver)
+
+
+## Paints [param craft] (not yet in the tree) in [param rider]'s colours and gives it the
+## tuning the rider gets on [param profile]: the craft's stats, then the rider's weight.
+func _fit(craft: JetSki, rider: RiderProfile, profile: CraftProfile) -> void:
+	if rider != null:
+		rider.apply_colors(craft.get_node_or_null(^"Model"))
+	if profile != null:
+		craft.tuning = profile.tuning_for(rider, craft.tuning)
+	elif rider != null:
+		craft.tuning = rider.tuned(craft.tuning)
 
 
 ## Adds a racer riding [param craft] (not yet in the tree) in starting slot [param slot].

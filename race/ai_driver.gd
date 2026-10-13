@@ -60,9 +60,9 @@ func _ready() -> void:
 	_craft = get_parent() as JetSki
 	if _craft == null:
 		push_error("AIDriver must be a child of a JetSki.")
-	if racer != null and racer.profile != null:
-		# Count on this rider's own grip in the turns.
-		cornering *= racer.profile.grip
+	if racer != null and racer.craft_profile != null:
+		# Count on this craft's own grip in the turns.
+		cornering *= racer.craft_profile.grip
 	_rng.seed = mistake_seed
 	_noise.seed = mistake_seed
 	_noise.frequency = 0.08

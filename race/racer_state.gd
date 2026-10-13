@@ -44,6 +44,8 @@ var stunt_points: int = 0
 var wrong_way: bool = false
 ## The rider, or null.
 var profile: RiderProfile
+## The craft the rider rides, or null.
+var craft_profile: CraftProfile
 ## Extra thrust factor on top of the power meter's, set by a computer rider's catch-up.
 var thrust_bias: float = 1.0
 
