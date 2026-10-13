@@ -1,5 +1,5 @@
 {
-  "description": "Riders: the rider select screen shows each rider's stats; choosing one (then a course) races as that rider, on a craft tuned by its stats, against the other three.",
+  "description": "Riders: the rider select screen shows each rider and the stats of the rider's default craft; choosing one (then a course) races as that rider on that craft, tuned by the craft's stats and the rider's weight, against the other three on their own craft.",
   "start": {
     "scene": "res://menus/rider_select.tscn",
     "seed": 1
@@ -19,7 +19,12 @@
         3.0,
         3.0
       ],
-      "name": "Marina's stats are all even"
+      "name": "Marina's craft's stats are all even"
+    },
+    {
+      "expect": "scene._craft_name.text",
+      "equals": "RIDES THE TRADEWIND",
+      "name": "Marina rides the Tradewind"
     },
     {
       "step": 3,
@@ -95,6 +100,15 @@
       "name": "as the chosen rider"
     },
     {
+      "expect": "[scene.player_craft.id, scene.player.craft_profile.id, Game.player_craft.id]",
+      "equals": [
+        "petrel",
+        "petrel",
+        "petrel"
+      ],
+      "name": "on the rider's default craft"
+    },
+    {
       "expect": "[scene.racers[1].display_name, scene.racers[2].display_name, scene.racers[3].display_name]",
       "equals": [
         "Marina",
@@ -105,7 +119,7 @@
     },
     {
       "expect": "abs(scene.player.craft.tuning.turn_rate_low - 1.6 * 1.12) < 0.001",
-      "name": "the craft has Ines's handling"
+      "name": "the craft has the Petrel's handling"
     },
     {
       "expect": "abs(scene.player.craft.mass - 280.0) < 0.01",
@@ -113,7 +127,16 @@
     },
     {
       "expect": "abs(scene.racers[2].craft.tuning.grip_g - 1.9) < 0.001 and abs(scene.racers[3].craft.tuning.grip_g - 1.9 * 0.88) < 0.001",
-      "name": "the computer riders have their own stats"
+      "name": "the computer riders ride their own craft"
+    },
+    {
+      "expect": "[scene.racers[1].craft_profile.id, scene.racers[2].craft_profile.id, scene.racers[3].craft_profile.id]",
+      "equals": [
+        "tradewind",
+        "swordfish",
+        "skipjack"
+      ],
+      "name": "each on their default craft"
     }
   ]
 }
