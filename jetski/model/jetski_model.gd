@@ -145,6 +145,10 @@ var _handlebar: Node3D
 var _bar_rest := Transform3D(Basis.IDENTITY, HANDLEBAR_PIVOT)
 var _bar_in_model := Transform3D(Basis.IDENTITY, HANDLEBAR_PIVOT)
 var _feet: Array[Vector3] = FOOTRESTS.duplicate()
+# The painted materials of the hull scene's meshes. Holding them here lets a rebuild free the
+# meshes before their materials: freed the other way round, the renderer reports errors for
+# the meshes' missing materials.
+var _hull_materials: Array[Material] = []
 var _rider_root: Node3D
 var _rider_mode: RiderMode = RiderMode.ABOARD
 var _rider_pelvis := Transform3D.IDENTITY
@@ -228,6 +232,7 @@ func _build() -> void:
 	for child in get_children(true):
 		if child.has_meta(&"model_part"):
 			child.free()
+	_hull_materials.clear()
 	_parts.clear()
 	_handlebar = null
 	_bar_rest = Transform3D(Basis.IDENTITY, HANDLEBAR_PIVOT)
@@ -393,6 +398,7 @@ func _hull_material(source: Material, height_row: Vector4, bottom_line: float, t
 		})
 	for key: StringName in values:
 		paint.set_shader_parameter(key, values[key])
+	_hull_materials.append(paint)
 	return paint
 
 
