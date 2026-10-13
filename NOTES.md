@@ -32,6 +32,37 @@ Checks use `gdh`, a command-line harness that runs the game off-screen on the GP
 by frame with scripted input, takes screenshots and evaluates expressions in the running game.
 While gdh holds the game between commands, the scene tree is paused.
 
+## CI
+
+GitHub Actions runs `.github/workflows/check.yml` on every pull request and every push to main,
+on a GitHub-hosted Ubuntu runner. It downloads the official Godot 4.7.2-stable Linux build
+(checked against the release's SHA-512 sum and cached between runs), then runs
+`test/check_project.sh`, which does two things:
+
+1. Imports the project headless from a clean checkout (`godot --headless --import`).
+2. Runs `test/check_project.gd`, which loads every script, scene and resource, skipping hidden
+   folders and folders with a `.gdignore` file. Loading compiles each script, and each scene and
+   resource loads the files it refers to. Nothing is added to the scene tree, so no game code
+   runs apart from the autoloads.
+
+The check fails if Godot exits with a non-zero code or prints an error line (`ERROR:`,
+`SCRIPT ERROR:`, `SHADER ERROR:`) in either step. It reads the output because Godot's import
+exits with 0 even when a file fails to import. So it catches script parse and type errors, files
+that fail to import, and scenes or resources that refer to a missing file. It does not run the
+game, so it misses errors that only happen while playing. Warnings show on the run page but don't
+fail the check. On GitHub each error also shows as an annotation, at the script line when Godot
+names one. The job takes about 30 seconds, most of it the import.
+
+Run the same check locally with `test/check_project.sh` (set `GODOT` to use a binary other than
+`godot` on the PATH). It takes a few seconds.
+
+The gdh scenarios in `test/scenarios/` are not part of CI, because they render on a real GPU and
+GitHub-hosted runners have none. Run them locally with `gdh test --project .` before merging a
+change to gameplay, rendering or the menus.
+
+To move to a new Godot release, change `GODOT_VERSION` and `GODOT_SHA512` in the workflow. The
+sum is in the release's `SHA512-SUMS.txt`.
+
 ## Layout
 
 ```
@@ -71,11 +102,13 @@ levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
 test/           water_match.tscn (GPU/CPU height comparison), wave_bench.gd,
+                check_project.sh + check_project.gd (the CI check, see "CI"),
                 scenarios/ (regression scenarios), tools/autodrive.py (test driver),
                 craft/ (test-only craft and test races for the craft scenarios and
                 time_trial_craft, and the hull preview scene),
                 fixtures/ (saved user:// folders for scenarios; hidden from Godot)
 docs/screenshots/  evidence screenshots for finished milestones
+.github/workflows/ check.yml (the CI check, see "CI")
 captures/       gdh output, git-ignored and hidden from Godot (.gdignore)
 ```
 
