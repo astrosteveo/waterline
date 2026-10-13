@@ -256,8 +256,9 @@ generated model's white is a little blue. A material that isn't a StandardMateri
 painted. The meshes go on visual layer 2, the layer for moving things,, as the code-built parts do. With
 `ghost` on, `hull_paint_ghost.gdshader` draws the same paint see-through (alpha 0.38 and a faint
 blue glow, as the code-built ghost), after the water (render priority 1), front faces only, and
-no part casts a shadow. The time-trial ghost still draws `jetski_model.tscn` without a hull
-scene; see issue #15, which makes it use the craft's model.
+no part casts a shadow. The time-trial ghost draws the model of the craft that set the record
+(`GhostRider.model_of`, which also gives the model the craft's `Seat` marker), so the ghost of a
+craft with a hull scene shows that hull.
 
 **The generated hull** (`assets/generated/jetski_hull.glb`, `jetski_hull` in `assetgen.yaml`) is
 2.9 m long, 1.39 m wide and 1.25 m high, 28,164 triangles, and white so that the paint shows.
@@ -297,7 +298,14 @@ footrests, Koa's three colours in the paint, the handstand holding the bars, and
 ending the climb within 5 cm of the seat (the old fixed seat is 23 cm lower).
 `test/craft/hull_preview.tscn` shows the code-built hull, the generated hull in Dax's colours
 and the generated hull as a ghost side by side; the `craft_hull_ghost` scenario checks the
-ghost's shaders, render priority and shadows. Without a hull scene the game draws as before. A
+ghost's shaders, render priority and shadows, and that a model rebuilt in the frame it enters
+the tree (as on the craft select screen, which paints the craft after adding it) raises no
+engine errors. The model keeps its painted materials in `_hull_materials` so that a rebuild
+frees the old meshes before their materials; the other way round, the renderer reported
+`Parameter "material" is null` four times. The `craft_hull_time_trial` scenario sets a
+one-lap time-trial record on the example craft and checks that the ghost on the retry draws
+the hull scene see-through, without shadows, with its rider at the `Seat` marker, and rides
+beside the player. Without a hull scene the game draws as before. A
 race replayed with seed 1 was captured at 7 moments (the start grid, a turn, a handstand, a
 crash, swimming, the climb and remounted) at 1280×720, before and after the change. No pixel
 differs by more than 2 on the 0–255 colour scale except 5 single pixels, which differ because
@@ -904,7 +912,8 @@ line for tests.
   for a 2-minute run, zstd-compressed in `user://ghosts/<course>.ghost` with the rider's name and
   the craft's id. `GhostRider` plays it back on the Model node of that craft's scene, taken out
   of a new instance of the scene (`GhostRider.model_of`; the rest of the craft is freed before it
-  enters the tree, so the ghost has no physics, wake, spray or sound). A ghost with no craft id,
+  enters the tree, so the ghost has no physics, wake, spray or sound). `model_of` sets the
+  model's `seat` from the craft's `Seat` marker, as a `JetSki` does for its own model. A ghost with no craft id,
   or one no longer in `Game.crafts`, rides `Race.craft_scene`'s model. The model is drawn
   see-through (`ghost = true` on a `JetSkiModel`: alpha 0.38, a faint blue glow, no
   shadows) in step with the race clock, interpolated between ticks. Every race now starts the
