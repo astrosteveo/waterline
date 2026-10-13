@@ -51,7 +51,7 @@ exits with 0 even when a file fails to import. So it catches script parse and ty
 that fail to import, and scenes or resources that refer to a missing file. It does not run the
 game, so it misses errors that only happen while playing. Warnings show on the run page but don't
 fail the check. On GitHub each error also shows as an annotation, at the script line when Godot
-names one. The whole job takes well under a minute.
+names one. The job takes about 30 seconds, most of it the import.
 
 Run the same check locally with `test/check_project.sh` (set `GODOT` to use a binary other than
 `godot` on the PATH). It takes a few seconds.
