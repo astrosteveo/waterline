@@ -42,8 +42,8 @@ water/presets/  WaveSet presets: open_sea.tres (choppy), rolling_swell.tres (ope
 environment/    sky shader (with stars), day and night environments, Sun, Terrain (seabed +
                 islands), Rock, Pier, LampPost, HarborBuilding
 jetski/         JetSki (RigidBody3D physics), JetSkiTuning (every tuning number),
-                RiderControls, PlayerInput; tuning/default.tres; model/ (placeholder craft
-                and rider, swappable)
+                RiderControls, PlayerInput; tuning/default.tres; model/ (JetSkiModel: the
+                code-built hull or a hull scene, and the rider; hull_paint shaders)
 cameras/        ChaseCamera, FreeCamera, CameraSwitcher
 props/          crate.tscn (a Floater)
 debug/          WaterProbe, DebugHud (F3 readout), RideRecorder (ride statistics),
@@ -64,14 +64,16 @@ race/           Race (race.tscn), StuntMode, TimeTrial, GhostRecorder, GhostRide
                 RaceHud, PowerMeter (HUD widget), GateMarker, ResultsScreen, RacingLine, AIDriver
 riders/         RiderProfile (colours, weight, default craft, computer skill) and the four riders (.tres)
 craft/          CraftProfile (scene, base tuning, the four stats) and the four craft (.tres);
-                long_hull.tscn, an example craft scene (not in Game.crafts)
+                long_hull.tscn and generated_hull.tscn, example craft scenes (not in
+                Game.crafts); hulls/ (hull scenes for JetSkiModel)
 levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.png = menu map),
                 open_water.tscn (free ride), water_test.tscn
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
 test/           water_match.tscn (GPU/CPU height comparison), wave_bench.gd,
                 scenarios/ (regression scenarios), tools/autodrive.py (test driver),
-                craft/ (test-only craft for the craft scenarios and time_trial_craft),
+                craft/ (test-only craft and test races for the craft scenarios and
+                time_trial_craft, and the hull preview scene),
                 fixtures/ (saved user:// folders for scenarios; hidden from Godot)
 docs/screenshots/  evidence screenshots for finished milestones
 captures/       gdh output, git-ignored and hidden from Godot (.gdignore)
@@ -171,7 +173,8 @@ Controls come in through `JetSki.controls` (`RiderControls`: throttle, steer, le
 fills them from the Input Map (keyboard steer and lean ease in over 0.12–0.15 s); a computer rider
 can fill them the same way. The model (`jetski/model/jetski_model.tscn`) is only visual: the
 physics never reads it, and any Node3D scene can replace it. If it has
-`set_pose(steer, lean, throttle, airborne)`, the craft calls it every frame.
+`set_pose(steer, lean, throttle, airborne)`, the craft calls it every frame, and if it has a
+`seat` property, the craft sets it from its `Seat` marker in `_ready`.
 
 `ChaseCamera` follows from 6.4 m behind and 2.4 m above, turning toward a heading that blends the
 nose with the direction of travel, with separate lags for yaw (3.5/s), height (2.5/s, or 0.8/s
@@ -188,15 +191,16 @@ shape from the scene's nodes in `_ready`, so a craft of another shape needs no c
 - `Collision`: the hull's box.
 - `HullPoints`: the buoyancy points, any number of `Marker3D`. Those at least `intake_min_z`
   (0.5 m) behind the middle feed the jet.
-- `Seat`: where a thrown rider leaves the craft (`JetSki.seat`).
+- `Seat`: where the rider's pelvis sits (`JetSki.seat`): the model draws the seated rider
+  here, a thrown rider leaves the craft from here and the climb back on ends here.
 - `StuntPivot`: the point the model turns about in a roll, flip or spin (`JetSki.stunt_pivot`).
 - `BoardingPoints`: its `Marker3D` children are where the swimming rider can climb on
   (`JetSki.boarding_points`); the rider swims to the nearest.
 
 A scene without `Seat`, `StuntPivot` or `BoardingPoints` keeps the values `jetski.tscn` has
-(`JetSki.DEFAULT_SEAT` and so on). The model still draws the seated rider, and the climb back
-on, at its own fixed seat (`JetSkiModel.PELVIS_REST`), so a craft that moves `Seat` also needs a
-model that matches it (issue #13).
+(`JetSki.DEFAULT_SEAT` and so on). The craft passes its seat to the model
+(`JetSkiModel.seat`), so the drawn seat and the physics seat can't disagree. A craft scene can
+also give the model a hull of its own (below).
 
 **The long-hull example** (`craft/long_hull.tscn`) is the base craft stretched by 30% along its
 length. Its collision box is 3.5 m long instead of 2.7 m, its buoyancy points run from 1.63 m
@@ -223,6 +227,83 @@ jumps, at the same lap times. Its buoyancy points spread further apart, so the h
 spans more of the short chop and pitches less over it. At skill 1.0 the computer driver makes no
 random choices and every race starts the waves at time 0, so the seed changes nothing (seeds 5
 and 11 gave identical runs); at skill 0.9 the driver wanders off the line according to the seed.
+
+## Hull scenes
+
+`JetSkiModel.hull_scene` draws any scene as the hull instead of the code-built one, and the
+code-built rider rides it. A craft scene sets it on its `Model` node, as
+`craft/generated_hull.tscn` does. The hull scene is in model space (-Z forward, +Y up, origin on
+the keel at mid-length) and marks where the rider holds on with named `Marker3D` nodes, found by
+name anywhere under its root:
+
+- `Handlebar`: the steering pivot. It turns about its own Y axis with the steering (24° at full
+  lock), and so does everything under it, so the handlebar's meshes go under it. The hands hold
+  it 0.33 m either side along its X axis (`JetSkiModel.GRIP_SPREAD`).
+- `FootLeft` and `FootRight`: the footrests.
+- `BottomLine` and `TrimLine` (optional): the heights where the paint changes colour.
+
+The hull scene has no seat: the rider sits at the craft's `Seat` marker. A hull scene without
+`Handlebar` or a foot marker logs a warning, and the rider uses the code-built hull's position
+for it.
+
+**Paint.** Each StandardMaterial3D in the hull scene is replaced by
+`jetski/model/hull_paint.gdshader`, which copies the material's albedo, roughness, metallic,
+normal map and ambient occlusion, and paints the light grey and white parts of the albedo in
+the rider's colours: `bottom_color` below `BottomLine`, `trim_color` from there up to `TrimLine`,
+`hull_color` above. Dark and strongly coloured parts keep their own colour, and painted parts
+keep their shading. Light parts with a saturation up to about 0.3 count as grey, because a
+generated model's white is a little blue. A material that isn't a StandardMaterial3D isn't
+painted. The meshes go on visual layer 2 (moving things), as the code-built parts do. With
+`ghost` on, `hull_paint_ghost.gdshader` draws the same paint see-through (alpha 0.38 and a faint
+blue glow, as the code-built ghost), after the water (render priority 1), front faces only, and
+no part casts a shadow. The time-trial ghost still draws `jetski_model.tscn` without a hull
+scene; see issue #15, which makes it use the craft's model.
+
+**The generated hull** (`assets/generated/jetski_hull.glb`, `jetski_hull` in `assetgen.yaml`) is
+2.9 m long, 1.39 m wide and 1.25 m high, 28,164 triangles, and white so that the paint shows.
+Every prompt that asked for a jet ski without a handlebar still drew one (10 of 10 images), so
+`jetski_hull_concept` draws the jet ski with its handlebar, and `jetski_hull` uses that image as
+a reference and edits the handlebar out (5 of 6 edits had none). At 12,000 faces the shape came
+out lumpy (7,669 triangles); at 30,000 it matches the reference image. assetgen warns that
+about 5,500 faces cut through others, with every seed and setting tried; a still camera saw no
+pixel change over 40 frames.
+
+`craft/hulls/generated_hull.tscn` turns the model to face -Z and adds a handlebar: a 0.74 m bar
+and a short column under `Handlebar`, 1.38 m high and 0.42 m ahead of the middle. Its footrests
+are on the side decks (±0.48 m, 0.63 m high, 0.2 m behind the middle), and the paint lines are
+at 0.3 m (`BottomLine`) and 0.42 m (`TrimLine`, just under the black rub rail).
+`craft/generated_hull.tscn` is `jetski.tscn` with that hull and its `Seat` marker at 1.35 m high
+and 0.4 m behind the middle, 0.36 m above the top of the generated seat, as on the code-built
+hull. The collision box, buoyancy points and tuning are the base craft's. It isn't in
+`Game.crafts`.
+
+To give a craft a model of its own:
+
+1. Make a scene with a Node3D root and the model under it, turned to face -Z, with its keel at
+   y = 0 and the middle of its length at the origin.
+2. Add the `Handlebar` marker with the handlebar's meshes under it, and the `FootLeft` and
+   `FootRight` markers. Add `BottomLine` and `TrimLine` if the model should take the rider's
+   colours; a model meant to be painted should be white or light grey where the paint goes.
+3. Make an inherited scene of `jetski/jetski.tscn`, set its `Model` node's `hull_scene`, and
+   move its `Seat` marker to about 0.36 m above the top of the seat. The editor draws the rider
+   at that marker.
+4. Point a `CraftProfile`'s `scene` at the new craft scene.
+
+**Tests.** `test/craft/race_generated_hull.tscn` races the example craft
+(`test/craft/generated_hull.tres`). The `craft_hull_scene` scenario (25 checks) rides it as Koa:
+the pelvis at the seat, the hands at the grips (also with the bar turned), the feet on the
+footrests, Koa's three colours in the paint, the handstand holding the bars, and a thrown rider
+ending the climb within 5 cm of the seat (the old fixed seat is 23 cm lower).
+`test/craft/hull_preview.tscn` shows the code-built hull, the generated hull in Dax's colours
+and the generated hull as a ghost side by side; the `craft_hull_ghost` scenario checks the
+ghost's shaders, render priority and shadows. Without a hull scene the game draws as before: a
+race replayed with seed 1 (the start grid, a turn, a handstand, a crash, swimming, the climb and
+remounted, 7 frames at 1280×720) differs from the same race before the change by at most 2
+levels of 255, except in 5 single pixels, from rounding in the seat position.
+
+Screenshots (`docs/screenshots/hull_scene_*.png`, Marina on the example craft at Gull Cove):
+`seated` (in a right turn, hands on the turned bar), `handstand`, `swimming` (back to the craft
+after a crash), `climbing` and `remounted`; `preview` is the preview scene.
 
 ## Jet ski tuning (jetski/jetski_tuning.gd, values in jetski/tuning/default.tres)
 
@@ -997,7 +1078,8 @@ entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_le
 
 All eight milestones are done. Ideas for after them, roughly by value:
 
-- Real models and sounds: every model is swappable (`JetSkiModel` and the scenery scripts take
-  a child named "Model"), and `SoundBank` is the one place sounds come from.
+- Real models and sounds: every model is swappable (`JetSkiModel` takes a hull scene, see
+  "Hull scenes", and the scenery scripts take a child named "Model"), and `SoundBank` is the one
+  place sounds come from.
 - Music (an empty slot: there is no music bus yet).
 - Split-screen two-player races (input actions would need a player prefix).
