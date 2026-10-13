@@ -1,21 +1,19 @@
-[gd_resource type="Resource" script_class="RiderProfile" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="RiderProfile" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://riders/rider_profile.gd" id="1"]
+[ext_resource type="Resource" path="res://craft/petrel.tres" id="2"]
 
 [resource]
 script = ExtResource("1")
 display_name = "Ines"
 tagline = "Turns tight and holds the line, but tops out early."
+default_craft = ExtResource("2")
 hull_color = Color(0.2, 0.72, 0.42, 1)
 trim_color = Color(0.1, 0.12, 0.15, 1)
 bottom_color = Color(0.08, 0.3, 0.2, 1)
 suit_color = Color(0.5, 0.2, 0.7, 1)
 vest_color = Color(0.2, 0.85, 0.95, 1)
 helmet_color = Color(1, 0.85, 0.15, 1)
-top_speed = 0.96
-acceleration = 1.0
-handling = 1.12
-grip = 1.1
 mass = 280.0
 ai_skill = 0.8
 ai_seed = 37

@@ -1,0 +1,45 @@
+{
+  "description": "Craft: any rider can ride any craft. Koa on the Petrel gets the Petrel's handling and grip and Koa's weight; the craft's stats come first, then the weight scales the forces.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1,
+    "args": [
+      "--no-opponents",
+      "--rider",
+      "koa",
+      "--craft",
+      "PETREL"
+    ]
+  },
+  "steps": [
+    "step 3",
+    {
+      "expect": "[player.display_name, player.craft_profile.id]",
+      "equals": [
+        "Koa",
+        "petrel"
+      ],
+      "name": "Koa rides the Petrel (the id is matched in any case)"
+    },
+    {
+      "expect": "abs(player.craft.tuning.turn_rate_low - 1.6 * 1.12) < 0.001 and abs(player.craft.tuning.grip_g - 1.9 * 1.1) < 0.001",
+      "name": "with the Petrel's handling and grip"
+    },
+    {
+      "expect": "abs(player.craft.mass - 330.0) < 0.01",
+      "name": "and Koa's weight"
+    },
+    {
+      "expect": "abs(player.craft.tuning.max_thrust - 2400.0 * 330.0 / 300.0) < 0.01",
+      "name": "which scales the thrust (the Petrel's acceleration is 1.0)"
+    },
+    {
+      "expect": "abs(player.craft.tuning.quadratic_drag - 6.1 * 330.0 / 300.0 / (0.96 * 0.96)) < 0.001",
+      "name": "and the drag after the Petrel's lower top speed"
+    },
+    {
+      "expect": "Game.craft_named('nope') == null and Game.crafts.size() == 4",
+      "name": "an unknown craft id finds nothing"
+    }
+  ]
+}

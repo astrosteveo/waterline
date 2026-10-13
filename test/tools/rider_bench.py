@@ -1,5 +1,5 @@
-"""Measures how each rider's craft rides on open water: 0 to 50 km/h, top speed, a
-full-lock U-turn at speed and the slip in it.
+"""Measures how each rider rides their default craft (or --craft) on open water: 0 to
+50 km/h, top speed, a full-lock U-turn at speed and the slip in it.
 
     uv run --project ~/Projects/gdh python test/tools/rider_bench.py [--riders marina,koa]
 """
@@ -11,6 +11,7 @@ from gdh.client import Session
 ap = argparse.ArgumentParser()
 ap.add_argument("--project", default=".")
 ap.add_argument("--riders", default="marina,koa,ines,dax,marina")
+ap.add_argument("--craft", default="", help="put every rider on this craft (an id) instead of their own")
 ap.add_argument("--flat", action="store_true", help="flat water, to compare the stats alone")
 ap.add_argument("--yaw", type=float, default=-1.134, help="heading: -1.134 rides with the swells")
 args = ap.parse_args()
@@ -19,7 +20,9 @@ CRAFT = "scene.get_node('JetSki')"
 
 
 def run(game, rider):
-    game.eval(f"{CRAFT}.set('tuning', Game.rider_named('{rider}').tuned(ResourceLoader.load('res://jetski/tuning/default.tres')))")
+    # The rider's default craft, or --craft for everyone: the craft's stats, then the rider's weight.
+    craft = f"Game.craft_named('{args.craft}')" if args.craft else f"Game.rider_named('{rider}').default_craft"
+    game.eval(f"{CRAFT}.set('tuning', {craft}.tuning_for(Game.rider_named('{rider}')))")
     game.eval(f"{CRAFT}._apply_body_tuning()")
     game.eval(f"{CRAFT}.respawn(Transform3D(Basis(Vector3(0,1,0), {args.yaw}), Vector3(0,0,0)))")
     game.step(2)

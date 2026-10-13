@@ -1,6 +1,6 @@
 extends Node
-## The game's state between scenes (autoload `Game`): the riders and courses, what the
-## player chose, the mode being played, the championship under way, the saved records, and
+## The game's state between scenes (autoload `Game`): the riders, craft and courses, what
+## the player chose, the mode being played, the championship under way, the saved records, and
 ## the scene changes between menus and races.
 ##
 ## The flow: main menu -> rider select -> course select (or, in a championship, the next
@@ -31,6 +31,13 @@ var riders: Array[RiderProfile] = [
 	preload("res://riders/ines.tres"),
 	preload("res://riders/dax.tres"),
 ]
+## Every craft, in the order the menus list them.
+var crafts: Array[CraftProfile] = [
+	preload("res://craft/tradewind.tres"),
+	preload("res://craft/swordfish.tres"),
+	preload("res://craft/petrel.tres"),
+	preload("res://craft/skipjack.tres"),
+]
 ## Every course, in the order the menus list them (and a championship runs them).
 var courses: Array[CourseInfo] = [
 	preload("res://levels/gull_cove.course.tres"),
@@ -44,6 +51,8 @@ var mode: Mode = Mode.QUICK_RACE
 var mode_chosen: bool = false
 ## The rider the player chose, or null to use the race scene's own.
 var player_rider: RiderProfile
+## The craft the player chose, or null for the rider's default craft.
+var player_craft: CraftProfile
 ## The course for the next race, or null to use the race scene's own.
 var course: CourseInfo
 ## The championship under way, or null.
@@ -86,6 +95,14 @@ func rider_named(display_name: String) -> RiderProfile:
 	return null
 
 
+## The craft with [param id] (any case), or null.
+func craft_named(id: String) -> CraftProfile:
+	for craft in crafts:
+		if craft.id.to_lower() == id.to_lower():
+			return craft
+	return null
+
+
 ## The course with [param id], or null.
 func course_named(id: String) -> CourseInfo:
 	for info in courses:
@@ -123,9 +140,10 @@ func start_mode(new_mode: Mode) -> void:
 	_change(RIDER_SELECT)
 
 
-## The rider select screen chose [param rider].
+## The rider select screen chose [param rider]. The player rides the rider's default craft.
 func rider_chosen(rider: RiderProfile) -> void:
 	player_rider = rider
+	player_craft = rider.default_craft
 	if mode == Mode.CHAMPIONSHIP:
 		championship = Championship.new(rider, riders, courses)
 		course = championship.current_course()
