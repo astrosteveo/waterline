@@ -27,7 +27,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		Game.goto_craft_select()
 
 
-## Shows [param info]: its map, conditions and records.
+## Shows [param info]: its map, conditions and records, each with the rider and craft that set
+## it.
 func select(info: CourseInfo) -> void:
 	selected = info
 	_name.text = info.display_name.to_upper()
@@ -37,13 +38,29 @@ func select(info: CourseInfo) -> void:
 	var records := Game.records
 	match Game.mode:
 		Game.Mode.TIME_TRIAL:
-			var rider := records.best_race_rider(info.id)
-			_records.text = "RECORD   %s%s\nBEST LAP   %s" % [Race.format_time(records.best_race(info.id)),
-					"  (%s)" % rider.to_upper() if rider != "" else "", Race.format_time(records.best_lap(info.id))]
+			_records.text = "RECORD   %s%s\nBEST LAP   %s%s" % [
+					Race.format_time(records.best_race(info.id)),
+					_credit(records.best_race_rider(info.id), records.best_race_craft(info.id)),
+					Race.format_time(records.best_lap(info.id)),
+					_credit(records.best_lap_rider(info.id), records.best_lap_craft(info.id))]
 		Game.Mode.STUNT:
-			_records.text = "BEST SCORE   %d" % records.best_stunt_score(info.id)
+			_records.text = "BEST SCORE   %d%s" % [records.best_stunt_score(info.id),
+					_credit(records.best_stunt_rider(info.id), records.best_stunt_craft(info.id))]
 		_:
 			_records.text = ""
+
+
+## Who set a record: "  (RIDER, CRAFT)" for [param rider] on the craft with the id
+## [param craft_id], the rider alone for a record from before craft ids were kept, and "" for
+## no record. A craft that is no longer in [member Game.crafts] shows its id.
+static func _credit(rider: String, craft_id: String) -> String:
+	var names := PackedStringArray()
+	if rider != "":
+		names.append(rider.to_upper())
+	if craft_id != "":
+		var craft := Game.craft_named(craft_id)
+		names.append((craft.display_name if craft != null else craft_id).to_upper())
+	return "  (%s)" % ", ".join(names) if not names.is_empty() else ""
 
 
 func confirm() -> void:
@@ -109,6 +126,9 @@ func _build_ui() -> void:
 	_conditions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(_conditions)
 	_records = MenuStyle.label("", 30, MenuStyle.CYAN)
+	# Wide enough for "BEST LAP   0:32.50  (MARINA, SWORDFISH)", so the panel keeps its width
+	# from a course with records to one without.
+	_records.custom_minimum_size = Vector2(640, 0)
 	column.add_child(_records)
 
 	var hint := MenuStyle.label("UP / DOWN: CHOOSE     ENTER / A: RACE     ESC / B: BACK", 28, MenuStyle.DIM)

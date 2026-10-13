@@ -44,6 +44,7 @@ func frame_count() -> int:
 	return frames.size() / STRIDE
 
 
-## The recording, for [method Records.save_ghost].
-func data(rider: String, course: String, race_time: float) -> Dictionary:
-	return {"rider": rider, "course": course, "time": race_time, "frames": frames}
+## The recording, for [method Records.save_ghost]: the rider's name, the craft's id
+## ([member CraftProfile.id]), the course, the race time and the frames.
+func data(rider: String, craft: String, course: String, race_time: float) -> Dictionary:
+	return {"rider": rider, "craft": craft, "course": course, "time": race_time, "frames": frames}

@@ -200,7 +200,8 @@ func _setup_mode(info: CourseInfo) -> void:
 		stunt_mode.run_over.connect(func(completed: bool) -> void:
 			var best := Game.records.best_stunt_score(course_id)
 			var rider := player_rider.display_name if player_rider != null else ""
-			var record := Game.records.submit_stunt_score(course_id, rider, stunt_mode.score)
+			var craft := player_craft.id if player_craft != null else ""
+			var record := Game.records.submit_stunt_score(course_id, rider, craft, stunt_mode.score)
 			solo.open("STUNT RESULTS", [
 				["RINGS", "%d / %d" % [stunt_mode.rings_taken, stunt_mode.rings.size()], MenuStyle.WHITE],
 				["RING POINTS", str(stunt_mode.ring_score), MenuStyle.WHITE],

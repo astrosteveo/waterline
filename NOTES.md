@@ -71,7 +71,8 @@ physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
 test/           water_match.tscn (GPU/CPU height comparison), wave_bench.gd,
                 scenarios/ (regression scenarios), tools/autodrive.py (test driver),
-                craft/ (test-only craft for the craft_scenes scenario)
+                craft/ (test-only craft for the craft scenarios and time_trial_craft),
+                fixtures/ (saved user:// folders for scenarios; hidden from Godot)
 docs/screenshots/  evidence screenshots for finished milestones
 captures/       gdh output, git-ignored and hidden from Godot (.gdignore)
 ```
@@ -813,11 +814,15 @@ line for tests.
 - **Time trial** (`TimeTrial`): alone from the middle of the grid, 3 laps. The HUD shows the
   record and the best lap, and each lap call adds the difference from the record lap (green
   ahead, red behind). At the finish `Records` keeps the race time and best lap if they are
-  better (with the rider), and a race record saves the run as the course's ghost.
+  better (with the rider and the craft), and a race record saves the run as the course's ghost.
 - **Ghosts:** `GhostRecorder` stores, every physics tick, the model's transform (so stunts
   show), steer, lean, airborne and the stunt with its progress: 12 floats a tick, about 350 KB
-  for a 2-minute run, zstd-compressed in `user://ghosts/<course>.ghost`. `GhostRider` plays it
-  back on a see-through `JetSkiModel` (`ghost = true`: alpha 0.38, a faint blue glow, no
+  for a 2-minute run, zstd-compressed in `user://ghosts/<course>.ghost` with the rider's name and
+  the craft's id. `GhostRider` plays it back on the Model node of that craft's scene, taken out
+  of a new instance of the scene (`GhostRider.model_of`; the rest of the craft is freed before it
+  enters the tree, so the ghost has no physics, wake, spray or sound). A ghost with no craft id,
+  or one no longer in `Game.crafts`, rides `Race.craft_scene`'s model. The model is drawn
+  see-through (`ghost = true` on a `JetSkiModel`: alpha 0.38, a faint blue glow, no
   shadows) in step with the race clock, interpolated between ticks. Every race now starts the
   wave clock at 0 (`Ocean.reset_time` in `Race._ready`), so the ghost rides the water it was
   recorded on; before that the ghost floated a metre off the surface on a retry.
@@ -828,9 +833,16 @@ line for tests.
   multiplier (+0.25 per ring in a row, up to ×3, reset by a ring missed) and adds a power
   level; landed stunts score as in a race; finishing adds 10 per second left. Buoys still
   count for the power meter but can't disqualify. The best score per course is saved.
-- **Records** (`game/records.gd`): `user://records.cfg`, a ConfigFile with the best race and
-  lap per course (and who set them) and the best stunt score. gdh runs keep `user://` in their
-  own folder, so tests never touch a player's records.
+- **Records** (`game/records.gd`): `user://records.cfg`, a ConfigFile with the best race, lap
+  and stunt score per course, each with the rider's name (`<course>_race_rider`,
+  `<course>_lap_rider`, `[stunt] <course>_rider`) and the craft's id (`<course>_race_craft`,
+  `<course>_lap_craft`, `[stunt] <course>_craft`). The course select shows both, as
+  "(MARINA, PETREL)". Records and ghosts saved before craft ids were kept still load: the
+  craft reads as "", the course select shows the rider alone, and the ghost rides the default
+  model; the ghost format kept version 1 for that reason. `test/fixtures/records_before_craft`
+  holds such a save, written by the code before the change, for the `records_before_craft`
+  scenario. gdh runs keep `user://` in their own folder, so tests never touch a player's
+  records.
 - **Results for the solo modes** are `SoloResults` (rows of label and value; RETRY, COURSES,
   MAIN MENU) instead of the race results.
 

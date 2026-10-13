@@ -49,8 +49,26 @@
       "name": "the lap record is the best lap"
     },
     {
+      "expect": "[Game.records.best_race_rider('gull_cove'), Game.records.best_race_craft('gull_cove'), Game.records.best_lap_rider('gull_cove'), Game.records.best_lap_craft('gull_cove')]",
+      "equals": [
+        "Dax",
+        "skipjack",
+        "Dax",
+        "skipjack"
+      ],
+      "name": "both records keep the rider and Dax's own craft, the Skipjack"
+    },
+    {
       "expect": "Game.records.load_ghost('gull_cove').size() > 0",
       "name": "the ghost is saved"
+    },
+    {
+      "expect": "[Game.records.load_ghost('gull_cove').get('rider'), Game.records.load_ghost('gull_cove').get('craft')]",
+      "equals": [
+        "Dax",
+        "skipjack"
+      ],
+      "name": "with the rider and the craft"
     },
     {
       "expect": "time_trial.recorder.frame_count() > 6000",
@@ -62,12 +80,14 @@
     },
     "step 30",
     {
-      "expect": "[time_trial.ghost != null, time_trial.record_race < 1000]",
+      "expect": "[time_trial.ghost != null, time_trial.record_race < 1000, time_trial.record_craft, time_trial.ghost_craft.id]",
       "equals": [
         true,
-        true
+        true,
+        "skipjack",
+        "skipjack"
       ],
-      "name": "retry: the record shows and the ghost rides"
+      "name": "retry: the record shows and the ghost rides, on the Skipjack"
     },
     {
       "eval": "autopilot(player, 0.9)"

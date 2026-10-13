@@ -1,0 +1,189 @@
+{
+  "description": "A time-trial record on a craft other than the rider's default: Marina picks a test craft whose model has a magenta deck (added to the craft list), sets the records on Gull Cove, and the records and the ghost keep the craft. On a retry the ghost rides the magenta-deck model in Marina's colours, and the course select names the craft next to the rider for the race and lap records.",
+  "start": {
+    "scene": "res://menus/main_menu.tscn",
+    "seed": 2,
+    "user_data": "fresh"
+  },
+  "steps": [
+    "step 5",
+    {
+      "eval": "Game.crafts.append(ResourceLoader.load('res://test/craft/magenta_deck.tres'))"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60
+    },
+    {
+      "expect": "Game.mode",
+      "equals": 2,
+      "name": "time trial chosen"
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "expect": "[scene.rider.display_name, scene.selected.id]",
+      "equals": [
+        "Marina",
+        "tradewind"
+      ],
+      "name": "Marina chosen; her own craft, the Tradewind, has the focus first"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    "step 5",
+    {
+      "expect": "scene.selected.id",
+      "equals": "magenta_deck",
+      "name": "up wraps round to the test craft at the end of the list"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.id, scene._records.text]",
+      "equals": [
+        "gull_cove",
+        "RECORD   -:--.--\nBEST LAP   -:--.--"
+      ],
+      "name": "no records yet, so no rider or craft"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "expect": "[player.display_name, player.craft_profile.id, player.craft.scene_file_path, time_trial.ghost == null]",
+      "equals": [
+        "Marina",
+        "magenta_deck",
+        "res://test/craft/magenta_deck.tscn",
+        true
+      ],
+      "name": "Marina rides the test craft's scene, with no ghost yet"
+    },
+    {
+      "eval": "autopilot(player, 0.9)"
+    },
+    {
+      "until": "get_node('SoloResults').is_open()",
+      "max": 12000,
+      "name": "the run ends with the time trial results"
+    },
+    {
+      "expect": "time_trial.new_records",
+      "equals": {
+        "race": true,
+        "lap": true
+      },
+      "name": "a first run sets both records"
+    },
+    {
+      "expect": "[Game.records.best_race_rider('gull_cove'), Game.records.best_race_craft('gull_cove'), Game.records.best_lap_rider('gull_cove'), Game.records.best_lap_craft('gull_cove')]",
+      "equals": [
+        "Marina",
+        "magenta_deck",
+        "Marina",
+        "magenta_deck"
+      ],
+      "name": "the race and lap records keep the rider and the craft"
+    },
+    {
+      "expect": "[Game.records.load_ghost('gull_cove').get('rider'), Game.records.load_ghost('gull_cove').get('craft')]",
+      "equals": [
+        "Marina",
+        "magenta_deck"
+      ],
+      "name": "the ghost keeps the rider and the craft"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    "step 30",
+    {
+      "expect": "[time_trial.ghost != null, time_trial.ghost_craft.id, time_trial.record_rider, time_trial.record_craft]",
+      "equals": [
+        true,
+        "magenta_deck",
+        "Marina",
+        "magenta_deck"
+      ],
+      "name": "retry: the ghost rides the craft that set the record"
+    },
+    {
+      "expect": "[time_trial.ghost.get_child_count(), time_trial.ghost.get_child(0).deck_color == Color(1, 0, 1, 1), time_trial.ghost.get_child(0).ghost, time_trial.ghost.get_child(0).hull_color == Game.riders[0].hull_color]",
+      "equals": [
+        1,
+        true,
+        true,
+        true
+      ],
+      "name": "on that craft's model (the magenta deck), drawn as a ghost in Marina's colours, with nothing else of the craft"
+    },
+    {
+      "eval": "autopilot(player, 0.9)"
+    },
+    {
+      "step": 900
+    },
+    {
+      "expect": "player.craft.global_position.distance_to(time_trial.ghost.get_child(0).global_position) < 4.0",
+      "name": "the ghost rides the recorded line beside the same driver on the same craft"
+    },
+    {
+      "eval": "Game.goto_course_select()"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.id, scene._records.text.count('  (MARINA, MAGENTA DECK)'), scene._records.text.get_slice('\n', 0).begins_with('RECORD   '), scene._records.text.get_slice('\n', 1).begins_with('BEST LAP   ')]",
+      "equals": [
+        "gull_cove",
+        2,
+        true,
+        true
+      ],
+      "name": "the course select names the rider and the craft for both records"
+    },
+    {
+      "eval": "Game.crafts.pop_back()"
+    }
+  ]
+}
