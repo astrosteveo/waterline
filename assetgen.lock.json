@@ -59,6 +59,56 @@
         ]
       }
     },
+    "jetski_hull": {
+      "type": "model",
+      "fingerprint": "6e0b0b0ed2d2ebb6",
+      "seed": 101,
+      "prompt": "this jet ski without a handlebar, the black steering column is cut off flat just above the hood with nothing sticking out sideways, white hull and white underside, long black seat. One single object shown whole, three-quarter front view from slightly above, centered with empty space around it, on a plain light grey background, soft even studio lighting, no ground shadow, no text. Match the art style, colour palette and rendering of the reference image.",
+      "files": [
+        "assets/generated/jetski_hull.glb"
+      ],
+      "primary": "assets/generated/.assetgen/jetski_hull/raw_0.png",
+      "generated": "2026-10-12T21:37:40",
+      "info": {
+        "engine": "trellis2",
+        "bake": "comfyui",
+        "meshes": [
+          {
+            "vertices": 26207,
+            "triangles": 28164,
+            "materials": 1,
+            "dimensions_m": {
+              "x": 1.3886,
+              "y_up": 1.2498,
+              "z": 2.9
+            },
+            "scale_applied": 2.894528,
+            "removed_inner_faces": 96,
+            "crossing_faces": 5532
+          }
+        ],
+        "detail_used": [
+          "medium"
+        ]
+      }
+    },
+    "jetski_hull_concept": {
+      "type": "concept",
+      "fingerprint": "d2d066dcb5fa67af",
+      "seed": 202,
+      "prompt": "the bare hull of a sit-down jet ski personal watercraft with its handlebar removed, only a short smooth black stump where the handlebar would be, plain glossy white hull and white underside, no stripes, no decals, no logos, a long black padded seat. One single object shown whole, three-quarter front view from slightly above, centered with empty space around it, on a plain light grey background, soft even studio lighting, no ground shadow, no text. Style: bright sunny tropical arcade racing game art, clean stylized shapes, saturated colours, soft simple shading, simple readable forms rather than detailed or realistic.",
+      "files": [
+        "assets/generated/jetski_hull_concept.png"
+      ],
+      "primary": "assets/generated/jetski_hull_concept.png",
+      "generated": "2026-10-12T21:24:11",
+      "info": {
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    },
     "koa_portrait": {
       "type": "icon",
       "fingerprint": "82fb5cad35d71ebb",
