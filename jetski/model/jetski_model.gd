@@ -1,19 +1,38 @@
 @tool
 class_name JetSkiModel
 extends Node3D
-## Placeholder jet ski and rider built from code: a flat-shaded low-poly hull, a seat,
-## handlebars, and a blocky rider whose body leans with the controls.
+## A jet ski and its rider: a hull, and a blocky rider built from code whose body leans with
+## the controls. The hull is built from code too (a flat-shaded low-poly hull, a seat and
+## handlebars) unless [member hull_scene] gives a model to draw instead.
 ##
-## [JetSki] calls [method set_pose] and [method set_rider] every frame. A replacement model
-## only needs to be a Node3D scene, optionally with the same methods; the physics never reads
-## the model. Model space matches the craft: -Z forward, +Y up, origin on the keel at
-## mid-length.
+## [JetSki] calls [method set_pose] and [method set_rider] every frame, and sets [member seat]
+## from the craft's Seat marker. A replacement model only needs to be a Node3D scene,
+## optionally with the same methods; the physics never reads the model. Model space matches
+## the craft: -Z forward, +Y up, origin on the keel at mid-length.
 ##
 ## The rider's parts hang under their own node, so after a crash the rider can leave the
 ## craft: [method set_rider] places the rider's pelvis anywhere in the world, in a tumbling,
 ## swimming or climbing pose.
 
+## A scene to draw as the hull instead of the code-built one, in model space. Empty: the
+## code-built hull. Named Marker3D nodes in it tell the rider where to hold on:
+## [br]- [code]Handlebar[/code]: the steering pivot. It turns about its own Y axis with the
+## steering, and so does everything under it, so put the handlebar's meshes there. The hands
+## hold it [constant GRIP_SPREAD] either side along its X axis.
+## [br]- [code]FootLeft[/code] and [code]FootRight[/code]: the footrests.
+## [br]- [code]BottomLine[/code] and [code]TrimLine[/code] (optional): where the paint
+## changes colour, by their height. See [member hull_color].
+## [br]The rider sits at [member seat], which comes from the craft, not from the hull scene.
+@export var hull_scene: PackedScene:
+	set(value):
+		hull_scene = value
+		_queue_build()
+
 @export_group("Colours")
+## The hull's main colour. On a [member hull_scene], the light grey and white parts of each
+## StandardMaterial3D's texture are painted: [member bottom_color] below the BottomLine
+## marker, [member trim_color] from there up to the TrimLine marker, this colour above.
+## Dark and strongly coloured parts keep their own colour.
 @export var hull_color: Color = Color(0.98, 0.78, 0.10):
 	set(value):
 		hull_color = value
@@ -80,8 +99,19 @@ enum RiderMode {
 	MOUNTING,
 }
 
-## Where the rider's pelvis sits when seated, in model space.
-const PELVIS_REST := Vector3(0.0, 1.12, 0.38)
+## [member seat] until [JetSki] sets it: the Seat marker of jetski.tscn.
+const DEFAULT_SEAT := Vector3(0.0, 1.12, 0.38)
+## The code-built hull's handlebar pivot and footrests (left, right), in model space.
+const HANDLEBAR_PIVOT := Vector3(0.0, 1.03, -0.42)
+const FOOTRESTS: Array[Vector3] = [Vector3(-0.30, 0.56, 0.30), Vector3(0.30, 0.56, 0.30)]
+## How far either side of the handlebar pivot the hands hold the bar, in meters.
+const GRIP_SPREAD := 0.33
+## The ghost look: alpha, glow colour and glow strength.
+const GHOST_ALPHA := 0.38
+const GHOST_GLOW := Color(0.55, 0.8, 1.0)
+const GHOST_GLOW_ENERGY := 0.35
+const HULL_PAINT := preload("res://jetski/model/hull_paint.gdshader")
+const HULL_PAINT_GHOST := preload("res://jetski/model/hull_paint_ghost.gdshader")
 
 # Hull cross-sections from bow to stern: z, half width, keel height, chine height, deck height.
 const STATIONS: Array[Vector4] = [
@@ -95,6 +125,11 @@ const STATIONS: Array[Vector4] = [
 ]
 const DECK_HEIGHTS: Array[float] = [0.50, 0.60, 0.62, 0.58, 0.55, 0.52, 0.48]
 
+## Where the rider's pelvis sits when seated, in model space. [JetSki] sets it from the
+## craft's Seat marker, so the drawn rider sits where a crash throws the rider from, and the
+## climb back on ends there.
+var seat: Vector3 = DEFAULT_SEAT
+
 var _steer := 0.0
 var _lean := 0.0
 var _airborne := 0.0
@@ -104,7 +139,12 @@ var _target_airborne := 0.0
 var _build_queued := false
 
 var _parts: Dictionary[StringName, MeshInstance3D] = {}
+# The node that turns with the steering, its transform at rest (in its parent's space), and
+# that transform in model space. The hands follow the last one.
 var _handlebar: Node3D
+var _bar_rest := Transform3D(Basis.IDENTITY, HANDLEBAR_PIVOT)
+var _bar_in_model := Transform3D(Basis.IDENTITY, HANDLEBAR_PIVOT)
+var _feet: Array[Vector3] = FOOTRESTS.duplicate()
 var _rider_root: Node3D
 var _rider_mode: RiderMode = RiderMode.ABOARD
 var _rider_pelvis := Transform3D.IDENTITY
@@ -115,6 +155,12 @@ var _stunt_progress := 0.0
 
 
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		# The craft's script doesn't run in the editor, so take the seat from its Seat marker
+		# here, to show the rider where the game will.
+		var marker := get_node_or_null(^"../Seat") as Node3D
+		if marker != null:
+			seat = transform.affine_inverse() * marker.position
 	_build()
 
 
@@ -162,11 +208,12 @@ func _place_rider_root() -> void:
 	_rider_root.top_level = true
 	var pelvis := _rider_pelvis
 	if _rider_mode == RiderMode.MOUNTING:
-		var seat := get_global_transform_interpolated() * Transform3D(Basis.IDENTITY, PELVIS_REST)
+		var seated := get_global_transform_interpolated() * Transform3D(Basis.IDENTITY, seat)
 		var t := _mount_blend * _mount_blend * (3.0 - 2.0 * _mount_blend)
-		pelvis = Transform3D(pelvis.basis.slerp(seat.basis, t).orthonormalized(),
-				pelvis.origin.lerp(seat.origin, t) + Vector3.UP * sin(PI * t) * 0.35)
-	_rider_root.global_transform = pelvis * Transform3D(Basis.IDENTITY, -PELVIS_REST)
+		pelvis = Transform3D(pelvis.basis.slerp(seated.basis, t).orthonormalized(),
+				pelvis.origin.lerp(seated.origin, t) + Vector3.UP * sin(PI * t) * 0.35)
+	# The rider node's space is model space while seated, so its pelvis rests at the seat.
+	_rider_root.global_transform = pelvis * Transform3D(Basis.IDENTITY, -seat)
 
 
 func _queue_build() -> void:
@@ -182,7 +229,21 @@ func _build() -> void:
 		if child.has_meta(&"model_part"):
 			child.free()
 	_parts.clear()
+	_handlebar = null
+	_bar_rest = Transform3D(Basis.IDENTITY, HANDLEBAR_PIVOT)
+	_bar_in_model = _bar_rest
+	_feet = FOOTRESTS.duplicate()
+	if hull_scene != null:
+		_build_hull_scene()
+	else:
+		_build_code_hull()
+	_build_rider()
+	_place_rider_root()
+	_apply_pose()
 
+
+## The flat-shaded hull, seat, hood, footwells and handlebar, all from code.
+func _build_code_hull() -> void:
 	var hull := MeshInstance3D.new()
 	hull.mesh = _build_hull_mesh()
 	_add_part(&"hull", hull)
@@ -195,7 +256,7 @@ func _build() -> void:
 	_add_box(&"nozzle", Vector3(0.22, 0.14, 0.12), Vector3(0.0, 0.14, 1.46), deck_color.darkened(0.4))
 
 	_handlebar = Node3D.new()
-	_handlebar.position = Vector3(0.0, 1.03, -0.42)
+	_handlebar.position = HANDLEBAR_PIVOT
 	_handlebar.set_meta(&"model_part", true)
 	add_child(_handlebar, false, Node.INTERNAL_MODE_FRONT)
 	var bar := MeshInstance3D.new()
@@ -204,7 +265,153 @@ func _build() -> void:
 	bar.set_meta(&"model_part", true)
 	_handlebar.add_child(bar, false, Node.INTERNAL_MODE_FRONT)
 
-	# Rider: boxes between joints under their own node, placed every frame by _apply_pose().
+
+## Draws [member hull_scene] and reads its markers (see [member hull_scene]).
+func _build_hull_scene() -> void:
+	var hull := hull_scene.instantiate() as Node3D
+	if hull == null:
+		push_error("JetSkiModel: the hull scene %s needs a Node3D root." % hull_scene.resource_path)
+		_build_code_hull()
+		return
+	hull.name = "Hull"
+	hull.set_meta(&"model_part", true)
+	add_child(hull, false, Node.INTERNAL_MODE_FRONT)
+	_handlebar = hull.find_child("Handlebar", true, false) as Node3D
+	if _handlebar != null:
+		_bar_rest = _handlebar.transform
+		_bar_in_model = _in_model_space(_handlebar)
+		_bar_in_model.basis = _bar_in_model.basis.orthonormalized()
+	else:
+		push_warning("JetSkiModel: the hull scene %s has no Handlebar marker." % hull_scene.resource_path)
+	for i in 2:
+		var foot := hull.find_child("FootLeft" if i == 0 else "FootRight", true, false) as Node3D
+		if foot != null:
+			_feet[i] = _in_model_space(foot).origin
+		else:
+			push_warning("JetSkiModel: the hull scene %s has no %s marker." % [hull_scene.resource_path,
+					"FootLeft" if i == 0 else "FootRight"])
+	var bottom_line := _marker_height(hull, "BottomLine")
+	var trim_line := _marker_height(hull, "TrimLine")
+	_dress_hull(hull, bottom_line, trim_line)
+
+
+## The height of the marker named [param marker_name] in model space, or far below the hull
+## when there is none.
+func _marker_height(hull: Node, marker_name: String) -> float:
+	var marker := hull.find_child(marker_name, true, false) as Node3D
+	return _in_model_space(marker).origin.y if marker != null else -1000.0
+
+
+## [param node]'s transform relative to this model.
+func _in_model_space(node: Node3D) -> Transform3D:
+	var xform := node.transform
+	var parent := node.get_parent()
+	while parent != null and parent != self:
+		if parent is Node3D:
+			xform = (parent as Node3D).transform * xform
+		parent = parent.get_parent()
+	return xform
+
+
+## Puts the hull scene's meshes on the moving-things layer, paints them in the rider's
+## colours ([code]hull_paint.gdshader[/code]) and gives them the ghost look when
+## [member ghost] is on.
+func _dress_hull(node: Node, bottom_line: float, trim_line: float) -> void:
+	for child in node.get_children():
+		_dress_hull(child, bottom_line, trim_line)
+	var geometry := node as GeometryInstance3D
+	if geometry == null:
+		return
+	geometry.layers = ShoreMap.DYNAMIC_LAYER
+	if ghost:
+		geometry.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mesh_instance := node as MeshInstance3D
+	if mesh_instance == null or mesh_instance.mesh == null:
+		return
+	var xform := _in_model_space(mesh_instance)
+	# The second row of the transform: a vertex's height in model space.
+	var height_row := Vector4(xform.basis.x.y, xform.basis.y.y, xform.basis.z.y, xform.origin.y)
+	if mesh_instance.material_override != null:
+		mesh_instance.material_override = _hull_material(mesh_instance.material_override, height_row,
+				bottom_line, trim_line)
+		return
+	for surface in mesh_instance.mesh.get_surface_count():
+		var source := mesh_instance.get_active_material(surface)
+		if source != null:
+			mesh_instance.set_surface_override_material(surface,
+					_hull_material(source, height_row, bottom_line, trim_line))
+
+
+## A painted copy of a hull scene's material. A material that isn't a StandardMaterial3D
+## isn't painted; on a ghost it becomes plain see-through white.
+func _hull_material(source: Material, height_row: Vector4, bottom_line: float, trim_line: float) -> Material:
+	var base := source as BaseMaterial3D
+	if base == null:
+		return _material(Color.WHITE) if ghost else source
+	var paint := ShaderMaterial.new()
+	paint.shader = HULL_PAINT_GHOST if ghost else HULL_PAINT
+	# A ghost draws after the water, as the code-built ghost does (see _make_ghostly).
+	paint.render_priority = 1 if ghost else base.render_priority
+	var values := {
+		&"albedo": base.albedo_color,
+		&"albedo_texture": base.albedo_texture,
+		&"uv1_scale": base.uv1_scale,
+		&"uv1_offset": base.uv1_offset,
+		&"roughness": base.roughness,
+		&"metallic": base.metallic,
+		&"specular": base.metallic_specular,
+		&"use_normal_map": base.normal_enabled,
+		&"normal_texture": base.normal_texture,
+		&"normal_scale": base.normal_scale,
+		&"use_ao": base.ao_enabled,
+		&"ao_light_affect": base.ao_light_affect,
+		&"hull_color": hull_color,
+		&"trim_color": trim_color,
+		&"bottom_color": bottom_color,
+		&"height_from_vertex": height_row,
+		&"bottom_line": bottom_line,
+		&"trim_line": trim_line,
+		&"ghost_alpha": GHOST_ALPHA,
+		&"ghost_glow": GHOST_GLOW,
+		&"ghost_glow_energy": GHOST_GLOW_ENERGY,
+	}
+	if base is ORMMaterial3D:
+		# Occlusion in red, roughness in green, metallic in blue.
+		values.merge({
+			&"roughness_texture": base.orm_texture, &"roughness_channel": Vector4(0, 1, 0, 0),
+			&"metallic_texture": base.orm_texture, &"metallic_channel": Vector4(0, 0, 1, 0),
+			&"ao_texture": base.orm_texture, &"ao_channel": Vector4(1, 0, 0, 0),
+		})
+	else:
+		values.merge({
+			&"roughness_texture": base.roughness_texture,
+			&"roughness_channel": _channel(base.roughness_texture_channel),
+			&"metallic_texture": base.metallic_texture,
+			&"metallic_channel": _channel(base.metallic_texture_channel),
+			&"ao_texture": base.ao_texture,
+			&"ao_channel": _channel(base.ao_texture_channel),
+		})
+	for key: StringName in values:
+		paint.set_shader_parameter(key, values[key])
+	return paint
+
+
+## The weights that pick one channel of a texture, as StandardMaterial3D does.
+static func _channel(channel: BaseMaterial3D.TextureChannel) -> Vector4:
+	match channel:
+		BaseMaterial3D.TEXTURE_CHANNEL_GREEN:
+			return Vector4(0, 1, 0, 0)
+		BaseMaterial3D.TEXTURE_CHANNEL_BLUE:
+			return Vector4(0, 0, 1, 0)
+		BaseMaterial3D.TEXTURE_CHANNEL_ALPHA:
+			return Vector4(0, 0, 0, 1)
+		BaseMaterial3D.TEXTURE_CHANNEL_GRAYSCALE:
+			return Vector4(1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0, 0)
+	return Vector4(1, 0, 0, 0)
+
+
+## The rider: boxes between joints under their own node, placed every frame by _apply_pose().
+func _build_rider() -> void:
 	_rider_root = Node3D.new()
 	_rider_root.name = "Rider"
 	_rider_root.set_meta(&"model_part", true)
@@ -221,15 +428,13 @@ func _build() -> void:
 	_add_sphere(&"head", 0.11, skin_color, _rider_root)
 	_add_sphere(&"helmet", 0.135, helmet_color, _rider_root)
 	_add_box(&"visor", Vector3(0.2, 0.07, 0.04), Vector3.ZERO, Color(0.05, 0.08, 0.12), _rider_root)
-	_place_rider_root()
-	_apply_pose()
 
 
 func _apply_pose() -> void:
 	if _parts.is_empty():
 		return
 	if _handlebar != null:
-		_handlebar.rotation = Vector3(0.0, -_steer * deg_to_rad(bar_angle), 0.0)
+		_handlebar.transform = _bar_rest * Transform3D(_bar_turn(), Vector3.ZERO)
 	_place_rider_root()
 	var riding := _riding_joints()
 	if _stunt == &"handstand":
@@ -260,7 +465,7 @@ func _riding_joints() -> Dictionary:
 	if _stunt != &"" and _stunt != &"handstand":
 		tuck = sin(PI * _stunt_progress)
 		crouch += 0.14 * tuck
-	var pelvis := Vector3(_steer * 0.05, PELVIS_REST.y - crouch, PELVIS_REST.z + 0.06 * maxf(_lean, 0.0))
+	var pelvis := seat + Vector3(_steer * 0.05, -crouch, 0.06 * maxf(_lean, 0.0))
 	var chest := pelvis + spine * Vector3(0.0, 0.46, -0.24)
 	var joints := {
 		"spine": spine,
@@ -269,15 +474,15 @@ func _riding_joints() -> Dictionary:
 		"neck": pelvis + spine * Vector3(0.0, 0.62, -0.30),
 		"head": pelvis + spine * Vector3(0.0, 0.74, -0.33),
 	}
-	var bar_basis := Basis(Vector3.UP, -_steer * deg_to_rad(bar_angle))
-	joints["hand_basis"] = bar_basis
+	var bar := _bar_in_model * Transform3D(_bar_turn(), Vector3.ZERO)
+	joints["hand_basis"] = bar.basis
 	for i in 2:
 		var side := -1.0 if i == 0 else 1.0
 		var tag := "_l" if i == 0 else "_r"
-		var foot := Vector3(0.30 * side, 0.56, 0.30)
+		var foot := _feet[i]
 		var hip := pelvis + spine * Vector3(0.11 * side, 0.0, 0.0)
 		var shoulder := chest + spine * Vector3(0.21 * side, 0.0, 0.0)
-		var hand := Vector3(0.0, 1.03, -0.42) + bar_basis * Vector3(0.33 * side, 0.0, 0.0)
+		var hand := bar * Vector3(GRIP_SPREAD * side, 0.0, 0.0)
 		joints["hip" + tag] = hip
 		joints["knee" + tag] = (hip + foot) * 0.5 + Vector3(0.06 * side, 0.08 * tuck, -0.24 - 0.05 * _airborne - 0.08 * tuck)
 		joints["foot" + tag] = foot
@@ -291,8 +496,9 @@ func _riding_joints() -> Dictionary:
 ## The spine is turned forward over the bars by 207°, which puts the chest straight under
 ## the pelvis; blending from the riding pose swings the body forward, not backward.
 func _handstand_joints() -> Dictionary:
+	var bar := _bar_in_model.origin
 	var spine := Basis(Vector3.RIGHT, -2.66)
-	var pelvis := Vector3(0.0, 2.10, -0.40)
+	var pelvis := bar + Vector3(0.0, 1.07, 0.02)
 	var chest := pelvis + spine * Vector3(0.0, 0.46, -0.24)
 	var joints := {
 		"spine": spine,
@@ -300,15 +506,15 @@ func _handstand_joints() -> Dictionary:
 		"chest": chest,
 		"neck": pelvis + spine * Vector3(0.0, 0.62, -0.30),
 		"head": pelvis + spine * Vector3(0.0, 0.74, -0.33),
-		"hand_basis": Basis.IDENTITY,
+		"hand_basis": _bar_in_model.basis,
 	}
 	for i in 2:
 		var side := -1.0 if i == 0 else 1.0
 		var tag := "_l" if i == 0 else "_r"
 		var hip := pelvis + spine * Vector3(0.11 * side, 0.0, 0.0)
 		var shoulder := chest + spine * Vector3(0.21 * side, 0.0, 0.0)
-		var hand := Vector3(0.33 * side, 1.03, -0.42)
-		var foot := Vector3(0.16 * side, 2.95, -0.30)
+		var hand := _bar_in_model * Vector3(GRIP_SPREAD * side, 0.0, 0.0)
+		var foot := bar + Vector3(0.16 * side, 1.92, 0.12)
 		joints["hip" + tag] = hip
 		joints["knee" + tag] = (hip + foot) * 0.5 + Vector3(0.02 * side, 0.0, -0.03)
 		joints["foot" + tag] = foot
@@ -337,10 +543,10 @@ func _swimming_joints() -> Dictionary:
 		func(side: float) -> Vector3: return Vector3(0.07 * side, -0.86, 0.12 * sin(stroke * 2.0 + side * 1.5)))
 
 
-## A straight body about the rest pelvis; [param hand_offset] and [param foot_offset] give
-## each hand relative to its shoulder and each foot relative to its hip, for side -1 or 1.
+## A straight body with its pelvis at the seat; [param hand_offset] and [param foot_offset]
+## give each hand relative to its shoulder and each foot relative to its hip, for side -1 or 1.
 func _straight_joints(hand_offset: Callable, foot_offset: Callable) -> Dictionary:
-	var pelvis := PELVIS_REST
+	var pelvis := seat
 	var chest := pelvis + Vector3(0.0, 0.46, -0.04)
 	var joints := {
 		"spine": Basis.IDENTITY,
@@ -364,6 +570,11 @@ func _straight_joints(hand_offset: Callable, foot_offset: Callable) -> Dictionar
 		joints["elbow" + tag] = (shoulder + hand) * 0.5 + Vector3(0.08 * side, 0.0, 0.06)
 		joints["hand" + tag] = hand
 	return joints
+
+
+## The handlebar's turn for the steering, about its own Y axis.
+func _bar_turn() -> Basis:
+	return Basis(Vector3.UP, -_steer * deg_to_rad(bar_angle))
 
 
 func _blend_joints(from: Dictionary, to: Dictionary, t: float) -> Dictionary:
@@ -471,10 +682,10 @@ func _make_ghostly(material: StandardMaterial3D) -> void:
 	if not ghost:
 		return
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.albedo_color.a = 0.38
+	material.albedo_color.a = GHOST_ALPHA
 	material.emission_enabled = true
-	material.emission = Color(0.55, 0.8, 1.0)
-	material.emission_energy_multiplier = 0.35
+	material.emission = GHOST_GLOW
+	material.emission_energy_multiplier = GHOST_GLOW_ENERGY
 	# Drawn after the water: both are see-through, and the water's mesh follows the camera,
 	# so by distance it would sort nearer and draw over the ghost.
 	material.render_priority = 1
