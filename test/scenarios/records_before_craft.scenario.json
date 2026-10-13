@@ -1,0 +1,139 @@
+{
+  "description": "Records and a ghost saved before craft ids were kept (test/fixtures/records_before_craft: Koa's race, lap and stunt records on Gull Cove and Koa's ghost, written by the code before craft ids) still load: the course select shows the rider and no craft, and the ghost rides the default model in Koa's colours while the player rides another craft. A new stunt record by Dax on the Petrel then keeps the craft, and the course select names both.",
+  "start": {
+    "scene": "res://menus/course_select.tscn",
+    "seed": 2,
+    "user_data_from": "../fixtures/records_before_craft",
+    "args": [
+      "--mode",
+      "time_trial"
+    ]
+  },
+  "steps": [
+    "step 5",
+    {
+      "expect": "[Game.records.best_race_craft('gull_cove'), Game.records.best_lap_craft('gull_cove'), Game.records.best_stunt_craft('gull_cove'), Game.records.best_stunt_rider('gull_cove')]",
+      "equals": [
+        "",
+        "",
+        "",
+        "Koa"
+      ],
+      "name": "the old records have no craft"
+    },
+    {
+      "expect": "[scene.selected.id, scene._records.text]",
+      "equals": [
+        "gull_cove",
+        "RECORD   1:40.50  (KOA)\nBEST LAP   0:33.00  (KOA)"
+      ],
+      "name": "the course select shows the rider and no craft"
+    },
+    {
+      "eval": "Game.set('mode', 3)"
+    },
+    {
+      "eval": "scene.select(Game.courses[0])"
+    },
+    {
+      "expect": "scene._records.text",
+      "equals": "BEST SCORE   1234  (KOA)",
+      "name": "and the same for the stunt record"
+    },
+    {
+      "eval": "Game.set('mode', 2)"
+    },
+    {
+      "eval": "Game.set('player_rider', Game.rider_named('dax'))"
+    },
+    {
+      "eval": "Game.set('player_craft', Game.craft_named('petrel'))"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "expect": "[player.display_name, player.craft_profile.id, time_trial.ghost != null, time_trial.ghost_craft == null, time_trial.record_rider, time_trial.record_craft]",
+      "equals": [
+        "Dax",
+        "petrel",
+        true,
+        true,
+        "Koa",
+        ""
+      ],
+      "name": "the old ghost loads, with no craft"
+    },
+    {
+      "expect": "[time_trial.ghost.get_child(0).scene_file_path, time_trial.ghost.get_child(0).ghost, time_trial.ghost.get_child(0).deck_color == player.craft.get_node('Model').deck_color, time_trial.ghost.get_child(0).hull_color == Game.rider_named('koa').hull_color]",
+      "equals": [
+        "res://jetski/model/jetski_model.tscn",
+        true,
+        true,
+        true
+      ],
+      "name": "it rides the default model, drawn as a ghost in Koa's colours"
+    },
+    {
+      "eval": "time_trial.set_meta('start', time_trial.ghost.get_child(0).global_position)"
+    },
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    "step 120",
+    {
+      "expect": "[time_trial.ghost.visible, time_trial.ghost.get_child(0).global_position.distance_to(time_trial.get_meta('start')) > 5.0]",
+      "equals": [
+        true,
+        true
+      ],
+      "name": "and rides off the start once the clock runs"
+    },
+    {
+      "eval": "Game.set('mode', 3)"
+    },
+    {
+      "eval": "Game.course_chosen(Game.courses[0])"
+    },
+    {
+      "until": "scene.name == 'Race' and scene.stunt_mode != null",
+      "max": 60
+    },
+    "step 5",
+    {
+      "eval": "stunt_mode.set('score', 2000)"
+    },
+    {
+      "eval": "stunt_mode.run_over.emit(true)"
+    },
+    {
+      "expect": "[Game.records.best_stunt_score('gull_cove'), Game.records.best_stunt_rider('gull_cove'), Game.records.best_stunt_craft('gull_cove')]",
+      "equals": [
+        2000,
+        "Dax",
+        "petrel"
+      ],
+      "name": "a new stunt record keeps the rider and the craft"
+    },
+    {
+      "eval": "Game.goto_course_select()"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "expect": "scene._records.text",
+      "equals": "BEST SCORE   2000  (DAX, PETREL)",
+      "name": "the course select names the rider and the craft"
+    }
+  ]
+}
