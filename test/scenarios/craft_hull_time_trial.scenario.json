@@ -1,0 +1,82 @@
+{
+  "description": "A time-trial ghost of a craft with a hull scene: the computer rides one lap of Gull Cove on the example craft (craft/generated_hull.tscn), which sets the record; on the retry the ghost draws that craft's model with its hull scene, see-through and without shadows (hull_paint_ghost.gdshader), with the rider at the craft's Seat marker, and rides beside the player.",
+  "start": {
+    "scene": "res://test/craft/race_generated_hull.tscn",
+    "seed": 1,
+    "user_data": "fresh",
+    "args": [
+      "--mode",
+      "time_trial",
+      "--laps",
+      "1"
+    ]
+  },
+  "steps": [
+    "step 5",
+    {
+      "expect": "[time_trial != null, time_trial.ghost == null, player.craft.scene_file_path]",
+      "equals": [
+        true,
+        true,
+        "res://craft/generated_hull.tscn"
+      ],
+      "name": "a time trial on the example craft, with no ghost yet"
+    },
+    {
+      "eval": "autopilot(player, 0.9)"
+    },
+    {
+      "until": "get_node('SoloResults').is_open()",
+      "max": 12000,
+      "name": "the computer finishes the lap"
+    },
+    {
+      "expect": "[time_trial.new_records['race'], Game.records.load_ghost('gull_cove').get('craft')]",
+      "equals": [
+        true,
+        "generated_hull_test"
+      ],
+      "name": "the run sets the record and saves its ghost with the craft"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    "step 30",
+    {
+      "expect": "[time_trial.ghost != null, time_trial.ghost.get_child(0).hull_scene.resource_path, time_trial.ghost.get_child(0).ghost]",
+      "equals": [
+        true,
+        "res://craft/hulls/generated_hull.tscn",
+        true
+      ],
+      "name": "retry: the ghost draws the craft's model with its hull scene"
+    },
+    {
+      "expect": "[time_trial.ghost.get_child(0).get_node('Hull/Model/jetski_hull').get_surface_override_material(0).shader.resource_path, time_trial.ghost.get_child(0).get_node('Hull/Model/jetski_hull').cast_shadow, time_trial.ghost.get_child(0).get_node('Hull/Handlebar/Bar').cast_shadow]",
+      "equals": [
+        "res://jetski/model/hull_paint_ghost.gdshader",
+        0,
+        0
+      ],
+      "name": "the ghost's hull is see-through and casts no shadow"
+    },
+    {
+      "expect": "time_trial.ghost.get_child(0).seat",
+      "approx": [0.0, 1.35, 0.4],
+      "name": "the ghost's rider sits at the craft's Seat marker"
+    },
+    {
+      "eval": "autopilot(player, 0.9)"
+    },
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    "step 240",
+    {
+      "expect": "player.craft.global_position.distance_to(time_trial.ghost.get_child(0).global_position) < 4.0",
+      "name": "the ghost rides the recorded line beside the same driver"
+    }
+  ]
+}

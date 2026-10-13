@@ -70,7 +70,7 @@ const DEFAULT_BOARDING_POINTS: Array[Vector3] = [Vector3(-1.0, 0.0, 0.4), Vector
 ## the StuntPivot marker, between the hull and the rider.
 var stunt_pivot: Vector3 = DEFAULT_STUNT_PIVOT
 ## Where the rider's pelvis sits when seated, in the craft's local space: the Seat marker.
-## A thrown rider leaves the craft from here.
+## A thrown rider leaves the craft from here, and the model draws the seated rider here.
 var seat: Vector3 = DEFAULT_SEAT
 ## Where the swimming rider can climb on, in the craft's local space: the Marker3D children
 ## of BoardingPoints (either side of the seat and behind the stern). The rider swims to the
@@ -185,6 +185,9 @@ func _ready() -> void:
 	_model = get_node_or_null(^"Model") as Node3D
 	if _model != null:
 		_model_rest = _model.transform
+		# The drawn rider sits where a crash throws the rider from ([JetSkiModel.seat]).
+		if &"seat" in _model:
+			_model.set(&"seat", _model_rest.affine_inverse() * seat)
 	_spawn_transform = global_transform
 	# Start on the water rather than wherever the scene put the keel: now, for the first
 	# frame drawn, and again on the first physics tick, which also matches the water's motion.
