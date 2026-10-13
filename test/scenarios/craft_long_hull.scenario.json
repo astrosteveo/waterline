@@ -1,7 +1,7 @@
 {
   "description": "The long-hull example craft (craft/long_hull.tscn, an inherited scene of jetski.tscn with a longer collision box, stretched buoyancy points and the stern boarding point moved back) crashes and remounts like the base craft: a pillar hit and a nose-first landing throw the rider off, a clean ramp landing and a wall scrape don't, and a rider swimming up from behind climbs on at the moved stern boarding point.",
   "start": {
-    "scene": "res://test/race_long_hull.tscn",
+    "scene": "res://test/craft/race_long_hull.tscn",
     "seed": 1,
     "args": [
       "--no-opponents"

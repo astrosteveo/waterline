@@ -8,7 +8,7 @@
 script = ExtResource("1")
 id = "long_hull_test"
 display_name = "Long Hull (test)"
-tagline = "The example craft from craft/long_hull.tscn, for tests only. Not in Game.crafts."
+tagline = "The example craft from craft/long_hull.tscn, for the craft_long_hull scenario. Not in Game.crafts."
 scene = ExtResource("2")
 tuning = ExtResource("3")
 top_speed = 1.0
