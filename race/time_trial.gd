@@ -18,6 +18,9 @@ var course_id: String = ""
 var record_race: float = INF
 var record_lap: float = INF
 var record_rider: String = ""
+## The id of the craft that set the race record, or "" (a record from before craft ids were
+## kept, or no record).
+var record_craft: String = ""
 ## The race record's time at the end of each lap.
 var record_splits := PackedFloat64Array()
 ## Which records the run set, once over.
@@ -33,6 +36,7 @@ func setup(p_race: Race, p_course_id: String) -> void:
 	record_race = records.best_race(course_id)
 	record_lap = records.best_lap(course_id)
 	record_rider = records.best_race_rider(course_id)
+	record_craft = records.best_race_craft(course_id)
 	record_splits = records.race_splits(course_id)
 	recorder = GhostRecorder.new()
 	recorder.name = "GhostRecorder"
@@ -70,7 +74,8 @@ func _on_finished() -> void:
 		run_over.emit({})
 		return
 	var rider := player.profile.display_name if player.profile != null else ""
-	new_records = Game.records.submit_time_trial(course_id, rider, player.finish_time, player.lap_times)
+	var craft := player.craft_profile.id if player.craft_profile != null else ""
+	new_records = Game.records.submit_time_trial(course_id, rider, craft, player.finish_time, player.lap_times)
 	if new_records.get("race", false):
-		Game.records.save_ghost(course_id, recorder.data(rider, course_id, player.finish_time))
+		Game.records.save_ghost(course_id, recorder.data(rider, craft, course_id, player.finish_time))
 	run_over.emit(new_records)
