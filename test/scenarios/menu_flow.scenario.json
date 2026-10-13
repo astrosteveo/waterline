@@ -1,5 +1,5 @@
 {
-  "description": "The menus: the main menu leads to each mode through the rider select and the course select (or straight to the championship's first race); back goes back; a quick race starts on the chosen course.",
+  "description": "The menus: the main menu leads to each mode through the rider select, the craft select and the course select (or, in a championship, from the craft select straight to the first race); back goes back a screen; a race starts on the chosen course with the chosen rider and craft.",
   "start": {
     "scene": "res://menus/main_menu.tscn",
     "seed": 1
@@ -76,9 +76,87 @@
       "tap": "ui_accept"
     },
     {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60,
+      "name": "the rider select leads to the craft select"
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.id, scene.get_viewport().gui_get_focus_owner().name]",
+      "equals": [
+        "swordfish",
+        "swordfish"
+      ],
+      "name": "Koa's own craft, the Swordfish, has the focus first"
+    },
+    {
+      "step": 3,
+      "tap": "ui_cancel"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60,
+      "name": "back from the craft select returns to the rider select"
+    },
+    "step 5",
+    {
+      "expect": "scene.selected.display_name",
+      "equals": "Koa",
+      "name": "with Koa still focused"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 3",
+    {
+      "expect": "scene.selected.id",
+      "equals": "petrel"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
       "until": "scene.name == 'CourseSelect'",
       "max": 60,
-      "name": "the rider select leads to the course select"
+      "name": "the craft select leads to the course select"
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_cancel"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60,
+      "name": "back from the course select returns to the craft select"
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.id, scene.get_viewport().gui_get_focus_owner().name]",
+      "equals": [
+        "petrel",
+        "petrel"
+      ],
+      "name": "with the chosen craft focused"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60
     },
     "step 5",
     {
@@ -117,16 +195,92 @@
     },
     "step 5",
     {
-      "expect": "[scene.course.course_name, scene.player.display_name, scene.racers.size()]",
+      "expect": "[scene.course.course_name, scene.player.display_name, scene.player_craft.id, scene.racers.size()]",
       "equals": [
         "Lantern Harbor",
         "Koa",
+        "petrel",
         1
       ],
-      "name": "a time trial on the chosen course, alone, as the chosen rider"
+      "name": "a time trial on the chosen course, alone, as the chosen rider on the chosen craft"
     },
     {
       "expect": "scene.time_trial != null"
+    },
+    {
+      "eval": "Game.goto_main_menu()"
+    },
+    {
+      "until": "scene.name == 'MainMenu'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    "step 3",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "Championship"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60
+    },
+    {
+      "expect": "Game.mode",
+      "equals": 1,
+      "name": "championship chosen"
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60,
+      "name": "a championship goes through the craft select too"
+    },
+    "step 5",
+    {
+      "expect": "scene.selected.id",
+      "equals": "swordfish",
+      "name": "choosing the rider again puts their own craft first"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    "step 3",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 120,
+      "name": "the craft select leads straight to the championship's first race"
+    },
+    "step 5",
+    {
+      "expect": "[scene.course.course_name, scene.player.display_name, scene.player_craft.id, Game.championship != null]",
+      "equals": [
+        "Gull Cove",
+        "Koa",
+        "tradewind",
+        true
+      ],
+      "name": "the first championship race, as the chosen rider on the chosen craft"
     }
   ]
 }

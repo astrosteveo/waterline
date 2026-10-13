@@ -29,6 +29,12 @@ extends Resource
 @export var ai_seed: int = 1
 
 
+## The weight on the menus' 1-to-5 scale: 3 at 300 kg (the base tuning's mass), a point for
+## every 15 kg above or below it, in half steps.
+func weight_rating() -> float:
+	return clampf(snappedf(3.0 + (mass - 300.0) / 15.0, 0.5), 1.0, 5.0)
+
+
 ## Paints a [JetSkiModel] (or any model with the same colour properties) in this rider's colours.
 func apply_colors(model: Node) -> void:
 	if model == null:

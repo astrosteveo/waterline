@@ -55,8 +55,9 @@ game/           Game autoload (riders, courses, modes, scene flow), Championship
                 Settings autoload (volumes, fullscreen, controls)
 effects/        Wake (+ wake.gdshader), Spray, EngineSound (all on jetski.tscn)
 audio/          SoundBank (every sound, generated in code)
-menus/          MainMenu (main_menu.tscn, the main scene), RiderSelect, CourseSelect, Standings,
-                OptionsPanel,
+menus/          MainMenu (main_menu.tscn, the main scene), RiderSelect, CraftSelect (both
+                extend CraftShowcase: a craft on the water with the camera circling it),
+                CourseSelect, Standings, OptionsPanel,
                 MenuBackdrop (a course behind a menu), MenuStyle (shared look), StatBar
 race/           Race (race.tscn), StuntMode, TimeTrial, GhostRecorder, GhostRider, SoloResults,
                 RaceSounds, Announcer, PauseMenu, RacerState, RaceRules (rules/default_rules.tres),
@@ -737,8 +738,9 @@ a default craft and the computer skill. A racer's tuning is built in two steps
   (who pushes whom), not the ride.
 
 The computer rides each rider's default craft. The player rides `Game.player_craft`, which
-`Game.rider_chosen` sets to the rider's default craft; `-- --craft ID` picks another
-(`Game.craft_named`). `Race.player_craft` and `RacerState.craft_profile` hold the craft in a race.
+`Game.rider_chosen` sets to the rider's default craft and `Game.craft_chosen` (the craft select
+screen) to the craft chosen; `-- --craft ID` picks another (`Game.craft_named`).
+`Race.player_craft` and `RacerState.craft_profile` hold the craft in a race.
 Each racer spawns on its craft's scene (`CraftProfile.scene`, a scene whose root is a `JetSki`).
 `Race.craft_scene` (`jetski/jetski.tscn`) is the fallback for a racer with no craft or a craft
 with no scene. The four craft all use `jetski/jetski.tscn` today; the `craft_scenes` scenario
@@ -767,24 +769,35 @@ so compare riders on flat water. On Gull Cove, each rider alone on the computer 
 1.0 over 3 laps: Koa 1:58.71, Marina 1:59.80, Dax 1:59.99, Ines 2:00.55, no misses or crashes.
 The spread is 1.5%, so the choice is about feel, not a best rider.
 
-**Rider select** (`menus/rider_select.tscn`, the main scene): the riders down the left (focus
-moves with ui_up/ui_down, the list wraps, the mouse works too), the focused rider on their
-default craft's scene floating on Gull Cove in the middle with the camera circling it (the craft
-is replaced when the next rider's craft has another scene), and a panel on the right with
-the name, the line, the rider's default craft ("RIDES THE SWORDFISH") and its four stat bars
-(`StatBar`; 3 is the base craft, a point per 7%, half steps). ui_accept sets `Game.player_rider`
-and `Game.player_craft` and opens the race. `Race` then races that rider
-against `Game.opponents_for()` the rest; the command line `-- --rider NAME` does the same.
-The results screen has RACE AGAIN, RIDERS (back to rider select) and QUIT.
+**Rider select** (`menus/rider_select.tscn`): the riders down the left (focus moves with
+ui_up/ui_down, the list wraps, the mouse works too), the focused rider on their default craft's
+scene floating on Gull Cove in the middle with the camera circling it (the craft is replaced when
+the next rider's craft has another scene), and a panel on the right with the name, the line and
+the weight, the one thing the rider still changes (a `StatBar`: 3 at 300 kg, a point per 15 kg,
+half steps, `RiderProfile.weight_rating`). ui_accept sets `Game.player_rider`, sets
+`Game.player_craft` to the rider's default craft and opens the craft select.
+
+**Craft select** (`menus/craft_select.tscn`): the same layout for the four craft. The focused
+craft floats on the water in the chosen rider's colours, and the panel shows its name, its line,
+"KOA'S OWN CRAFT" when it is the rider's default, and its four stat bars (3 is the base craft, a
+point per 7%, half steps, `CraftProfile.rating`). The craft in `Game.player_craft` has the focus
+first: the rider's default craft after the rider select, the craft chosen before when coming
+back from the course select. ui_accept sets `Game.player_craft` and opens the course select (in
+a championship, the first race); ui_cancel goes back to the rider select. `Race` then races that
+rider on that craft against `Game.opponents_for()` the rest, each on their own default craft;
+the command line `-- --rider NAME --craft ID` does the same. Both screens extend
+`CraftShowcase` (`menus/craft_showcase.gd`), which holds the backdrop, the circling camera, the
+craft on the water and the list and panel layout.
 
 ## Game flow and modes
 
 `Game` (`game/game.gd`, an autoload) holds the riders, the courses (`CourseInfo` resources:
 id, name, conditions line, scene), the chosen rider, course and mode, the championship under
-way and the records, and changes scenes: main menu → rider select → course select (or the
-championship's next course) → race → results → back. Each screen calls Game
-(`start_mode`, `rider_chosen`, `course_chosen`, `goto_standings`, `next_championship_race`,
-`goto_main_menu`...), so screens don't know about each other. ui_cancel goes back a screen.
+way and the records, and changes scenes: main menu → rider select → craft select → course
+select (or the championship's next course) → race → results → back. Each screen calls Game
+(`start_mode`, `rider_chosen`, `craft_chosen`, `course_chosen`, `goto_standings`,
+`next_championship_race`, `goto_main_menu`...), so screens don't know about each other.
+ui_cancel goes back a screen.
 `Race` reads `Game.mode` and sets itself up; `-- --mode NAME` sets the mode from the command
 line for tests.
 

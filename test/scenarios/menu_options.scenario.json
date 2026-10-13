@@ -120,6 +120,15 @@
       "tap": "ui_accept"
     },
     {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60
+    },
+    "step 3",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
       "until": "scene.name == 'Race'",
       "max": 60
     },

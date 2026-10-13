@@ -1,5 +1,5 @@
 {
-  "description": "Craft scenes: each racer rides the scene of its own craft. Koa's default craft is switched to a test craft with a scene of its own and Dax's to one with no scene; the rider select screen swaps the craft on the water, and the race puts Koa on the test scene and everyone else, Dax included, on jetski.tscn.",
+  "description": "Craft scenes: each racer rides the scene of its own craft. Koa's default craft is switched to a test craft with a scene of its own and Dax's to one with no scene, and both join the craft list; the rider select and the craft select swap the craft on the water, and the race puts Koa on the test scene and everyone else, Dax included, on jetski.tscn.",
   "start": {
     "scene": "res://menus/rider_select.tscn",
     "seed": 1
@@ -11,6 +11,12 @@
     },
     {
       "eval": "Game.riders[3].set('default_craft', ResourceLoader.load('res://test/craft/no_scene.tres'))"
+    },
+    {
+      "eval": "Game.crafts.append(Game.riders[1].default_craft)"
+    },
+    {
+      "eval": "Game.crafts.append(Game.riders[3].default_craft)"
     },
     {
       "expect": "[scene.selected.display_name, scene._craft.scene_file_path, scene.find_children('*', 'JetSki', false, false).size()]",
@@ -27,12 +33,11 @@
     },
     "step 5",
     {
-      "expect": "[scene.selected.display_name, scene._craft.scene_file_path, scene.find_children('*', 'JetSki', false, false).size(), scene._craft_name.text]",
+      "expect": "[scene.selected.display_name, scene._craft.scene_file_path, scene.find_children('*', 'JetSki', false, false).size()]",
       "equals": [
         "Koa",
         "res://test/craft/test_hull.tscn",
-        1,
-        "RIDES THE TEST HULL"
+        1
       ],
       "name": "Koa shows on the test craft's scene, which replaces the craft on the water"
     },
@@ -72,9 +77,56 @@
       "tap": "ui_accept"
     },
     {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60,
+      "name": "confirming Koa opens the craft select"
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.id, scene._craft.scene_file_path, scene.find_children('*', 'JetSki', false, false).size()]",
+      "equals": [
+        "test_hull",
+        "res://test/craft/test_hull.tscn",
+        1
+      ],
+      "name": "Koa's own craft, the test craft, has the focus first, on its own scene"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.id, scene._craft.scene_file_path, scene.find_children('*', 'JetSki', false, false).size()]",
+      "equals": [
+        "no_scene",
+        "res://jetski/jetski.tscn",
+        1
+      ],
+      "name": "a craft with no scene shows on jetski.tscn, which replaces the test craft"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.id, scene._craft.scene_file_path, scene.find_children('*', 'JetSki', false, false).size()]",
+      "equals": [
+        "test_hull",
+        "res://test/craft/test_hull.tscn",
+        1
+      ],
+      "name": "and back to the test craft's scene"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
       "until": "scene.name == 'CourseSelect'",
       "max": 60,
-      "name": "confirming Koa opens the course select"
+      "name": "confirming the test craft opens the course select"
     },
     "step 5",
     {
@@ -126,6 +178,12 @@
     },
     {
       "eval": "Game.riders[3].set('default_craft', Game.craft_named('skipjack'))"
+    },
+    {
+      "eval": "Game.crafts.pop_back()"
+    },
+    {
+      "eval": "Game.crafts.pop_back()"
     }
   ]
 }

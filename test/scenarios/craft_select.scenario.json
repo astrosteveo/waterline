@@ -1,0 +1,219 @@
+{
+  "description": "Craft select: after the rider select, the craft select shows the focused craft on the water in the chosen rider's colours with the camera circling it, and the craft's name, line and four stats, with the rider's own craft focused first. Keyboard, gamepad and mouse move through the list (which wraps) and choose; back returns to the rider select, and back from the course select returns to the chosen craft. The race puts the rider on that craft.",
+  "start": {
+    "scene": "res://menus/rider_select.tscn",
+    "seed": 1
+  },
+  "steps": [
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60,
+      "name": "confirming Ines opens the craft select"
+    },
+    "step 5",
+    {
+      "expect": "[scene.rider.display_name, scene.selected.id, scene.get_viewport().gui_get_focus_owner().name]",
+      "equals": [
+        "Ines",
+        "petrel",
+        "petrel"
+      ],
+      "name": "Ines's own craft, the Petrel, has the focus first"
+    },
+    {
+      "expect": "[scene._name.text, scene._tagline.text == scene.selected.tagline, scene._own.text]",
+      "equals": [
+        "PETREL",
+        true,
+        "INES'S OWN CRAFT"
+      ],
+      "name": "the panel shows the craft's name and line, marked as Ines's own"
+    },
+    {
+      "expect": "[scene._bars[0].value, scene._bars[1].value, scene._bars[2].value, scene._bars[3].value]",
+      "equals": [
+        2.5,
+        3.0,
+        4.5,
+        4.5
+      ],
+      "name": "the Petrel's stats: less top speed, more handling and grip"
+    },
+    {
+      "expect": "scene._craft.get_node('Model').hull_color.is_equal_approx(Game.rider_named('Ines').hull_color) and scene._craft.get_node('Model').suit_color.is_equal_approx(Game.rider_named('Ines').suit_color)",
+      "name": "the craft on the water is in Ines's colours"
+    },
+    {
+      "eval": "scene.set_meta('camera_at', scene._camera.global_position)"
+    },
+    "step 60",
+    {
+      "expect": "scene._camera.current and scene._camera.global_position.distance_to(scene.get_meta('camera_at')) > 0.5 and abs(Vector2(scene._camera.global_position.x - scene._craft.global_position.x, scene._camera.global_position.z - scene._craft.global_position.z).length() - 6.4) < 0.2 and scene._camera.is_position_in_frustum(scene._craft.global_position)",
+      "name": "the camera circles the craft, 6.4 m away, looking at it"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 3",
+    {
+      "expect": "[scene.selected.id, scene._own.text, scene._bars[0].value, scene._bars[1].value, scene._bars[2].value, scene._bars[3].value]",
+      "equals": [
+        "skipjack",
+        "",
+        3.0,
+        5.0,
+        3.5,
+        1.5
+      ],
+      "name": "down shows the Skipjack, not marked as Ines's own: more acceleration, less grip"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 3",
+    {
+      "expect": "[scene.selected.id, scene._bars[0].value, scene._bars[1].value, scene._bars[2].value, scene._bars[3].value]",
+      "equals": [
+        "tradewind",
+        3.0,
+        3.0,
+        3.0,
+        3.0
+      ],
+      "name": "the list wraps round to the Tradewind, the base craft"
+    },
+    {
+      "step": 3,
+      "tap": "ui_up"
+    },
+    "step 3",
+    {
+      "expect": "scene.selected.id",
+      "equals": "skipjack",
+      "name": "and up wraps back"
+    },
+    {
+      "step": 3,
+      "tap": "joy:dpad_up"
+    },
+    "step 3",
+    {
+      "expect": "scene.selected.id",
+      "equals": "petrel",
+      "name": "the gamepad's D-pad moves through the list"
+    },
+    {
+      "step": 3,
+      "tap": "joy:b"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60,
+      "name": "gamepad B goes back to the rider select"
+    },
+    "step 5",
+    {
+      "expect": "scene.selected.display_name",
+      "equals": "Ines",
+      "name": "with Ines still focused"
+    },
+    {
+      "step": 3,
+      "tap": "joy:a"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60,
+      "name": "gamepad A confirms the rider"
+    },
+    "step 5",
+    {
+      "step": 2,
+      "click_node": "UI/Root/List/swordfish"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60,
+      "name": "a mouse click on SWORDFISH chooses it"
+    },
+    {
+      "expect": "Game.player_craft.id",
+      "equals": "swordfish"
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_cancel"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60,
+      "name": "back from the course select returns to the craft select"
+    },
+    "step 5",
+    {
+      "expect": "[scene.selected.id, scene.get_viewport().gui_get_focus_owner().name]",
+      "equals": [
+        "swordfish",
+        "swordfish"
+      ],
+      "name": "with the chosen craft focused"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 60,
+      "name": "confirming the course starts the race"
+    },
+    "step 5",
+    {
+      "expect": "[scene.player.display_name, scene.player_craft.id, scene.player.craft_profile.id]",
+      "equals": [
+        "Ines",
+        "swordfish",
+        "swordfish"
+      ],
+      "name": "Ines races the Swordfish"
+    },
+    {
+      "expect": "abs(scene.player.craft.tuning.turn_rate_low - 1.6 * 0.92) < 0.001 and abs(scene.player.craft.tuning.quadratic_drag - 6.1 * 0.86 / (1.06 * 1.06) * 280.0 / 300.0) < 0.001 and abs(scene.player.craft.mass - 280.0) < 0.01",
+      "name": "with the Swordfish's handling and top speed and Ines's weight"
+    },
+    {
+      "expect": "[scene.racers[1].craft_profile.id, scene.racers[2].craft_profile.id, scene.racers[3].craft_profile.id]",
+      "equals": [
+        "tradewind",
+        "swordfish",
+        "skipjack"
+      ],
+      "name": "the computer riders ride their own craft"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Ines"
-tagline = "Turns tight and holds the line, but tops out early."
+tagline = "The lightest rider. Easy to knock aside in a crowd."
 default_craft = ExtResource("2")
 hull_color = Color(0.2, 0.72, 0.42, 1)
 trim_color = Color(0.1, 0.12, 0.15, 1)

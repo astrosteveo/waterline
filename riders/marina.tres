@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource("1")
 display_name = "Marina"
-tagline = "Even all round. A safe first pick."
+tagline = "A middle weight. A safe first pick."
 default_craft = ExtResource("2")
 hull_color = Color(0.98, 0.78, 0.1, 1)
 trim_color = Color(0.1, 0.35, 0.85, 1)
