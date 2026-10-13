@@ -50,15 +50,11 @@ const STUNTS: Dictionary[StringName, Dictionary] = {
 const COMBO_BONUS := 0.5
 ## An untidy landing scores this share of the points.
 const UNTIDY_POINTS := 0.5
-## The point the model turns about during a roll, flip or spin, in the craft's local space:
-## between the hull and the rider.
-const STUNT_PIVOT := Vector3(0.0, 0.65, 0.2)
-
-## Where the rider's pelvis sits when seated, in the craft's local space.
-const SEAT := Vector3(0.0, 1.12, 0.38)
-## Where the rider can climb on: either side of the seat, or behind the stern. The rider
-## swims to the nearest.
-const BOARDING_POINTS: Array[Vector3] = [Vector3(-1.0, 0.0, 0.4), Vector3(1.0, 0.0, 0.4), Vector3(0.0, 0.0, 1.7)]
+## [member stunt_pivot], [member seat] and [member boarding_points] for a craft scene without
+## the StuntPivot, Seat or BoardingPoints markers.
+const DEFAULT_STUNT_PIVOT := Vector3(0.0, 0.65, 0.2)
+const DEFAULT_SEAT := Vector3(0.0, 1.12, 0.38)
+const DEFAULT_BOARDING_POINTS: Array[Vector3] = [Vector3(-1.0, 0.0, 0.4), Vector3(1.0, 0.0, 0.4), Vector3(0.0, 0.0, 1.7)]
 
 ## The ride's tuning numbers. Shared resources can be swapped per rider or per craft.
 @export var tuning: JetSkiTuning
@@ -69,6 +65,17 @@ const BOARDING_POINTS: Array[Vector3] = [Vector3(-1.0, 0.0, 0.4), Vector3(1.0, 0
 @export var intake_min_z: float = 0.5
 ## Detect crashes and throw the rider off. When false the craft can't crash.
 @export var crashes_enabled: bool = true
+
+## The point the model turns about during a roll, flip or spin, in the craft's local space:
+## the StuntPivot marker, between the hull and the rider.
+var stunt_pivot: Vector3 = DEFAULT_STUNT_PIVOT
+## Where the rider's pelvis sits when seated, in the craft's local space: the Seat marker.
+## A thrown rider leaves the craft from here.
+var seat: Vector3 = DEFAULT_SEAT
+## Where the swimming rider can climb on, in the craft's local space: the Marker3D children
+## of BoardingPoints (either side of the seat and behind the stern). The rider swims to the
+## nearest.
+var boarding_points: Array[Vector3] = DEFAULT_BOARDING_POINTS.duplicate()
 
 ## What the rider asks for this tick. [PlayerInput] or a computer rider writes it.
 var controls := RiderControls.new()
@@ -174,6 +181,7 @@ func _ready() -> void:
 	angular_damp = 0.0
 	_apply_body_tuning()
 	_collect_hull_points()
+	_collect_rider_points()
 	_model = get_node_or_null(^"Model") as Node3D
 	if _model != null:
 		_model_rest = _model.transform
@@ -246,8 +254,8 @@ func _physics_process(delta: float) -> void:
 
 ## The nearest place for the swimming rider to climb on, in world space.
 func boarding_point() -> Vector3:
-	var best := global_transform * BOARDING_POINTS[0]
-	for local in BOARDING_POINTS:
+	var best := global_transform * boarding_points[0]
+	for local in boarding_points:
 		var point := global_transform * local
 		if point.distance_squared_to(_rider_position) < best.distance_squared_to(_rider_position):
 			best = point
@@ -275,7 +283,7 @@ func throw_rider(reason: StringName = &"impact") -> void:
 		return
 	rider_state = RiderState.THROWN
 	_rider_time = 0.0
-	_rider_position = global_transform * SEAT
+	_rider_position = global_transform * seat
 	_rider_previous = _rider_position
 	var heading := -global_basis.z
 	heading.y = 0.0
@@ -361,6 +369,28 @@ func _collect_hull_points() -> void:
 		_hull_points.append(local)
 		_is_intake.append(1 if local.z >= intake_min_z else 0)
 		_samples.append(WaterSample.new())
+
+
+## Reads [member stunt_pivot], [member seat] and [member boarding_points] from the StuntPivot,
+## Seat and BoardingPoints markers, so a craft scene of another shape can move them. A missing
+## marker keeps its default.
+func _collect_rider_points() -> void:
+	var pivot_marker := get_node_or_null(^"StuntPivot") as Node3D
+	if pivot_marker != null:
+		stunt_pivot = to_local(pivot_marker.global_position)
+	var seat_marker := get_node_or_null(^"Seat") as Node3D
+	if seat_marker != null:
+		seat = to_local(seat_marker.global_position)
+	var holder := get_node_or_null(^"BoardingPoints")
+	if holder == null:
+		return
+	var points: Array[Vector3] = []
+	for child in holder.get_children():
+		var marker := child as Node3D
+		if marker != null:
+			points.append(to_local(marker.global_position))
+	if not points.is_empty():
+		boarding_points = points
 
 
 ## Puts the craft back upright on the water at [param where] (its spawn point by default),
@@ -825,7 +855,7 @@ static func _stunt_ease(progress: float) -> float:
 	return progress - sin(TAU * progress) / TAU
 
 
-## The model's turn for a roll, flip or spin at [param progress], about [constant STUNT_PIVOT].
+## The model's turn for a roll, flip or spin at [param progress], about [member stunt_pivot].
 ## The physics body keeps its own attitude; only the model turns.
 func _stunt_pose(progress: float) -> Transform3D:
 	if stunt == &"" or stunt == &"handstand":
@@ -839,7 +869,7 @@ func _stunt_pose(progress: float) -> Transform3D:
 			turn = Basis(Vector3.RIGHT, angle)
 		&"spin":
 			turn = Basis(Vector3.UP, -angle * stunt_side)
-	return Transform3D(turn, STUNT_PIVOT) * Transform3D(Basis.IDENTITY, -STUNT_PIVOT)
+	return Transform3D(turn, stunt_pivot) * Transform3D(Basis.IDENTITY, -stunt_pivot)
 
 
 ## A hard side or front hit on scenery or another craft throws the rider off. Walls and

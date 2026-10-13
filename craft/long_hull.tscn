@@ -1,0 +1,32 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://jetski/jetski.tscn" id="1"]
+
+[sub_resource type="BoxShape3D" id="long_hull_shape"]
+size = Vector3(1.0, 0.55, 3.5)
+
+[node name="LongHull" instance=ExtResource("1")]
+
+[node name="Collision" parent="."]
+shape = SubResource("long_hull_shape")
+
+[node name="Bow" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, -1.625)
+
+[node name="FrontLeft" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.36, 0.12, -1.04)
+
+[node name="FrontRight" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.36, 0.12, -1.04)
+
+[node name="RearLeft" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.12, 1.105)
+
+[node name="RearRight" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.12, 1.105)
+
+[node name="Stern" parent="HullPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 1.69)
+
+[node name="Stern" parent="BoardingPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.1)
