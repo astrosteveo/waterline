@@ -1,9 +1,9 @@
 class_name RiderSelect
 extends Node3D
-## The rider select screen: the four riders down the left, the chosen rider's craft
-## floating on the water behind, the rider's default craft and its stats on the right. Confirming hands the rider to
-## [method Game.rider_chosen], which moves on to the course select (or the championship's
-## first race); backing out returns to the main menu.
+## The rider select screen: the four riders down the left, the chosen rider on their default
+## craft floating on the water behind, the craft's name and stats on the right. Confirming
+## hands the rider to [method Game.rider_chosen], which moves on to the course select (or the
+## championship's first race); backing out returns to the main menu.
 
 ## Emitted when the player confirms a rider.
 signal rider_chosen(rider: RiderProfile)
@@ -14,6 +14,9 @@ signal cancelled
 @export var backdrop_scene: PackedScene = preload("res://levels/gull_cove.tscn")
 ## How fast the camera circles the craft, in radians per second.
 @export var orbit_speed: float = 0.18
+
+## The craft shown for a rider whose default craft has no scene.
+const DEFAULT_CRAFT := preload("res://jetski/jetski.tscn")
 
 var selected: RiderProfile
 
@@ -34,12 +37,6 @@ func _ready() -> void:
 	move_child(backdrop, 0)
 	var course := backdrop as Course
 	_anchor = course.grid_transform(1, 4) if course != null else Transform3D.IDENTITY
-	_craft = preload("res://jetski/jetski.tscn").instantiate() as JetSki
-	_craft.name = "Craft"
-	_craft.transform = _anchor
-	_craft.crashes_enabled = false
-	add_child(_craft)
-	_craft.hold(_anchor)
 	_camera = Camera3D.new()
 	# Moved in _process.
 	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -53,6 +50,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _craft == null:
+		return
 	_orbit += orbit_speed * delta
 	var focus := _craft.get_global_transform_interpolated().origin + Vector3.UP * 0.7
 	var heading := -_anchor.basis.z
@@ -66,13 +65,29 @@ func _process(delta: float) -> void:
 ## its stats.
 func select(rider: RiderProfile) -> void:
 	selected = rider
+	var craft := rider.default_craft
+	_show_craft(craft.scene if craft != null and craft.scene != null else DEFAULT_CRAFT)
 	rider.apply_colors(_craft.get_node_or_null(^"Model"))
 	_name.text = rider.display_name.to_upper()
 	_tagline.text = rider.tagline
-	var craft := rider.default_craft
 	_craft_name.text = "RIDES THE %s" % craft.display_name.to_upper() if craft != null else ""
 	for i in _bars.size():
 		_bars[i].value = craft.rating(CraftProfile.STATS[i]) if craft != null else 3.0
+
+
+## Puts a craft from [param scene] on the water, unless the one there already is one.
+func _show_craft(scene: PackedScene) -> void:
+	if _craft != null and _craft.scene_file_path == scene.resource_path:
+		return
+	if _craft != null:
+		remove_child(_craft)
+		_craft.queue_free()
+	_craft = scene.instantiate() as JetSki
+	_craft.name = "Craft"
+	_craft.transform = _anchor
+	_craft.crashes_enabled = false
+	add_child(_craft)
+	_craft.hold(_anchor)
 
 
 ## Starts the race with the selected rider.

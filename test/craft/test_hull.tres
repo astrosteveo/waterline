@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CraftProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://craft/craft_profile.gd" id="1"]
+[ext_resource type="PackedScene" path="res://test/craft/test_hull.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "test_hull"
+display_name = "Test Hull"
+tagline = "A craft scene of its own, for the craft_scenes scenario."
+scene = ExtResource("2")

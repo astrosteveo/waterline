@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CraftProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://craft/craft_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "no_scene"
+display_name = "No Scene"
+tagline = "A craft without a scene, for the craft_scenes scenario: it rides Race.craft_scene."

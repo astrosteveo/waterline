@@ -47,7 +47,7 @@ enum Phase {
 
 ## The course to race on: a scene whose root is a [Course].
 @export var course_scene: PackedScene
-## The craft every racer rides.
+## The craft a racer rides when it has no craft, or its craft has no scene.
 @export var craft_scene: PackedScene = preload("res://jetski/jetski.tscn")
 ## The power meter and disqualification rules.
 @export var rules: RaceRules
@@ -230,7 +230,7 @@ func _setup_mode(info: CourseInfo) -> void:
 
 
 func _spawn_player() -> void:
-	var craft := craft_scene.instantiate() as JetSki
+	var craft := _make_craft(player_craft)
 	craft.name = "Player"
 	_fit(craft, player_rider, player_craft)
 	var racer := _add_racer(craft, player_rider.display_name if player_rider != null else "You", player_slot)
@@ -253,7 +253,7 @@ func _spawn_player() -> void:
 
 
 func _spawn_computer(profile: RiderProfile, slot: int) -> void:
-	var craft := craft_scene.instantiate() as JetSki
+	var craft := _make_craft(profile.default_craft)
 	craft.name = profile.display_name.validate_node_name()
 	_fit(craft, profile, profile.default_craft)
 	var racer := _add_racer(craft, profile.display_name, slot)
@@ -267,6 +267,18 @@ func _spawn_computer(profile: RiderProfile, slot: int) -> void:
 	driver.race = self
 	driver.racer = racer
 	craft.add_child(driver)
+
+
+## A new craft from [param profile]'s scene, or from [member craft_scene] when there is no
+## profile, no scene or the scene's root isn't a [JetSki].
+func _make_craft(profile: CraftProfile) -> JetSki:
+	if profile != null and profile.scene != null:
+		var node := profile.scene.instantiate()
+		if node is JetSki:
+			return node
+		node.free()
+		push_error("The scene of craft '%s' must have a JetSki as its root." % profile.id)
+	return craft_scene.instantiate() as JetSki
 
 
 ## Paints [param craft] (not yet in the tree) in [param rider]'s colours and gives it the
