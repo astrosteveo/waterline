@@ -70,6 +70,6 @@ assets:
     prompt: "this jet ski without a handlebar, the black steering column is cut off flat just above the hood with nothing sticking out sideways, white hull and white underside, long black seat"
     size_m: 2.9          # length; the code-built hull is 2.9 m from bow to stern
     height_m: 0
-    faces: 30000          # 12000 came out lumpy; the shape needs about 28000
+    faces: 30000          # 12000 faces gave a lumpy hull; this hull needs about 28000 to come out smooth
     texture_size: 1024
     notes: "Hull for craft/hulls/generated_hull.tscn (issue #13). White, so the rider's colours can paint it. No handlebar, because the hull scene adds one that turns with the steering. assetgen warns that about 5,500 faces cut through others (every seed and setting tried did); none flickered in the game."

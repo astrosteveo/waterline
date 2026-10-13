@@ -253,7 +253,7 @@ the rider's colours: `bottom_color` below `BottomLine`, `trim_color` from there 
 `hull_color` above. Dark and strongly coloured parts keep their own colour, and painted parts
 keep their shading. Light parts with a saturation up to about 0.3 count as grey, because a
 generated model's white is a little blue. A material that isn't a StandardMaterial3D isn't
-painted. The meshes go on visual layer 2 (moving things), as the code-built parts do. With
+painted. The meshes go on visual layer 2, the layer for moving things,, as the code-built parts do. With
 `ghost` on, `hull_paint_ghost.gdshader` draws the same paint see-through (alpha 0.38 and a faint
 blue glow, as the code-built ghost), after the water (render priority 1), front faces only, and
 no part casts a shadow. The time-trial ghost still draws `jetski_model.tscn` without a hull
@@ -265,8 +265,9 @@ Every prompt that asked for a jet ski without a handlebar still drew one (10 of 
 `jetski_hull_concept` draws the jet ski with its handlebar, and `jetski_hull` uses that image as
 a reference and edits the handlebar out (5 of 6 edits had none). At 12,000 faces the shape came
 out lumpy (7,669 triangles); at 30,000 it matches the reference image. assetgen warns that
-about 5,500 faces cut through others, with every seed and setting tried; a still camera saw no
-pixel change over 40 frames.
+about 5,500 faces cut through other faces, and it warned the same with every seed and setting
+that was tried. Such faces flicker when they do; with the camera held still on the hull for 40
+frames, no pixel changed.
 
 `craft/hulls/generated_hull.tscn` turns the model to face -Z and adds a handlebar: a 0.74 m bar
 and a short column under `Handlebar`, 1.38 m high and 0.42 m ahead of the middle. Its footrests
@@ -296,14 +297,16 @@ footrests, Koa's three colours in the paint, the handstand holding the bars, and
 ending the climb within 5 cm of the seat (the old fixed seat is 23 cm lower).
 `test/craft/hull_preview.tscn` shows the code-built hull, the generated hull in Dax's colours
 and the generated hull as a ghost side by side; the `craft_hull_ghost` scenario checks the
-ghost's shaders, render priority and shadows. Without a hull scene the game draws as before: a
-race replayed with seed 1 (the start grid, a turn, a handstand, a crash, swimming, the climb and
-remounted, 7 frames at 1280×720) differs from the same race before the change by at most 2
-levels of 255, except in 5 single pixels, from rounding in the seat position.
+ghost's shaders, render priority and shadows. Without a hull scene the game draws as before. A
+race replayed with seed 1 was captured at 7 moments (the start grid, a turn, a handstand, a
+crash, swimming, the climb and remounted) at 1280×720, before and after the change. No pixel
+differs by more than 2 on the 0–255 colour scale except 5 single pixels, which differ because
+the seat position is now computed from the Seat marker and rounds slightly differently.
 
 Screenshots (`docs/screenshots/hull_scene_*.png`, Marina on the example craft at Gull Cove):
-`seated` (in a right turn, hands on the turned bar), `handstand`, `swimming` (back to the craft
-after a crash), `climbing` and `remounted`; `preview` is the preview scene.
+`seated` (the rider in a right turn, hands on the turned bar), `handstand`, `swimming` (the
+rider swimming back to the craft after a crash), `climbing` and `remounted`; `preview` is the
+preview scene.
 
 ## Jet ski tuning (jetski/jetski_tuning.gd, values in jetski/tuning/default.tres)
 
