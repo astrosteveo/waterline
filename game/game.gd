@@ -3,9 +3,9 @@ extends Node
 ## the player chose, the mode being played, the championship under way, the saved records, and
 ## the scene changes between menus and races.
 ##
-## The flow: main menu -> rider select -> course select (or, in a championship, the next
-## course) -> race -> results -> back. Each scene asks Game where to go next, so the scenes
-## don't know about each other.
+## The flow: main menu -> rider select -> craft select -> course select (or, in a championship,
+## the next course) -> race -> results -> back. Each scene asks Game where to go next, so the
+## scenes don't know about each other.
 
 enum Mode {
 	## One race against the three other riders.
@@ -20,6 +20,7 @@ enum Mode {
 
 const MAIN_MENU := "res://menus/main_menu.tscn"
 const RIDER_SELECT := "res://menus/rider_select.tscn"
+const CRAFT_SELECT := "res://menus/craft_select.tscn"
 const COURSE_SELECT := "res://menus/course_select.tscn"
 const RACE := "res://race/race.tscn"
 const STANDINGS := "res://menus/standings.tscn"
@@ -51,7 +52,8 @@ var mode: Mode = Mode.QUICK_RACE
 var mode_chosen: bool = false
 ## The rider the player chose, or null to use the race scene's own.
 var player_rider: RiderProfile
-## The craft the player chose, or null for the rider's default craft.
+## The craft the player rides: the rider's default craft once the rider is chosen, then the
+## craft chosen on the craft select screen. Null: the rider's default craft.
 var player_craft: CraftProfile
 ## The course for the next race, or null to use the race scene's own.
 var course: CourseInfo
@@ -140,12 +142,20 @@ func start_mode(new_mode: Mode) -> void:
 	_change(RIDER_SELECT)
 
 
-## The rider select screen chose [param rider]. The player rides the rider's default craft.
+## The rider select screen chose [param rider]: the craft select comes next, with the rider's
+## default craft focused first.
 func rider_chosen(rider: RiderProfile) -> void:
 	player_rider = rider
 	player_craft = rider.default_craft
+	_change(CRAFT_SELECT)
+
+
+## The craft select screen chose [param craft]: the course select comes next, or in a
+## championship the first race.
+func craft_chosen(craft: CraftProfile) -> void:
+	player_craft = craft
 	if mode == Mode.CHAMPIONSHIP:
-		championship = Championship.new(rider, riders, courses)
+		championship = Championship.new(player_rider, riders, courses)
 		course = championship.current_course()
 		_change(RACE)
 	else:
@@ -174,6 +184,10 @@ func next_championship_race() -> void:
 
 func goto_rider_select() -> void:
 	_change(RIDER_SELECT)
+
+
+func goto_craft_select() -> void:
+	_change(CRAFT_SELECT)
 
 
 func goto_course_select() -> void:

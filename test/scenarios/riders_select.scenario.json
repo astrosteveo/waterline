@@ -1,5 +1,5 @@
 {
-  "description": "Riders: the rider select screen shows each rider and the stats of the rider's default craft; choosing one (then a course) races as that rider on that craft, tuned by the craft's stats and the rider's weight, against the other three on their own craft.",
+  "description": "Riders: the rider select screen shows each rider and the stats of the rider's default craft; choosing one (then their own craft and a course) races as that rider on that craft, tuned by the craft's stats and the rider's weight, against the other three on their own craft.",
   "start": {
     "scene": "res://menus/rider_select.tscn",
     "seed": 1
@@ -79,9 +79,24 @@
       "tap": "ui_accept"
     },
     {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60,
+      "name": "confirming a rider opens the craft select"
+    },
+    "step 5",
+    {
+      "expect": "scene.selected.id",
+      "equals": "petrel",
+      "name": "Ines's own craft has the focus first"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
       "until": "scene.name == 'CourseSelect'",
       "max": 60,
-      "name": "confirming a rider opens the course select"
+      "name": "confirming the craft opens the course select"
     },
     "step 5",
     {
