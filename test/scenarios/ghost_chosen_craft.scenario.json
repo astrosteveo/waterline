@@ -1,0 +1,213 @@
+{
+  "description": "Issue #31's last criterion, through the real menus with fresh user data: Koa (whose own craft is the Swordfish) picks the Petrel on the craft select, sets both records on Gull Cove, and the course select then names the Petrel with Koa for both records. Racing Gull Cove again, the ghost rides the Petrel's scene, drawn as a ghost in Koa's colours, on the recorded line. The four shipped craft share res://jetski/jetski.tscn, so the Petrel's ghost looks the same as a Swordfish ghost would; time_trial_craft.scenario.json covers a craft with a model of its own.",
+  "start": {
+    "scene": "res://menus/main_menu.tscn",
+    "seed": 2,
+    "user_data": "fresh"
+  },
+  "steps": [
+    "step 5",
+    {
+      "expect": "[Game.records.best_race('gull_cove') > 1e9, Game.records.load_ghost('gull_cove').size()]",
+      "equals": [
+        true,
+        0
+      ],
+      "name": "fresh user data: no record and no ghost on Gull Cove"
+    },
+    {
+      "step": 3,
+      "click_text": "TIME TRIAL"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "step": 3,
+      "click_node": "UI/Root/List/Koa"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60
+    },
+    "step 10",
+    {
+      "expect": "[Game.player_rider.display_name, Game.player_rider.default_craft.id, scene.selected.id, scene._own.text]",
+      "equals": [
+        "Koa",
+        "swordfish",
+        "swordfish",
+        "KOA'S OWN CRAFT"
+      ],
+      "name": "Koa's own craft, the Swordfish, has the focus first"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 20",
+    {
+      "expect": "[scene.selected.id, scene._own.text, scene._craft.scene_file_path]",
+      "equals": [
+        "petrel",
+        "",
+        "res://jetski/jetski.tscn"
+      ],
+      "name": "down moves to the Petrel, not Koa's own craft"
+    },
+    {
+      "shot": "craft-select-petrel"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "expect": "[Game.player_craft.id, scene.selected.id, scene._records.text]",
+      "equals": [
+        "petrel",
+        "gull_cove",
+        "RECORD   -:--.--\nBEST LAP   -:--.--"
+      ],
+      "name": "the Petrel is chosen; Gull Cove has no record yet"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 120
+    },
+    "step 5",
+    {
+      "expect": "[player.display_name, player.craft_profile.id, time_trial.ghost == null, laps]",
+      "equals": [
+        "Koa",
+        "petrel",
+        true,
+        3
+      ],
+      "name": "Koa rides the Petrel for three laps, with no ghost yet"
+    },
+    {
+      "expect": "autopilot(player, 0.9).skill",
+      "approx": 0.9,
+      "name": "the computer rides the run at skill 0.9, as the other time-trial scenarios do"
+    },
+    {
+      "until": "get_node('SoloResults').is_open()",
+      "max": 12000,
+      "name": "the run ends with the time trial results"
+    },
+    {
+      "expect": "time_trial.new_records",
+      "equals": {
+        "race": true,
+        "lap": true
+      },
+      "name": "the run sets both records"
+    },
+    {
+      "expect": "[Game.records.best_race_rider('gull_cove'), Game.records.best_race_craft('gull_cove'), Game.records.best_lap_craft('gull_cove'), Game.records.load_ghost('gull_cove').get('rider'), Game.records.load_ghost('gull_cove').get('craft')]",
+      "equals": [
+        "Koa",
+        "petrel",
+        "petrel",
+        "Koa",
+        "petrel"
+      ],
+      "name": "the records and the ghost keep Koa and the Petrel"
+    },
+    "step 30",
+    {
+      "step": 3,
+      "click_text": "COURSES"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60
+    },
+    "step 10",
+    {
+      "expect": "[scene.selected.id, scene._records.text.get_slice('\n', 0).begins_with('RECORD   '), scene._records.text.get_slice('\n', 0).ends_with('  (KOA, PETREL)'), scene._records.text.get_slice('\n', 1).begins_with('BEST LAP   '), scene._records.text.get_slice('\n', 1).ends_with('  (KOA, PETREL)'), scene._records.text.contains('SWORDFISH')]",
+      "equals": [
+        "gull_cove",
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "name": "the course select names the Petrel, not Koa's Swordfish, for both records"
+    },
+    {
+      "shot": "course-select-record"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'Race'",
+      "max": 120
+    },
+    "step 5",
+    {
+      "expect": "[time_trial.ghost != null, time_trial.ghost_craft.id, time_trial.record_rider, time_trial.record_craft, time_trial.ghost.get_child_count(), time_trial.ghost.get_child(0).scene_file_path, time_trial.ghost.get_child(0).ghost]",
+      "equals": [
+        true,
+        "petrel",
+        "Koa",
+        "petrel",
+        1,
+        "res://jetski/model/jetski_model.tscn",
+        true
+      ],
+      "name": "the ghost rides the Petrel, drawn as a ghost, with only the craft's model"
+    },
+    {
+      "expect": "[time_trial.ghost_craft == Game.craft_named('petrel'), time_trial.ghost_craft.scene == Game.craft_named('petrel').scene, time_trial.ghost.get_child(0).hull_color == Game.rider_named('Koa').hull_color, time_trial.ghost.get_child(0).trim_color == Game.rider_named('Koa').trim_color, time_trial.ghost.get_child(0).suit_color == Game.rider_named('Koa').suit_color]",
+      "equals": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "name": "the ghost's model comes from the Petrel's scene, in Koa's colours"
+    },
+    {
+      "until": "phase == 1",
+      "max": 600
+    },
+    "step 150",
+    {
+      "expect": "time_trial.ghost.visible and time_trial.ghost.get_child(0).global_position.distance_to(player.craft.global_position) > 10.0",
+      "name": "after 2.5 s the ghost has ridden over 10 m ahead of the waiting player"
+    },
+    {
+      "shot": "ghost-ahead"
+    },
+    "camera --view 8,2.5,15:2.5,0.8,12",
+    {
+      "shot": "ghost-closeup"
+    },
+    "camera --release",
+    "step 600",
+    {
+      "expect": "time_trial.ghost.get_child(0).global_position.distance_to(Vector3(Game.records.load_ghost('gull_cove')['frames'][(int(round(race_time*60))-1)*12], Game.records.load_ghost('gull_cove')['frames'][(int(round(race_time*60))-1)*12+1], Game.records.load_ghost('gull_cove')['frames'][(int(round(race_time*60))-1)*12+2]))",
+      "approx": 0.0,
+      "within": 0.01,
+      "name": "12.5 s in, the ghost is where the saved run was"
+    }
+  ],
+  "expect": []
+}

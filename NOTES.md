@@ -919,6 +919,10 @@ line for tests.
   shadows) in step with the race clock, interpolated between ticks. Every race now starts the
   wave clock at 0 (`Ocean.reset_time` in `Race._ready`), so the ghost rides the water it was
   recorded on; before that the ghost floated a metre off the surface on a retry.
+  The `ghost_chosen_craft` scenario goes through the menus with fresh user data: Koa picks the
+  Petrel instead of his own Swordfish on the craft select and sets both Gull Cove records, the
+  course select then names the Petrel for both, and on the next run the ghost rides the Petrel's
+  model in Koa's colours on the recorded line.
 - **Stunt mode** (`StuntMode`): one lap against a clock of 0.1 s per meter of the lap, rounded
   up to 5 s (Gull Cove 65 s). Rings (`StuntRing`) float along the racing line every 50 m,
   clear of buoys and ramps by 18 m, and an air ring hangs 9 m past each ramp's lip, 1.2 m
