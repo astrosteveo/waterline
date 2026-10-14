@@ -111,6 +111,15 @@
       "tap": "ui_accept"
     },
     {
+      "until": "scene.name == 'CupSelect'",
+      "max": 60
+    },
+    "step 3",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
       "until": "scene.name == 'RiderSelect'",
       "max": 60
     },
