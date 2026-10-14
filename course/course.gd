@@ -74,6 +74,15 @@ signal layout_changed
 ## How fast the level moves, in meters per second.
 @export_range(0.01, 2.0, 0.01, "suffix:m/s") var level_change_rate: float = 0.15
 
+@export_group("Waves")
+## The waves on each lap, from the first. An empty entry, or a lap past the end, uses the
+## entry before it; empty all the way back means the waves the race started with (the
+## OceanSurface's). The race starts changing the waves to the next lap's when the leader
+## starts that lap.
+@export var lap_waves: Array[WaveSet] = []
+## How long a change of waves takes, in seconds.
+@export_range(0.0, 120.0, 0.1, "suffix:s") var wave_change_time: float = 20.0
+
 @export_group("Preview")
 ## Draw the centre line, walls and gates in the editor.
 @export var preview_in_editor: bool = true:
@@ -125,6 +134,15 @@ func level_for_lap(lap: int) -> float:
 	if lap_levels.is_empty():
 		return 0.0
 	return lap_levels[clampi(lap, 0, lap_levels.size() - 1)]
+
+
+## The waves on lap [param lap] (0 for the first), from [member lap_waves], or null for the
+## waves the race started with.
+func waves_for_lap(lap: int) -> WaveSet:
+	for i in range(mini(lap, lap_waves.size() - 1), -1, -1):
+		if lap_waves[i] != null:
+			return lap_waves[i]
+	return null
 
 
 ## Rebuilds the centre line, wall lines and gates from the current data.

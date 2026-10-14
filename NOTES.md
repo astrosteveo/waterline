@@ -114,6 +114,7 @@ levels/         the courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
 test/           water_match.tscn (GPU/CPU height comparison), wave_bench.gd,
+                wave_change_check.gd (CPU checks of a wave change),
                 every_course.tscn (races every course, for every_course.scenario.json),
                 check_project.sh + check_project.gd (the CI check, see "CI"),
                 scenarios/ (regression scenarios), tools/autodrive.py (test driver),
@@ -173,6 +174,14 @@ captures/       gdh output, git-ignored and hidden from Godot (.gdignore)
   depth into height, two 8-bit channels, 0.78 m texels over 800 m). The water gives a point under
   it shoreline foam only if that point lies at most 0.5 m above the highest scenery in the 3×3
   texels around it. Rocks and beaches keep their foam; hulls, crates and buoys get none.
+- **Changing the waves during a race** (issue #22; details in the wiki page "Wave changes").
+  `Ocean.change_waves(target, seconds)` changes the waves into another preset's: only the
+  amplitudes change, with a smoothstep over wave time, so the surface never jumps and a replay
+  sees the same water. Waves both presets share change in place; the others fade out or in, and
+  more than 16 in all warns. It works on a copy (`WaveSet.changing_to`), so presets never change.
+  The CPU sends the shader each wave's amplitude at the drawn time every frame during a change,
+  and `Ocean` drops the faded waves when it ends. `OceanSurface` follows `Ocean.wave_set` in the
+  game. A course schedules changes per lap with `Course.lap_waves` and `wave_change_time`.
 - **Visual layers.** 1 = static scenery (terrain, rocks, ramps, anything that should get
   shoreline foam), 2 = moving things (`JetSkiModel` and `Floater` set it on their meshes), 3 =
   water, 20 = the ShoreMap capture pass, which the game cameras exclude (it also discards itself
@@ -647,6 +656,14 @@ in a cup yet.
   start to fade). Run it again with:
   `gdh live start --project . --session wm --scene res://test/water_match.tscn`, then
   `gdh live step 30 --session wm` and `gdh live eval "scene.check()" --session wm`.
+- **GPU vs CPU height during a wave change** (`test/scenarios/water_change.scenario.json`): from
+  `open_sea` to `rolling_swell` over 4 s (15 waves), the same check at a quarter, half and most of
+  the way gave mean errors of 0.38–0.55 mm and at most 2.9 mm, and 0.41 mm and 2.1 mm after it.
+- **Frame time during a wave change**, four computer riders on Gull Cove (`-- --watch`, seed 1,
+  gdh profiler on, 600 frames): the game's processing and physics took 2.06 ms a frame (median;
+  physics 0.88 ms) on Gull Cove's 7 waves, and 2.42–2.46 ms (physics 1.21 ms) during a change to
+  `open_sea`, which uses 15 waves. The wave solver's cost grows with the number of waves; a change
+  between presets that share their waves (Gull Cove to `rolling_swell`) stays at 7.
 - **GPU vs CPU height, visually.** Five `WaterProbe` poles in `water_test.tscn` are placed every
   physics tick at the CPU height; each turns from yellow to magenta exactly at that height, with
   black rings every 5 cm. In `docs/screenshots/m1_probe_waterline.png` (foam turned off) the water

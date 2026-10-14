@@ -1,0 +1,88 @@
+{
+  "description": "A course can change the waves per lap (Course.lap_waves): when the leader starts lap 2 the waves change from the course's own to rolling_swell over Course.wave_change_time, the drawn water follows, the preset stays as it was, and the next race starts on the course's own waves again.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1,
+    "args": [
+      "--no-opponents"
+    ]
+  },
+  "steps": [
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "eval": "rules.set('misses_to_disqualify', 0)",
+      "name": "no disqualification: this test skips every buoy"
+    },
+    {"eval": "course.lap_waves.append(null)"},
+    {"eval": "course.lap_waves.append(ResourceLoader.load('res://water/presets/rolling_swell.tres'))"},
+    {"eval": "course.set('wave_change_time', 10.0)"},
+    {
+      "expect": "[course.waves_for_lap(0) == null, course.waves_for_lap(1) == ResourceLoader.load('res://water/presets/rolling_swell.tres'), course.waves_for_lap(5) == course.waves_for_lap(1)]",
+      "equals": [true, true, true],
+      "name": "lap 1 keeps the course's waves; lap 2 and later use rolling_swell"
+    },
+    {
+      "expect": "[Ocean.wave_set == ResourceLoader.load('res://water/presets/cove_calm.tres'), Ocean.wave_set.is_changing()]",
+      "equals": [true, false],
+      "name": "lap 1: Gull Cove's own waves"
+    },
+    {"eval": "place_racer(player, 100, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 220, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 340, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 460, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 580, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 620, 0, 15)"},
+    {
+      "until": "player.laps_done == 1",
+      "hold": "throttle",
+      "max": 180,
+      "name": "the player starts lap 2"
+    },
+    {
+      "expect": "[Ocean.wave_set.is_changing(), abs(Ocean.wave_set.change_end() - Ocean.end_time - 10.0) < 0.001, course.get_node('OceanSurface').wave_set == Ocean.wave_set]",
+      "equals": [true, true, true],
+      "name": "the waves start a 10 s change, and the drawn water follows it"
+    },
+    {
+      "expect": "Ocean.wave_set.wave_count()",
+      "equals": 7,
+      "name": "Gull Cove's waves are rolling_swell's at a lower height, so the 7 waves grow in place"
+    },
+    {"step": 300, "hold": "throttle"},
+    {
+      "expect": "Ocean.wave_set.change_weight(Ocean.time) > 0.4 and Ocean.wave_set.change_weight(Ocean.time) < 0.6",
+      "name": "half way after 5 s"
+    },
+    {"step": 330, "hold": "throttle"},
+    {
+      "expect": "[Ocean.wave_set.is_changing(), Ocean.wave_set.wave_count(), course.get_node('OceanSurface').wave_set == Ocean.wave_set]",
+      "equals": [false, 7, true],
+      "name": "after 11 s the change is over and only rolling_swell's waves are left"
+    },
+    {
+      "expect": "abs(Ocean.height_at_time(Vector3(3, 0, 4), Ocean.time) - ResourceLoader.load('res://water/presets/rolling_swell.tres').height_at(3, 4, Ocean.time)) < 0.000001",
+      "name": "the water is rolling_swell's"
+    },
+    {
+      "expect": "[ResourceLoader.load('res://water/presets/cove_calm.tres').wave_count(), ResourceLoader.load('res://water/presets/rolling_swell.tres').max_height()]",
+      "approx": [7, 1.812],
+      "within": 0.001,
+      "name": "the presets are unchanged"
+    },
+    {"eval": "tree.reload_current_scene()"},
+    "step 3",
+    {
+      "expect": "[Ocean.wave_set == ResourceLoader.load('res://water/presets/cove_calm.tres'), Ocean.wave_set.is_changing()]",
+      "equals": [true, false],
+      "name": "the next race starts on Gull Cove's own waves"
+    }
+  ]
+}
