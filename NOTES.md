@@ -108,7 +108,7 @@ riders/         RiderProfile (colours, weight, default craft, computer skill) an
 craft/          CraftProfile (scene, base tuning, the four stats) and the four craft (.tres);
                 long_hull.tscn and generated_hull.tscn, example craft scenes (not in
                 Game.crafts); hulls/ (hull scenes for JetSkiModel)
-levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.png = menu map;
+levels/         the courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.png = menu map;
                 all three written by tools/courses/course_tool.py),
                 open_water.tscn (free ride), water_test.tscn
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
@@ -611,7 +611,31 @@ overwrites both files, so edit the spec, not the scene or the `.course.tres`.
 and `order`, and run `course_tool.py SPEC --scene --thumb`. `Game` loads every `*.course.tres` in
 `res://levels/` at startup (`Game.find_courses()`, with `ResourceLoader.list_directory()`, which
 lists the original file names in exported builds too) and sorts them by `order`, then by id. The
-menus and the championship use that order. Today's courses are 1 (Gull Cove) to 4 (Ebb Reef).
+menus list them in that order; a championship races the courses its cup lists (`res://cups/`). The
+four layouts are 1 (Gull Cove) to 4 (Ebb Reef).
+
+**Reversed and mirrored versions.** `course_tool.py SPEC --reverse` (or `--mirror`, or both) lays
+out another version of the course from the same spec and writes it as a separate course with its
+own id, name, scene, menu map and `CourseInfo` (`gull_cove_reverse`, "Gull Cove Reverse"):
+
+- **Reverse:** the control points run the other way from the same start line, and each offset `s`
+  becomes `length - s`.
+- **Mirror:** x is negated in the control points, the start, rocks, islands and props, props turn
+  the other way, and the sun's yaw is mirrored so the light falls the same way on the scenery.
+- Either one alone negates every lateral offset and swaps red and yellow buoys, because the side
+  the racer keeps each buoy on flips with the direction of travel; both together leave them as
+  they are. Every buoy and ramp stays where it was in the world.
+- A version's order is the layout's plus 100 (reverse), 200 (mirror) or 300 (both), so versions
+  come after the four layouts in the menus. Its conditions line starts with "Reversed." or
+  "Mirrored.". A spec's `versions` entry (`{"reverse": {"order": 5, "conditions": "..."}}`)
+  overrides any of a version's keys.
+- Ramps face along the course, so they turn round with it, and a ramp's landing ends up where its
+  approach used to be: race each version with the every-course test before shipping it.
+
+Gull Cove ships reversed and mirrored. The depth check passes for both (no wall point over water
+shallower than 2.5 m), and in the every-course test (seed 1) every rider finished both with no
+crashes: laps of 37–47 s, at most 2 misses (Dax on the reverse, Marina on the mirror). Neither is
+in a cup yet.
 
 ## Verification done
 
