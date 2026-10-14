@@ -31,6 +31,9 @@ signal all_finished
 ## The leader started a lap on which the water's rest level differs: it now moves toward
 ## [param level].
 signal tide_turned(level: float)
+## The leader started a lap with other waves: they now change into [param waves] over
+## [member Course.wave_change_time] seconds.
+signal waves_changed(waves: WaveSet)
 ## In watch mode, the camera moved to another rider.
 signal watched_changed(racer: RacerState)
 ## The player finished or was disqualified; the race is over for them.
@@ -101,6 +104,8 @@ var time_trial: TimeTrial
 var _ticks := 0
 # The lap whose water level the tide moves toward: the leader's.
 var _tide_lap := 0
+# The waves the race started with, for laps whose Course.lap_waves entry is empty.
+var _start_waves: WaveSet
 var _countdown_left := 0.0
 var _last_countdown_second := -1
 
@@ -161,6 +166,10 @@ func _ready() -> void:
 		player_craft = Game.craft_named(Game.arg_value("--craft"))
 	if player_craft == null and player_rider != null:
 		player_craft = player_rider.default_craft
+	# The waves before the racers spawn on them.
+	_start_waves = Ocean.wave_set
+	if course.waves_for_lap(0) != null:
+		Ocean.wave_set = course.waves_for_lap(0)
 	racing_line = RacingLine.new(course)
 	_spawn_player()
 	# `-- --no-opponents` races the player alone, for tests and practice.
@@ -504,6 +513,10 @@ func _complete_lap(racer: RacerState, at_time: float) -> void:
 		_tide_lap = racer.laps_done
 		if not is_equal_approx(course.level_for_lap(_tide_lap), course.level_for_lap(_tide_lap - 1)):
 			tide_turned.emit(course.level_for_lap(_tide_lap))
+		var waves := _waves_for_lap(_tide_lap)
+		if waves != _waves_for_lap(_tide_lap - 1):
+			Ocean.change_waves(waves, course.wave_change_time)
+			waves_changed.emit(waves)
 	if racer.laps_done >= laps:
 		racer.finished = true
 		racer.finish_time = at_time
@@ -513,6 +526,11 @@ func _complete_lap(racer: RacerState, at_time: float) -> void:
 		else:
 			_ease_off(racer)
 		_check_all_done()
+
+
+func _waves_for_lap(lap: int) -> WaveSet:
+	var waves := course.waves_for_lap(lap)
+	return waves if waves != null else _start_waves
 
 
 ## The race is over for the player: the computer takes the player's craft round at an easy
