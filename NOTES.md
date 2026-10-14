@@ -143,7 +143,8 @@ captures/       gdh output, git-ignored and hidden from Godot (.gdignore)
   physics and the picture agree wherever a jet ski can be seen up close. Normals are computed per
   pixel from the same waves, faded where a wave is shorter than a few pixels.
 - **Look.** Depth-based colour from the depth buffer (shallow turquoise to deep blue), refraction
-  of what is below, absorption per colour channel, crest glow toward the sun, foam where the
+  of what is below (shifted in proportion to the water in front of it, up to 8 m, so an object
+  crossing the surface stays joined at the waterline), absorption per colour channel, crest glow toward the sun, foam where the
   Jacobian determinant ("fold") shows crests squeezed together and in water shallower than 0.35 m,
   two scrolling noise normal maps for ripples, and Godot's own specular and sky reflection
   (SPECULAR 0.25, which is water's 2% reflectance). Detail too fine to draw at a distance turns
