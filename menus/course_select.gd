@@ -33,8 +33,7 @@ func select(info: CourseInfo) -> void:
 	selected = info
 	_name.text = info.display_name.to_upper()
 	_conditions.text = info.conditions
-	var map_path := info.scene.replace(".tscn", "_map.png")
-	_map.texture = load(map_path) as Texture2D if ResourceLoader.exists(map_path) else null
+	_map.texture = info.map
 	var records := Game.records
 	match Game.mode:
 		Game.Mode.TIME_TRIAL:

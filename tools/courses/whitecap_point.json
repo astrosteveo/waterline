@@ -1,5 +1,7 @@
 {
+ "id": "whitecap_point",
  "name": "Whitecap Point",
+ "conditions": "Open sea and choppy water: the chop throws the craft into the air on every straight.",
  "root": "WhitecapPoint",
  "scene": "levels/whitecap_point.tscn",
  "laps": 3,

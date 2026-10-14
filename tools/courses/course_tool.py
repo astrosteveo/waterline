@@ -1,9 +1,10 @@
 """Lays out a course from a JSON spec: draws a top-down map and writes the course scene.
 
     python3 tools/courses/course_tool.py tools/courses/gull_cove.json --map captures/gull_cove_map.png
-    python3 tools/courses/course_tool.py tools/courses/gull_cove.json --scene   # writes the .tscn
+    python3 tools/courses/course_tool.py tools/courses/gull_cove.json --scene   # the .tscn and .course.tres
+    python3 tools/courses/course_tool.py tools/courses/gull_cove.json --thumb   # the menu map
 
-The spec gives the centre line's control points [x, z, half width] (clockwise or not, in
+The spec gives the course's id, name and conditions line (for the menus), the centre line's control points [x, z, half width] (clockwise or not, in
 order of travel), buoys, ramps and rocks by [offset along the course from the start line,
 meters right of the centre line, ...], and terrain islands [x, z, radius, peak height]. The
 centre line is the same centripetal Catmull-Rom curve the game builds (course/course.gd), so
@@ -12,7 +13,9 @@ inside of tight turns cut out), the buoys and their passing sides, ramps, rocks 
 islands, and circles in magenta every wall point over water shallower than 2.5 m with the
 coastline variation at its largest: the walls, not the seabed, must stop a craft.
 
-Writing the scene overwrites it: changes made to it in the editor are lost.
+--scene writes the course scene named in the spec and, next to it, the CourseInfo the menus
+list (<id>.course.tres: id, name, conditions line, scene and menu map). Both are overwritten:
+changes made to them in the editor are lost.
 Needs numpy and Pillow.
 """
 import argparse
@@ -345,6 +348,35 @@ def write_scene(course, path):
         f.write("\n".join(out))
 
 
+def godot_string(text):
+    return '"%s"' % text.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+
+
+def info_path(spec, project):
+    """Where the CourseInfo goes: <id>.course.tres next to the course scene."""
+    return os.path.join(project, os.path.dirname(spec["scene"]), spec["id"] + ".course.tres")
+
+
+def thumb_path(spec, project):
+    return os.path.join(project, spec["scene"].replace(".tscn", "_map.png"))
+
+
+def write_info(spec, path):
+    """The CourseInfo resource the menus list: id, name, conditions, scene and menu map."""
+    out = ['[gd_resource type="Resource" script_class="CourseInfo" load_steps=3 format=3]', '',
+           '[ext_resource type="Script" path="res://course/course_info.gd" id="1"]',
+           '[ext_resource type="Texture2D" path="res://%s" id="2"]' % thumb_path(spec, "").lstrip("/"), '',
+           '[resource]',
+           'script = ExtResource("1")',
+           'id = %s' % godot_string(spec["id"]),
+           'display_name = %s' % godot_string(spec["name"]),
+           'conditions = %s' % godot_string(spec["conditions"]),
+           'scene = %s' % godot_string("res://" + spec["scene"]),
+           'map = ExtResource("2")', '']
+    with open(path, "w") as f:
+        f.write("\n".join(out))
+
+
 def write_props(spec, course):
     """Piers, lamps and buildings: {"type", "at": [x, z] or "offset": [s, lateral], "yaw" (degrees), ...}."""
     if not spec.get("props"):
@@ -381,7 +413,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("spec")
     ap.add_argument("--map", help="write a top-down map PNG here")
-    ap.add_argument("--scene", action="store_true", help="write the course scene named in the spec")
+    ap.add_argument("--scene", action="store_true",
+                    help="write the course scene named in the spec and its CourseInfo (<id>.course.tres)")
     ap.add_argument("--thumb", action="store_true", help="write the menu map next to the course scene (<scene>_map.png)")
     ap.add_argument("--project", default=os.path.join(os.path.dirname(__file__), "..", ".."))
     args = ap.parse_args()
@@ -392,13 +425,16 @@ def main():
         bad = draw_map(course, args.map)
         print("map: %s; wall points over shallow water: %d" % (args.map, bad))
     if args.thumb:
-        path = os.path.join(args.project, spec["scene"].replace(".tscn", "_map.png"))
+        path = thumb_path(spec, args.project)
         draw_thumb(course, path)
         print("thumb:", os.path.normpath(path))
     if args.scene:
         path = os.path.join(args.project, spec["scene"])
         write_scene(course, path)
         print("scene:", os.path.normpath(path))
+        path = info_path(spec, args.project)
+        write_info(spec, path)
+        print("course info:", os.path.normpath(path))
 
 
 if __name__ == "__main__":
