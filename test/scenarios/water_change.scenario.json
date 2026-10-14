@@ -1,0 +1,41 @@
+{
+  "description": "The waves change from open_sea to rolling_swell over 4 s: on the CPU the surface starts and ends as the two presets, moves smoothly, repeats exactly and leaves both presets as they were; the drawn water matches the CPU heights before, during and after the change, as closely as on fixed waves.",
+  "start": {"scene": "res://test/water_match.tscn", "seed": 1},
+  "steps": [
+    {
+      "expect": "ResourceLoader.load('res://test/wave_change_check.gd').new().failures()",
+      "equals": [],
+      "name": "CPU checks: start, end, smooth, repeatable, shared waves, presets unchanged"
+    },
+    "step 30",
+    {"eval": "Ocean.change_waves(ResourceLoader.load('res://water/presets/rolling_swell.tres'), 4.0)"},
+    "step 60",
+    {
+      "expect": "[Ocean.wave_set.is_changing(), Ocean.wave_set.wave_count(), scene.get_node('OceanSurface').wave_set == Ocean.wave_set]",
+      "equals": [true, 15, true],
+      "name": "the drawn water changes with the physics: open_sea's 8 waves and rolling_swell's 7"
+    },
+    {"expect": "scene.check().mean_error_m < 0.001", "name": "a quarter of the way: mean error under 1 mm"},
+    {"expect": "scene.check().max_error_m < 0.005", "name": "a quarter of the way: largest error under 5 mm"},
+    "step 60",
+    {"expect": "scene.check().mean_error_m < 0.001", "name": "half way: mean error under 1 mm"},
+    {"expect": "scene.check().max_error_m < 0.005", "name": "half way: largest error under 5 mm"},
+    "step 60",
+    {"expect": "scene.check().mean_error_m < 0.001", "name": "most of the way: mean error under 1 mm"},
+    {"expect": "scene.check().max_error_m < 0.005", "name": "most of the way: largest error under 5 mm"},
+    "step 97",
+    {
+      "expect": "[Ocean.wave_set.is_changing(), Ocean.wave_set.wave_count(), scene.get_node('OceanSurface').wave_set == Ocean.wave_set]",
+      "equals": [false, 7, true],
+      "name": "after the change only rolling_swell's 7 waves are left"
+    },
+    {"expect": "scene.check().mean_error_m < 0.001", "name": "after: mean error under 1 mm"},
+    {"expect": "scene.check().max_error_m < 0.005", "name": "after: largest error under 5 mm"},
+    {
+      "expect": "[ResourceLoader.load('res://water/presets/open_sea.tres').wave_count(), ResourceLoader.load('res://water/presets/open_sea.tres').max_height()]",
+      "approx": [8, 1.661],
+      "within": 0.001,
+      "name": "the open_sea preset is unchanged"
+    }
+  ]
+}

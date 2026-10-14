@@ -9,7 +9,9 @@ extends MeshInstance3D
 ## horizon (see ocean_grid_offset() in gerstner.gdshaderinc). On ready, the node hands its
 ## [member wave_set] to the Ocean autoload, which the jet skis and buoys query.
 
-## The waves to draw and simulate.
+## The waves to draw and simulate. While the game runs, the surface follows the Ocean
+## autoload: a set given to [method Ocean.change_waves] or [member Ocean.wave_set] becomes
+## this one too.
 @export var wave_set: WaveSet:
 	set(value):
 		if wave_set != null and wave_set.changed.is_connected(_on_wave_set_changed):
@@ -80,6 +82,12 @@ func _ready() -> void:
 		Ocean.level = 0.0
 		if wave_set != null:
 			Ocean.wave_set = wave_set
+		Ocean.wave_set_changed.connect(_on_ocean_waves_changed)
+
+
+func _exit_tree() -> void:
+	if not Engine.is_editor_hint() and Ocean.wave_set_changed.is_connected(_on_ocean_waves_changed):
+		Ocean.wave_set_changed.disconnect(_on_ocean_waves_changed)
 
 
 func _process(delta: float) -> void:
@@ -95,6 +103,10 @@ func _process(delta: float) -> void:
 	if water_material != null and wave_set != null:
 		water_material.set_shader_parameter(&"wave_phase", wave_set.get_shader_wave_phases(t))
 		water_material.set_shader_parameter(&"ripple_time", t)
+		if wave_set.is_changing():
+			# The amplitudes at the time drawn, as the physics computes them.
+			water_material.set_shader_parameter(&"wave_shape", wave_set.get_shader_wave_shapes(t))
+			water_material.set_shader_parameter(&"max_wave_height", maxf(wave_set.max_height_at(t), 0.01))
 	last_render_time = t
 
 
@@ -115,13 +127,19 @@ func _rebuild_mesh() -> void:
 	plane.subdivide_width = grid_cells - 1
 	plane.subdivide_depth = grid_cells - 1
 	mesh = plane
+	_update_bounds()
+	_push_static_uniforms()
+
+
+func _update_bounds() -> void:
+	if mesh == null:
+		return
 	# The shader moves vertices far outside the 2 x 2 plane: cull by the real extent.
 	var reach := outer_radius + 10.0
 	var rise := 20.0
 	if wave_set != null:
 		rise = wave_set.max_height() + 5.0
 	custom_aabb = AABB(Vector3(-reach, -rise, -reach), Vector3(reach * 2.0, rise * 2.0, reach * 2.0))
-	_push_static_uniforms()
 
 
 func _push_static_uniforms() -> void:
@@ -133,17 +151,25 @@ func _push_static_uniforms() -> void:
 	water_material.set_shader_parameter(&"outer_radius", outer_radius)
 
 
+func _on_ocean_waves_changed() -> void:
+	if Ocean.wave_set != wave_set:
+		wave_set = Ocean.wave_set
+
+
 func _on_wave_set_changed() -> void:
 	if water_material == null:
 		return
 	if wave_set == null:
 		water_material.set_shader_parameter(&"wave_count", 0)
 		return
+	if is_node_ready():
+		_update_bounds()
+	var t := Ocean.render_time() if not Engine.is_editor_hint() else _editor_time
 	var data := wave_set.get_shader_wave_data()
 	water_material.set_shader_parameter(&"wave_count", data["count"])
 	water_material.set_shader_parameter(&"wave_dir_k", data["wave_dir_k"])
-	water_material.set_shader_parameter(&"wave_shape", data["wave_shape"])
-	water_material.set_shader_parameter(&"max_wave_height", maxf(wave_set.max_height(), 0.01))
-	water_material.set_shader_parameter(&"wave_phase", wave_set.get_shader_wave_phases(Ocean.render_time() if not Engine.is_editor_hint() else _editor_time))
+	water_material.set_shader_parameter(&"wave_shape", wave_set.get_shader_wave_shapes(t))
+	water_material.set_shader_parameter(&"max_wave_height", maxf(wave_set.max_height_at(t), 0.01))
+	water_material.set_shader_parameter(&"wave_phase", wave_set.get_shader_wave_phases(t))
 	if wave_set.max_fold() >= 0.95:
 		push_warning("WaveSet folds over itself (max fold %.2f); keep it below 0.9." % wave_set.max_fold())

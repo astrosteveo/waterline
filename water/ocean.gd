@@ -13,7 +13,9 @@ extends Node
 ##   time their new position will be shown at.
 ## [br]- The shader draws at [method render_time], which follows physics interpolation.
 
-## Emitted when [member wave_set] is replaced.
+## Emitted when [member wave_set] is replaced or its waves change. [OceanSurface] follows
+## a replaced set, so a script can change the waves through [member wave_set] or
+## [method change_waves] alone.
 signal wave_set_changed
 
 ## The waves in use. Never null: a flat sea until a scene sets one.
@@ -45,15 +47,36 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	time = end_time
 	end_time += delta
+	# Every query from now on is at or after the end, so dropping the faded waves changes
+	# nothing anyone sees.
+	if wave_set.is_changing() and time >= wave_set.change_end():
+		wave_set.finish_change()
 
 
 func _process(_delta: float) -> void:
 	if _followers.is_empty():
 		return
-	var phases := wave_set.get_shader_wave_phases(render_time())
+	var t := render_time()
+	var phases := wave_set.get_shader_wave_phases(t)
+	var changing := wave_set.is_changing()
+	var shapes := wave_set.get_shader_wave_shapes(t) if changing else PackedVector4Array()
 	for material in _followers:
 		material.set_shader_parameter(&"wave_phase", phases)
 		material.set_shader_parameter(&"water_level", level)
+		if changing:
+			material.set_shader_parameter(&"wave_shape", shapes)
+
+
+## Changes the waves into [param target]'s over [param duration] seconds of wave time,
+## starting now: only the amplitudes change (see [method WaveSet.changing_to]). The water
+## works on a copy, so [param target] and the current set stay as they are, and the
+## change depends only on [member time], so a race replayed from the same start sees the
+## same water. Calling it again during a change starts the new one from where the waves
+## are.
+func change_waves(target: WaveSet, duration: float) -> void:
+	# From the end of this step: anything that already read the water this step read the
+	# old waves at a time the new set gives the same heights for.
+	wave_set = wave_set.changing_to(target, end_time, duration)
 
 
 ## Keeps [param material]'s wave uniforms (wave_count, wave_dir_k, wave_shape, wave_phase
@@ -81,7 +104,7 @@ func _push_wave_data(material: ShaderMaterial) -> void:
 	var data := wave_set.get_shader_wave_data()
 	material.set_shader_parameter(&"wave_count", data["count"])
 	material.set_shader_parameter(&"wave_dir_k", data["wave_dir_k"])
-	material.set_shader_parameter(&"wave_shape", data["wave_shape"])
+	material.set_shader_parameter(&"wave_shape", wave_set.get_shader_wave_shapes(render_time()))
 	material.set_shader_parameter(&"wave_phase", wave_set.get_shader_wave_phases(render_time()))
 	material.set_shader_parameter(&"water_level", level)
 
