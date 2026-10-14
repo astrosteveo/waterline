@@ -1022,6 +1022,10 @@ race → results → back. Each screen calls Game (`start_mode`, `cup_chosen`, `
 `craft_chosen`, `course_chosen`, `goto_standings`,
 `next_championship_race`, `goto_main_menu`...), so screens don't know about each other.
 ui_cancel goes back a screen.
+The course select's list holds any number of courses: up to seven show whole, and with more it
+scrolls (a `ScrollContainer` with `follow_focus`) and shows six and a half rows, so the cut-off
+one says the list goes on. Checked with 13 courses (the reverse and mirrored versions of every
+layout, made with the course tool and then removed).
 `Race` reads `Game.mode` and sets itself up; `-- --mode NAME` sets the mode from the command
 line for tests.
 
