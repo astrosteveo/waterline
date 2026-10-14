@@ -1,5 +1,5 @@
 {
-  "description": "Gull Cove Swell: the Gull Cove scene raced on cove_swell.tres (waves a third higher than Gull Cove's) through its CourseInfo's overrides. The physics and the drawn water use the swell, and a time trial on it keeps its records and ghost apart from Gull Cove's.",
+  "description": "Gull Cove Swell: the Gull Cove scene raced on cove_swell.tres (waves twice as high as Gull Cove's) through its CourseInfo's overrides. The physics and the drawn water use the swell, and a time trial on it keeps its records and ghost apart from Gull Cove's.",
   "start": {
     "scene": "res://race/race.tscn",
     "seed": 3,
@@ -19,8 +19,8 @@
       "name": "the drawn water and the physics ride the swell"
     },
     {
-      "expect": "abs(Ocean.wave_set.max_height() - 4.0 / 3.0 * ResourceLoader.load('res://water/presets/cove_calm.tres').max_height()) < 0.001",
-      "name": "a third higher than Gull Cove's waves"
+      "expect": "abs(Ocean.wave_set.max_height() - 2.0 * ResourceLoader.load('res://water/presets/cove_calm.tres').max_height()) < 0.001",
+      "name": "twice the height of Gull Cove's waves"
     },
     {
       "expect": "course.get_node('WorldEnvironment').environment.resource_path",
