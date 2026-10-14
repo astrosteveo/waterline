@@ -135,6 +135,10 @@ func _ready() -> void:
 	# so the water, sky and tide start that way.
 	if info != null and info.overrides != null:
 		info.overrides.apply_to(course)
+	# The results and the announcer name the course as the menus do: a course that races
+	# another's scene (Gull Cove Swell on Gull Cove's) has a name of its own.
+	if info != null:
+		course.course_name = info.display_name
 	add_child(course)
 	move_child(course, 0)
 	laps = laps_override if laps_override > 0 else course.laps

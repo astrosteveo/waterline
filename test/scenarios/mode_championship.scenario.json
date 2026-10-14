@@ -103,6 +103,11 @@
     },
     "step 5",
     {
+      "expect": "scene.get_node('ResultsScreen')._course_name.text",
+      "equals": "GULL COVE SWELL",
+      "name": "the results name race 1's course Gull Cove Swell"
+    },
+    {
       "expect": "scene.get_viewport().gui_get_focus_owner().name",
       "equals": "Continue",
       "name": "the results offer CONTINUE"

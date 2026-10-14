@@ -471,7 +471,8 @@ the swell at 75% (troughs to −1.36 m). `cove_swell.tres` is the same waves at 
 Cove's height (troughs to −1.81 m), for Gull Cove Swell.
 
 **Gull Cove Swell** (`gull_cove_swell`) is Gull Cove's scene on `cove_swell.tres`, through its
-`CourseInfo.overrides`. The swell at 150% (troughs to −2.72 m) was tried first: the
+`CourseInfo.overrides`; `Race` gives the course node the `CourseInfo`'s name, so the results and
+the announcer call it Gull Cove Swell. The swell at 150% (troughs to −2.72 m) was tried first: the
 troughs then fall below the ramps' foot (2 m under the rest level), and in the every-course test
 (seed 1) three of the four computer riders crashed, mostly into the ramps' front edge, and Dax hit
 the course rock at 315 m. At 110% Dax still hit that rock. At 100% every rider finished with no
