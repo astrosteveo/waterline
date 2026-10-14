@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("1")
+order = 4
 id = "ebb_reef"
 display_name = "Ebb Reef"
 conditions = "The tide goes out every lap: reefs and hidden rocks break the surface, and the ramps stand taller."

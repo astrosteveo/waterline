@@ -4,7 +4,7 @@
     python3 tools/courses/course_tool.py tools/courses/gull_cove.json --scene   # the .tscn and .course.tres
     python3 tools/courses/course_tool.py tools/courses/gull_cove.json --thumb   # the menu map
 
-The spec gives the course's id, name and conditions line (for the menus), the centre line's control points [x, z, half width] (clockwise or not, in
+The spec gives the course's id, name, conditions line and menu order (for the menus), the centre line's control points [x, z, half width] (clockwise or not, in
 order of travel), buoys, ramps and rocks by [offset along the course from the start line,
 meters right of the centre line, ...], and terrain islands [x, z, radius, peak height]. The
 centre line is the same centripetal Catmull-Rom curve the game builds (course/course.gd), so
@@ -362,12 +362,13 @@ def thumb_path(spec, project):
 
 
 def write_info(spec, path):
-    """The CourseInfo resource the menus list: id, name, conditions, scene and menu map."""
+    """The CourseInfo resource the menus list: menu order, id, name, conditions, scene and menu map."""
     out = ['[gd_resource type="Resource" script_class="CourseInfo" load_steps=3 format=3]', '',
            '[ext_resource type="Script" path="res://course/course_info.gd" id="1"]',
            '[ext_resource type="Texture2D" path="res://%s" id="2"]' % thumb_path(spec, "").lstrip("/"), '',
            '[resource]',
            'script = ExtResource("1")',
+           'order = %d' % spec.get("order", 0),
            'id = %s' % godot_string(spec["id"]),
            'display_name = %s' % godot_string(spec["name"]),
            'conditions = %s' % godot_string(spec["conditions"]),

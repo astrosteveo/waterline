@@ -1,5 +1,6 @@
 {
  "id": "lantern_harbor",
+ "order": 3,
  "name": "Lantern Harbor",
  "conditions": "Night racing by the harbour lights. Out through the breakwater gap and back round its end.",
  "root": "LanternHarbor",

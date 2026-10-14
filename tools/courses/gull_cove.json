@@ -1,5 +1,6 @@
 {
   "id": "gull_cove",
+  "order": 1,
   "name": "Gull Cove",
   "conditions": "Calm water in a sheltered cove. Two ramps and a hairpin round the rock spit.",
   "root": "GullCove",

@@ -3,6 +3,8 @@ extends Resource
 ## A course as the menus list it: its name, the conditions to expect, its scene and its map.
 ## tools/courses/course_tool.py writes it (`levels/<id>.course.tres`) from the course's spec.
 
+## Where the course comes in the menus and the championship: lower first.
+@export var order: int = 0
 ## Short name used in save files and on the command line (`-- --course gull_cove`).
 @export var id: String = ""
 @export var display_name: String = ""

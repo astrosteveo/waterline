@@ -1,5 +1,6 @@
 {
  "id": "ebb_reef",
+ "order": 4,
  "name": "Ebb Reef",
  "conditions": "The tide goes out every lap: reefs and hidden rocks break the surface, and the ramps stand taller.",
  "root": "EbbReef",

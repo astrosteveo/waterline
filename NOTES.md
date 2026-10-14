@@ -596,16 +596,21 @@ the anchor position.
 ## Course design tool
 
 `tools/courses/course_tool.py SPEC.json --map out.png --scene` lays out a course from a JSON spec
-(`tools/courses/gull_cove.json`): the course's id, name and conditions line for the menus, control
+(`tools/courses/gull_cove.json`): the course's id, name, conditions line and menu order, control
 points with half widths, buoys, ramps and rocks by course offset and lateral offset, and terrain
 islands. It uses the same spline as the game, so
 offsets match, draws a top-down map (walls with the inside loops cut out, buoys with a tick toward
 their passing side, ramps, rocks, islands and shallows) and circles every wall point that lies over
 water shallower than 2.5 m, and writes the course scene. `--scene` also writes the course's
-`CourseInfo` next to the scene (`levels/<id>.course.tres`: id, name, conditions line, scene path and
-the menu map as its `map` texture, which the course select screen shows). Writing overwrites both
-files, so edit the spec, not the scene or the `.course.tres`. Session 3 needs three more courses; start from a copy
-of the Gull Cove spec.
+`CourseInfo` next to the scene (`levels/<id>.course.tres`: menu order, id, name, conditions line,
+scene path and the menu map as its `map` texture, which the course select screen shows). Writing
+overwrites both files, so edit the spec, not the scene or the `.course.tres`.
+
+**Adding a course** needs no code change: copy a spec, give it a new `id`, `name`, `scene`, `root`
+and `order`, and run `course_tool.py SPEC --scene --thumb`. `Game` loads every `*.course.tres` in
+`res://levels/` at startup (`Game.find_courses()`, with `ResourceLoader.list_directory()`, which
+lists the original file names in exported builds too) and sorts them by `order`, then by id. The
+menus and the championship use that order. Today's courses are 1 (Gull Cove) to 4 (Ebb Reef).
 
 ## Verification done
 

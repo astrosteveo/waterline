@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("1")
+order = 3
 id = "lantern_harbor"
 display_name = "Lantern Harbor"
 conditions = "Night racing by the harbour lights. Out through the breakwater gap and back round its end."
