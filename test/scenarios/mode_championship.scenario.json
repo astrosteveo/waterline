@@ -1,5 +1,5 @@
 {
-  "description": "Championship: from the main menu, the cup select (the Coast Cup holds today's four courses at today's skill; the Pro Cup, chosen here, makes the computer riders sharper), then four one-lap races on the cup's courses in turn, points for each place (10, 6, 3, 1), standings under the cup's name after each race, the champion at the end, then back to the main menu.",
+  "description": "Championship: from the main menu, the cup select (the Coast Cup holds today's four courses at today's skill; the Pro Cup, chosen here, makes the computer riders sharper and races Gull Cove Swell in place of Gull Cove), then four one-lap races on the cup's courses in turn, points for each place (10, 6, 3, 1), standings under the cup's name after each race, the champion at the end, then back to the main menu.",
   "start": {
     "scene": "res://menus/main_menu.tscn",
     "seed": 4,
@@ -76,9 +76,12 @@
     },
     "step 3",
     {
-      "expect": "scene.course.course_name",
-      "equals": "Gull Cove",
-      "name": "race 1 is on Gull Cove"
+      "expect": "[Game.course.id, Ocean.wave_set.resource_path]",
+      "equals": [
+        "gull_cove_swell",
+        "res://water/presets/cove_swell.tres"
+      ],
+      "name": "race 1 is on Gull Cove Swell, on the swell"
     },
     {
       "expect": "[scene.racers[1].craft.get_node('AIDriver').skill, scene.racers[2].craft.get_node('AIDriver').skill, scene.racers[3].craft.get_node('AIDriver').skill]",

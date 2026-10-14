@@ -1036,8 +1036,9 @@ line for tests.
   `*.cup.tres` in `res://cups/`, found by `Game.find_cups()` and sorted by `order`) holds a
   name, its courses in race order, the laps per race (0: each course's own) and a skill offset
   added to each computer rider's skill in its races (kept within 0 to 1; `Race.skill_offset`).
-  The Coast Cup is today's four courses at 3 laps and today's skill; the Pro Cup is the same
-  four with the computer riders 0.1 sharper (Koa 1.0, Ines 0.9, Dax 0.8). Then each course of
+  The Coast Cup is today's four courses at 3 laps and today's skill; the Pro Cup races Gull Cove
+  Swell in place of Gull Cove, then the other three, with the computer riders 0.1 sharper (Koa
+  1.0, Ines 0.9, Dax 0.8), so it is rougher as well as faster. Then each course of
   the cup in turn, points 10/6/3/1 by place (none when disqualified), standings after each race
   under the cup's name (`menus/standings.tscn`: this race's points and the totals, then the
   next course), the champion after the last; equal points go to the better place in the last
