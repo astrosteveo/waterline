@@ -5,12 +5,16 @@ extends Node3D
 ## [br]- spray off both sides of the bow at speed;
 ## [br]- a sheet of spray off the outside of a carve or a slide;
 ## [br]- a splash at each touchdown, bigger the harder the landing.
-## It reads the parent [JetSki]'s telemetry; the physics never reads it.
+## It reads the parent [JetSki]'s telemetry; the physics never reads it. The spray drifts
+## with the wind ([member Ocean.wind]).
 
 ## The craft. Defaults to the parent.
 @export var craft: JetSki
 ## Speed at which the bow spray and the rooster tail are at full strength.
 @export_range(1.0, 40.0, 0.1, "suffix:m/s") var full_speed: float = 16.0
+## How hard the wind ([member Ocean.wind]) pushes the spray: its acceleration per m/s of
+## wind. Spray thrown at the craft's speed drifts downwind within its short life.
+@export_range(0.0, 3.0, 0.01, "suffix:1/s") var wind_push: float = 0.8
 
 var _tail: GPUParticles3D
 var _bow_left: GPUParticles3D
@@ -20,6 +24,7 @@ var _carve_right: GPUParticles3D
 var _splash: GPUParticles3D
 var _draw_mesh: QuadMesh
 var _material: ShaderMaterial
+var _wind := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -49,6 +54,11 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if craft == null:
 		return
+	if not Ocean.wind.is_equal_approx(_wind):
+		_wind = Ocean.wind
+		var gravity := Vector3(_wind.x * wind_push, -9.8, _wind.z * wind_push)
+		for emitter in [_tail, _bow_left, _bow_right, _carve_left, _carve_right, _splash]:
+			((emitter as GPUParticles3D).process_material as ParticleProcessMaterial).gravity = gravity
 	var wet := craft.contact > 0.2 and not craft.airborne
 	var pace := clampf(craft.speed / full_speed, 0.0, 1.2)
 	_drive(_tail, wet and craft.thrust > 0.2 and craft.speed > 1.5, clampf(craft.thrust * (0.35 + 0.65 * pace), 0.0, 1.0))
