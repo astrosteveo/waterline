@@ -29,8 +29,6 @@ var rain: Rain
 ## Seconds between two updates of the sky during a change. Each update redraws the sky's
 ## reflections, so it isn't done every frame.
 var sky_update_interval: float = 0.1
-## The rain's colour is the fog's times this.
-var rain_brightness: float = 1.6
 
 var _course: Course
 var _surface: OceanSurface
@@ -81,6 +79,7 @@ func setup(course: Course, p_forecast: Forecast) -> void:
 		_base["ambient_energy"] = _environment.ambient_light_energy
 		_base["fog_density"] = _environment.fog_density if _environment.fog_enabled else 0.0
 		_base["fog_sky_affect"] = _environment.fog_sky_affect
+		_base["fog_aerial_perspective"] = _environment.fog_aerial_perspective
 		_base["fog_color"] = _environment.fog_light_color
 		if _environment.sky != null and _environment.sky.sky_material is ShaderMaterial:
 			_sky_material = _environment.sky.sky_material as ShaderMaterial
@@ -166,6 +165,8 @@ func look_of(p_weather: Weather) -> Dictionary:
 		result["fog_density"] = p_weather.fog_density
 	if result.has("fog_sky_affect") and p_weather.fog_sky_affect >= 0.0:
 		result["fog_sky_affect"] = p_weather.fog_sky_affect
+	if result.has("fog_aerial_perspective") and p_weather.fog_aerial_perspective >= 0.0:
+		result["fog_aerial_perspective"] = p_weather.fog_aerial_perspective
 	if result.has("fog_color"):
 		result["fog_color"] = _shade(_base["fog_color"], p_weather.sky_grey, p_weather.sky_brightness)
 	for key in SKY_COLOURS:
@@ -220,6 +221,7 @@ func _apply(values: Dictionary, with_sky: bool) -> void:
 		_environment.fog_enabled = density > 0.0
 		_environment.fog_density = density
 		_environment.fog_sky_affect = values.get("fog_sky_affect", _environment.fog_sky_affect)
+		_environment.fog_aerial_perspective = values.get("fog_aerial_perspective", _environment.fog_aerial_perspective)
 		_environment.fog_light_color = values.get("fog_color", _environment.fog_light_color)
 	if _sky_material != null and with_sky:
 		for key: String in values:
@@ -236,9 +238,6 @@ func _apply(values: Dictionary, with_sky: bool) -> void:
 	if rain != null:
 		rain.strength = values.get("rain", 0.0)
 		rain.wind = Ocean.wind
-		if values.has("fog_color"):
-			var fog: Color = values["fog_color"]
-			rain.colour = Color(fog.r * rain_brightness, fog.g * rain_brightness, fog.b * rain_brightness)
 
 
 ## [param colour] with [param grey] of its colour taken out and its brightness times

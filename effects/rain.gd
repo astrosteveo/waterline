@@ -21,14 +21,6 @@ var wind: Vector3 = Vector3.ZERO:
 		wind = value
 		_update_velocity()
 
-## The drops' colour. They are unshaded, so give them the light of the sky: [RaceWeather]
-## sets the fog's colour, a little brighter.
-var colour: Color = Color(0.5, 0.52, 0.55):
-	set(value):
-		colour = value
-		if _material != null:
-			_material.set_shader_parameter(&"tint", colour)
-
 ## Drops at full strength.
 @export var drops: int = 10000
 ## How fast a drop falls, in m/s.
@@ -70,7 +62,6 @@ func _ready() -> void:
 	_material.shader = preload("res://effects/rain.gdshader")
 	# Drawn over the water, which is in the transparent pass too.
 	_material.render_priority = 2
-	_material.set_shader_parameter(&"tint", colour)
 	Ocean.add_follower(_material)
 	var quad := QuadMesh.new()
 	quad.material = _material

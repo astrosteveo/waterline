@@ -51,6 +51,9 @@ extends CourseConditions
 @export_range(-0.001, 0.05, 0.0001) var fog_density: float = -1.0
 ## How much the fog hides the sky, 0 to 1. Negative keeps the course's.
 @export_range(-1.0, 1.0, 0.01) var fog_sky_affect: float = -1.0
+## How much of the fog's colour comes from the sky behind it, 0 to 1. Thick fog wants 0,
+## or the clouds show through it. Negative keeps the course's.
+@export_range(-1.0, 1.0, 0.01) var fog_aerial_perspective: float = -1.0
 
 @export_group("Water")
 ## Share of the water's colour taken out (deep, shallow and crest colours), 0 to 1.
