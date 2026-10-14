@@ -11,7 +11,7 @@
     "swell": {
       "name": "Gull Cove Swell",
       "order": 401,
-      "conditions": "A swell rolls into the cove, a third higher than usual. Two ramps and a hairpin round the rock spit.",
+      "conditions": "A swell rolls into the cove, twice as high as usual. Two ramps and a hairpin round the rock spit.",
       "waves": "res://water/presets/cove_swell.tres"
     }
   },
