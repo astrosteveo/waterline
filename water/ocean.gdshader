@@ -36,7 +36,13 @@ uniform vec3 absorption = vec3(0.5, 0.16, 0.11);
 // Light passing through thin crests toward the camera.
 uniform vec3 crest_color : source_color = vec3(0.08, 0.55, 0.45);
 uniform float crest_strength = 0.35;
-uniform float refraction_strength = 0.06;
+// How far what lies under the water appears to move sideways, in meters per meter of water in
+// front of it, times the horizontal part of the surface normal (0.1 for a surface tilted by
+// about 6 degrees). Real water (index 1.33) seen from above gives about 0.25; twice that keeps
+// the ripples visible in shallows seen from a distance.
+uniform float refraction_strength = 0.5;
+// Water deeper than this, in meters along the view, bends what is behind it no further.
+uniform float refraction_max_depth = 8.0;
 
 group_uniforms surface;
 uniform float roughness : hint_range(0.0, 1.0) = 0.04;
@@ -91,6 +97,18 @@ vec3 world_from_depth(vec2 screen_uv, float depth, mat4 inv_projection, mat4 inv
 	return (inv_view * vec4(view.xyz, 1.0)).xyz;
 }
 
+// Distance from the camera along its view axis to what the depth buffer holds at screen_uv.
+float view_depth_at(vec2 screen_uv, float depth, mat4 inv_projection) {
+	vec4 view = inv_projection * vec4(screen_uv * 2.0 - 1.0, depth, 1.0);
+	return -view.z / view.w;
+}
+
+// Where a view-space point lands on the screen, in the same coordinates as SCREEN_UV.
+vec2 screen_uv_of(vec3 view_position, mat4 projection) {
+	vec4 clip = projection * vec4(view_position, 1.0);
+	return clip.xy / clip.w * 0.5 + 0.5;
+}
+
 void fragment() {
 	// Per-pixel normal from the same waves. Waves shorter than a few pixels are faded,
 	// so distant water doesn't sparkle.
@@ -117,19 +135,36 @@ void fragment() {
 	float n_dot_v = clamp(dot(normal_world, view_dir), 0.0, 1.0);
 	float fresnel = 0.02 + 0.98 * pow(1.0 - n_dot_v, 5.0);
 
-	// What lies under the water at this pixel, and how deep.
+	// What lies under the water at this pixel, and how deep. Refraction moves what lies below
+	// sideways by an amount that grows with the water in front of it, so the underwater part of
+	// a hull or a rock still meets its part above the water. The shift follows the surface's
+	// slope in the world and is projected to the screen, so it points the same way on the
+	// water whatever the camera's heading, and gets smaller with distance.
 	float surface_depth = FRAGCOORD.z;
-	vec2 refract_uv = clamp(SCREEN_UV + normal_world.xz * refraction_strength, vec2(0.001), vec2(0.999));
-	float floor_depth = texture(depth_texture, refract_uv).r;
+	float surface_view_depth = -VERTEX.z;
+	vec3 tilt_view = mat3(VIEW_MATRIX) * vec3(normal_world.x, 0.0, normal_world.z);
+	vec2 shift_per_meter = screen_uv_of(VERTEX + tilt_view * refraction_strength, PROJECTION_MATRIX)
+			- screen_uv_of(VERTEX, PROJECTION_MATRIX);
+	float water_here = view_depth_at(SCREEN_UV, texture(depth_texture, SCREEN_UV).r, INV_PROJECTION_MATRIX)
+			- surface_view_depth;
+	vec2 first_uv = clamp(SCREEN_UV + shift_per_meter * clamp(water_here, 0.0, refraction_max_depth),
+			vec2(0.001), vec2(0.999));
 	// Reverse Z: a larger value is nearer. Don't refract objects in front of the water. With
 	// MSAA, an edge pixel's colour is a blend of the object and what's behind it while its
 	// depth is only one of them, so check the neighbouring pixels too: refracting an edge
-	// pixel drew a broken outline of the craft, shifted sideways.
+	// pixel drew a broken outline of the craft, shifted sideways. The shift shrinks with the
+	// water in front of the nearest of them instead of switching off, so it fades out toward
+	// an object rather than drawing a hard line along it.
 	vec2 texel = 1.5 / vec2(textureSize(depth_texture, 0));
-	float nearest = max(floor_depth, max(
-			max(texture(depth_texture, refract_uv + vec2(texel.x, 0.0)).r, texture(depth_texture, refract_uv - vec2(texel.x, 0.0)).r),
-			max(texture(depth_texture, refract_uv + vec2(0.0, texel.y)).r, texture(depth_texture, refract_uv - vec2(0.0, texel.y)).r)));
-	if (nearest > surface_depth) {
+	float nearest = max(texture(depth_texture, first_uv).r, max(
+			max(texture(depth_texture, first_uv + vec2(texel.x, 0.0)).r, texture(depth_texture, first_uv - vec2(texel.x, 0.0)).r),
+			max(texture(depth_texture, first_uv + vec2(0.0, texel.y)).r, texture(depth_texture, first_uv - vec2(0.0, texel.y)).r)));
+	float water_there = view_depth_at(first_uv, nearest, INV_PROJECTION_MATRIX) - surface_view_depth;
+	float water_depth = clamp(min(water_here, water_there), 0.0, refraction_max_depth);
+	vec2 refract_uv = clamp(SCREEN_UV + shift_per_meter * water_depth, vec2(0.001), vec2(0.999));
+	float floor_depth = texture(depth_texture, refract_uv).r;
+	// A thin object between this pixel and the first sample can still be in front.
+	if (floor_depth > surface_depth) {
 		refract_uv = SCREEN_UV;
 		floor_depth = texture(depth_texture, SCREEN_UV).r;
 	}
