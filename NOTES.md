@@ -399,6 +399,18 @@ terrain and scenery as children. `levels/gull_cove.tscn` is the first one. `Race
 (`race/race.tscn`, the main scene) instantiates the course scene named in its `course_scene`,
 spawns the racers on the starting grid and runs the race, so one race scene serves every course.
 
+- **Conditions.** The scene sets the waves (`OceanSurface.wave_set`), the sky
+  (`WorldEnvironment.environment`), the water's look (`OceanSurface.shader_overrides`) and the
+  tide (`Course.lap_levels`). A `CourseInfo` can race the scene in other conditions with
+  `overrides`, a `CourseConditions` (`course/course_conditions.gd`) whose fields are each
+  optional: an empty one leaves the scene's value, and its `water_overrides` are added to the
+  scene's own `shader_overrides`, key by key. `Race` calls `CourseConditions.apply_to()` on the
+  course after instantiating it and before adding it to the tree, so the water, sky and tide
+  start that way and the racers spawn on the new waves. `apply_to()` also works on a course
+  already in the tree (the waves, sky and water change at once, and the race moves the level
+  toward the new tide), so a weather resource can reuse it. Records and ghosts are kept per
+  `CourseInfo.id`, so a course that shares a scene keeps its own.
+
 - **Centre line.** `Course.control_points` (world x, z) and `half_widths` (one per point) define
   a closed centripetal Catmull-Rom curve, sampled every 1 m and turned so that sample 0 lies on the
   `StartLine` marker. Offsets along it (0 at the start line, up to `Course.length`) are how the
@@ -449,9 +461,19 @@ radius, about the craft's full-lock radius at top speed, so it needs a lift or a
 Islands, sandbars and rocks fill the inside of the loop; every wall point is at least 2.5 m
 deep even with the islands' random coastline variation at its largest (`coast_noise`,
 checked on the map), so the walls, not the seabed,
-stop a craft. Since milestone 7 the water is `water/presets/cove_calm.tres` (the calm course):
-`cove_swell.tres` (the open-water swell at 75%, troughs to −1.36 m) at half height. The
-milestone 3–5 measurements below were made on `cove_swell`.
+stop a craft. Since milestone 7 the water is `water/presets/cove_calm.tres`, meant as the cove
+swell at half height, but the file sets `amplitude_scale` twice (0.5, then 0.75) and Godot keeps
+the last value, so Gull Cove races the open-water swell at 75% (troughs to −1.36 m), the same
+water the milestone 3–5 measurements below were made on. `cove_swell.tres` is the same waves at
+100%, a third higher (troughs to −1.81 m), for Gull Cove Swell.
+
+**Gull Cove Swell** (`gull_cove_swell`) is Gull Cove's scene on `cove_swell.tres`, through its
+`CourseInfo.overrides`. Twice Gull Cove's height (150%, troughs to −2.72 m) was tried first: the
+troughs then fall below the ramps' foot (2 m under the rest level), and in the every-course test
+(seed 1) three of the four computer riders crashed, mostly into the ramps' front edge, and Dax hit
+the course rock at 315 m. At 110% Dax still hit that rock. At 100% every rider finished with no
+crash: laps of 40–50 s, at most 1 miss each. A deeper ramp foot (the spec's `ramp_bottom`, as on
+Ebb Reef) would be needed for higher waves.
 
 Measured with the test driver (`test/tools/autodrive.py`, below), which steers with the gamepad
 stick through each buoy's passing side: one lap in 44.8 s, 9 of 9 buoys passed. Holding a
@@ -640,6 +662,15 @@ own id, name, scene, menu map and `CourseInfo` (`gull_cove_reverse`, "Gull Cove 
   overrides any of a version's keys.
 - Ramps face along the course, so they turn round with it, and a ramp's landing ends up where its
   approach used to be: race each version with the every-course test before shipping it.
+
+**Other conditions.** A spec's `variants` entry ships the same scene in other conditions as
+courses of their own: `"variants": {"swell": {"name": "Gull Cove Swell", "order": 401,
+"conditions": "...", "waves": "res://water/presets/cove_swell.tres"}}`. `--scene` writes each as
+a `CourseInfo` (`levels/<id>_<key>.course.tres`) with its own id that points at the course's
+scene and menu map and sets `overrides` from the variant's `waves` (a `WaveSet`), `environment`
+(an `Environment`), `water` (water shader parameters, added to the spec's own `water`) and
+`lap_levels`. The name and conditions line default to the course's, and the order to the
+course's plus 400. `--reverse` and `--mirror` drop the variants.
 
 Gull Cove ships reversed and mirrored. The depth check passes for both (no wall point over water
 shallower than 2.5 m), and in the every-course test (seed 1) every rider finished both with no
@@ -1051,9 +1082,9 @@ line for tests.
 
 | Course | Conditions | Lap | How |
 |---|---|---|---|
-| Gull Cove | calm | 636 m | `cove_calm.tres`: the cove swell at half height (troughs to about −0.7 m). The first course, for learning the buoys. |
+| Gull Cove | calm | 636 m | `cove_calm.tres`: the open-water swell at 75% (troughs to −1.36 m; the file means half height, see "Known issues"). The first course, for learning the buoys. |
 | Whitecap Point | choppy open sea | 908 m | `whitecap_chop.tres`: `open_sea` with a lower main swell (0.62 m) and stronger chop (0.19, 0.13, 0.07 m). The craft hops off the chop on every straight. Long start straight with a ramp, a sweeping top, a chicane past a rock, a long bottom sweep. |
-| Lantern Harbor | night, harbour lights | 1021 m | `night_environment.tres` (dark sky with stars, a moon disc, colour ambient light, glow), a dim blue moon low in the sky so its glitter shows the swells, `harbor_swell.tres` (cove swell at 55%). Piers with lamps and lit buildings along the north shore, a breakwater with red and green entrance lights, lit buoys (`Buoy.lamp_energy`) and darker water (`OceanSurface.shader_overrides`). The course leaves through the breakwater gap and comes back round its east end. |
+| Lantern Harbor | night, harbour lights | 1021 m | `night_environment.tres` (dark sky with stars, a moon disc, colour ambient light, glow), a dim blue moon low in the sky so its glitter shows the swells, `harbor_swell.tres` (meant as the cove swell at 55%, but it is at 75%, as on Gull Cove: see "Known issues"). Piers with lamps and lit buildings along the north shore, a breakwater with red and green entrance lights, lit buoys (`Buoy.lamp_energy`) and darker water (`OceanSurface.shader_overrides`). The course leaves through the breakwater gap and comes back round its east end. |
 | Ebb Reef | the tide goes out each lap | 776 m | `Course.lap_levels` 0, −0.9, −1.8 m: when the leader starts lap 2 and 3 the rest level falls at 0.15 m/s and the HUD calls THE TIDE IS GOING OUT. Reef flats break the surface, four rocks hidden 0.6 m under the water on lap 1 stand up to 1.2 m above it on lap 3 (the computer riders' line avoids them from the start), and the ramps' lips rise from 1.8 m to 3.6 m above the water, so the jumps grow. The ramps start 4.2 m under the high-tide level (19 m long, same 17.6° slope): with the default 2 m, a trough at low tide exposed the ramp's front edge and riders hit it head-on. Walls stay 4.3 m deep at high tide (2.5 m at low tide). |
 
 Computer races (four riders, 3 laps): Whitecap Point 58–60 s laps, 0–1 misses each, no crashes;
@@ -1193,6 +1224,11 @@ entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_le
   highest skill); on the shorter courses the field is within a few seconds.
 - The spray is soft round puffs, a stylised look; at full speed the bow spray shows as a string
   of separate puffs.
+- `water/presets/cove_calm.tres` and `harbor_swell.tres` each set `amplitude_scale` twice (0.5 or
+  0.55, then 0.75). Godot keeps the last value, so both are the open-water swell at 75%, the same
+  water, and Gull Cove is not the calm course its conditions line says. Removing the 0.75 lines
+  would make the water what the files mean, but Gull Cove and Lantern Harbor would ride
+  differently from the measurements in these notes.
 
 ## Where to go next
 
