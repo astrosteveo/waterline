@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CourseInfo" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://course/course_info.gd" id="1"]
+[ext_resource type="Texture2D" path="res://levels/gull_cove_map.png" id="2"]
+[ext_resource type="Script" path="res://course/course_conditions.gd" id="3"]
+[ext_resource type="Resource" path="res://water/presets/cove_swell.tres" id="4"]
+
+[sub_resource type="Resource" id="overrides"]
+script = ExtResource("3")
+wave_set = ExtResource("4")
+
+[resource]
+script = ExtResource("1")
+order = 401
+id = "gull_cove_swell"
+display_name = "Gull Cove Swell"
+conditions = "A swell rolls into the cove, a third higher than usual. Two ramps and a hairpin round the rock spit."
+scene = "res://levels/gull_cove.tscn"
+map = ExtResource("2")
+overrides = SubResource("overrides")

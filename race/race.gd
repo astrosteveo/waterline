@@ -131,6 +131,10 @@ func _ready() -> void:
 	if course == null:
 		push_error("The course scene's root must be a Course.")
 		return
+	# A course that races its scene in other conditions sets them before the scene is ready,
+	# so the water, sky and tide start that way.
+	if info != null and info.overrides != null:
+		info.overrides.apply_to(course)
 	add_child(course)
 	move_child(course, 0)
 	laps = laps_override if laps_override > 0 else course.laps

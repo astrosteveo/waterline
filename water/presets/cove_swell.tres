@@ -61,4 +61,4 @@ phase_degrees = 120.0
 [resource]
 script = ExtResource("1")
 waves = Array[ExtResource("2")]([SubResource("swell_long"), SubResource("swell_steep"), SubResource("swell_cross"), SubResource("chop_a"), SubResource("chop_b"), SubResource("chop_c"), SubResource("chop_d")])
-amplitude_scale = 0.75
+amplitude_scale = 1.0

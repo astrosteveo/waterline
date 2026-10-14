@@ -29,9 +29,21 @@ with it, and a ramp's landing ends up where its approach used to be: race each v
 shipping it. A spec's "versions" entry ({"reverse": {"order": 101, "conditions": "..."}})
 overrides any of a version's keys.
 
+A spec's "variants" entry ships the same scene in other conditions as courses of their own:
+
+    "variants": {"swell": {"name": "Gull Cove Swell", "order": 401, "conditions": "...",
+                           "waves": "res://water/presets/cove_swell.tres"}}
+
+Each variant is a CourseInfo (<id>_<key>.course.tres, here gull_cove_swell) with its own id, so
+its records and ghost are kept apart. It points at the course's scene and menu map and sets
+the conditions it names on top of the scene's: "waves" (a WaveSet), "environment" (an
+Environment), "water" (water shader parameters, added to the spec's own "water") and
+"lap_levels". The name and conditions line default to the course's, and the menu order to the
+course's plus 400. Variants belong to the course as laid out: --reverse and --mirror drop them.
+
 --scene writes the course scene named in the spec and, next to it, the CourseInfo the menus
-list (<id>.course.tres: menu order, id, name, conditions line, scene and menu map). Both are overwritten:
-changes made to them in the editor are lost.
+list (<id>.course.tres: menu order, id, name, conditions line, scene and menu map), and each
+variant's CourseInfo. They are overwritten: changes made to them in the editor are lost.
 Needs numpy and Pillow.
 """
 import argparse
@@ -313,12 +325,7 @@ def write_scene(course, path):
             '[node name="OceanSurface" type="MeshInstance3D" parent="."]', 'script = ExtResource("ocean")',
             'wave_set = ExtResource("waves")', 'water_material = ExtResource("water_mat")']
     if spec.get("water"):
-        items = []
-        for key, value in spec["water"].items():
-            if isinstance(value, list):
-                value = "Color(%g, %g, %g, 1)" % tuple(value[:3])
-            items.append('"%s": %s' % (key, value))
-        out.append('shader_overrides = {%s}' % ", ".join(items))
+        out.append('shader_overrides = %s' % godot_dict(spec["water"]))
     out += ['',
             '[node name="ShoreMap" type="Node3D" parent="."]', 'script = ExtResource("shore")', '']
     ter = spec["terrain"]
@@ -382,6 +389,7 @@ def version_spec(spec, reverse=False, mirror=False):
     length = Course(spec).length
     out = json.loads(json.dumps(spec))
     out.pop("versions", None)
+    out.pop("variants", None)
     sx = -1 if mirror else 1
     # Lateral offsets and buoy colours flip when exactly one of the two applies.
     flip = -1 if reverse != mirror else 1
@@ -461,6 +469,69 @@ def write_info(spec, path):
         f.write("\n".join(out))
 
 
+def godot_dict(water):
+    """Water shader parameters {name: number or [r, g, b]} as a Godot Dictionary."""
+    items = []
+    for key, value in water.items():
+        if isinstance(value, list):
+            value = "Color(%g, %g, %g, 1)" % tuple(value[:3])
+        items.append('"%s": %s' % (key, value))
+    return "{%s}" % ", ".join(items)
+
+
+VARIANT_RESOURCES = {
+    # spec key: (CourseConditions property, resource type)
+    "waves": ("wave_set", "Resource"),
+    "environment": ("environment", "Environment"),
+}
+
+
+def variant_specs(spec):
+    """The spec of each of the course's variants: the same scene and map, other conditions."""
+    out = []
+    for key, variant in spec.get("variants", {}).items():
+        v = dict(variant)
+        v["id"] = "%s_%s" % (spec["id"], key)
+        v.setdefault("name", "%s %s" % (spec["name"], key.replace("_", " ").title()))
+        v.setdefault("order", spec.get("order", 0) + 400)
+        v.setdefault("conditions", spec["conditions"])
+        v["scene"] = spec["scene"]
+        out.append(v)
+    return out
+
+
+def write_variant_info(variant, path):
+    """A CourseInfo for the course's scene, with the variant's conditions set on top of it."""
+    ext = [("Script", "res://course/course_info.gd", "1"),
+           ("Texture2D", "res://" + thumb_path(variant, "").lstrip("/"), "2"),
+           ("Script", "res://course/course_conditions.gd", "3")]
+    fields = []
+    for key, (prop, kind) in VARIANT_RESOURCES.items():
+        if variant.get(key):
+            ext.append((kind, variant[key], str(len(ext) + 1)))
+            fields.append('%s = ExtResource("%s")' % (prop, ext[-1][2]))
+    if variant.get("water"):
+        fields.append("water_overrides = %s" % godot_dict(variant["water"]))
+    if variant.get("lap_levels"):
+        fields.append("lap_levels = PackedFloat32Array(%s)" % ", ".join("%g" % v for v in variant["lap_levels"]))
+    if not fields:
+        sys.exit("variant %s sets no conditions: give it waves, environment, water or lap_levels" % variant["id"])
+    out = ['[gd_resource type="Resource" script_class="CourseInfo" load_steps=%d format=3]' % (len(ext) + 2), ""]
+    out += ['[ext_resource type="%s" path="%s" id="%s"]' % e for e in ext]
+    out += ["", '[sub_resource type="Resource" id="overrides"]', 'script = ExtResource("3")'] + fields
+    out += ["", "[resource]",
+            'script = ExtResource("1")',
+            "order = %d" % variant["order"],
+            "id = %s" % godot_string(variant["id"]),
+            "display_name = %s" % godot_string(variant["name"]),
+            "conditions = %s" % godot_string(variant["conditions"]),
+            "scene = %s" % godot_string("res://" + variant["scene"]),
+            'map = ExtResource("2")',
+            'overrides = SubResource("overrides")', ""]
+    with open(path, "w") as f:
+        f.write("\n".join(out))
+
+
 def write_props(spec, course):
     """Piers, lamps and buildings: {"type", "at": [x, z] or "offset": [s, lateral], "yaw" (degrees), ...}."""
     if not spec.get("props"):
@@ -521,6 +592,10 @@ def main():
         path = info_path(spec, args.project)
         write_info(spec, path)
         print("course info:", os.path.normpath(path))
+        for variant in variant_specs(spec):
+            path = info_path(variant, args.project)
+            write_variant_info(variant, path)
+            print("course info:", os.path.normpath(path))
 
 
 if __name__ == "__main__":

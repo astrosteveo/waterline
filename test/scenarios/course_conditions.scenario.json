@@ -1,0 +1,9 @@
+{
+  "description": "CourseConditions sets the waves, sky, water shader parameters and tide it names on a course scene, keeps the scene's own for the rest, adds water overrides to the scene's own, works on a course already in the tree, and leaves the shared files unchanged.",
+  "start": {"scene": "res://test/course_conditions.tscn", "seed": 1},
+  "steps": [
+    {"until": "done", "max": 600, "name": "every check ran"},
+    {"expect": "checks.size()", "equals": 16, "name": "all 16 checks"},
+    {"expect": "failures", "equals": [], "name": "every check passed"}
+  ]
+}
