@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="CourseInfo" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="CourseInfo" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://course/course_info.gd" id="1"]
+[ext_resource type="Texture2D" path="res://levels/whitecap_point_map.png" id="2"]
 
 [resource]
 script = ExtResource("1")
@@ -8,3 +9,4 @@ id = "whitecap_point"
 display_name = "Whitecap Point"
 conditions = "Open sea and choppy water: the chop throws the craft into the air on every straight."
 scene = "res://levels/whitecap_point.tscn"
+map = ExtResource("2")

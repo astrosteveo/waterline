@@ -1,5 +1,7 @@
 {
+ "id": "ebb_reef",
  "name": "Ebb Reef",
+ "conditions": "The tide goes out every lap: reefs and hidden rocks break the surface, and the ramps stand taller.",
  "root": "EbbReef",
  "scene": "levels/ebb_reef.tscn",
  "laps": 3,

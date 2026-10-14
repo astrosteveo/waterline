@@ -97,7 +97,8 @@ riders/         RiderProfile (colours, weight, default craft, computer skill) an
 craft/          CraftProfile (scene, base tuning, the four stats) and the four craft (.tres);
                 long_hull.tscn and generated_hull.tscn, example craft scenes (not in
                 Game.crafts); hulls/ (hull scenes for JetSkiModel)
-levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.png = menu map),
+levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>_map.png = menu map;
+                all three written by tools/courses/course_tool.py),
                 open_water.tscn (free ride), water_test.tscn
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
@@ -584,12 +585,15 @@ the anchor position.
 ## Course design tool
 
 `tools/courses/course_tool.py SPEC.json --map out.png --scene` lays out a course from a JSON spec
-(`tools/courses/gull_cove.json`): control points with half widths, buoys, ramps and rocks by
-course offset and lateral offset, and terrain islands. It uses the same spline as the game, so
+(`tools/courses/gull_cove.json`): the course's id, name and conditions line for the menus, control
+points with half widths, buoys, ramps and rocks by course offset and lateral offset, and terrain
+islands. It uses the same spline as the game, so
 offsets match, draws a top-down map (walls with the inside loops cut out, buoys with a tick toward
 their passing side, ramps, rocks, islands and shallows) and circles every wall point that lies over
-water shallower than 2.5 m, and writes the course scene. Writing the scene overwrites it, so edit
-the spec, not the scene, for layout changes. Session 3 needs three more courses; start from a copy
+water shallower than 2.5 m, and writes the course scene. `--scene` also writes the course's
+`CourseInfo` next to the scene (`levels/<id>.course.tres`: id, name, conditions line, scene path and
+the menu map as its `map` texture, which the course select screen shows). Writing overwrites both
+files, so edit the spec, not the scene or the `.course.tres`. Session 3 needs three more courses; start from a copy
 of the Gull Cove spec.
 
 ## Verification done

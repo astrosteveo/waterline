@@ -1,5 +1,7 @@
 {
+ "id": "lantern_harbor",
  "name": "Lantern Harbor",
+ "conditions": "Night racing by the harbour lights. Out through the breakwater gap and back round its end.",
  "root": "LanternHarbor",
  "scene": "levels/lantern_harbor.tscn",
  "laps": 3,
