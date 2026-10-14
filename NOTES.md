@@ -60,6 +60,16 @@ The gdh scenarios in `test/scenarios/` are not part of CI, because they render o
 GitHub-hosted runners have none. Run them locally with `gdh test --project .` before merging a
 change to gameplay, rendering or the menus.
 
+To race every course on its own, run
+`gdh scenario run test/scenarios/every_course.scenario.json` (about 90 seconds; `gdh test` runs it
+too). It starts `test/every_course.tscn`, which races four computer riders over every course in
+`Game.courses`, all laps, on seed 1, one course after another. A course added to `Game.courses` is
+raced with no change to the test. The scenario fails if a rider doesn't finish within 150 s of race
+time per lap, crashes, is disqualified or misses more than 3 buoys (computer races measured 0–2
+misses per rider), and on any engine error or warning. It prints each course's lap times, misses
+and crashes per rider as `game:` lines on stderr. On seed 1 every rider finishes every course, with
+2 misses at most (Marina on Gull Cove) and no crashes.
+
 To move to a new Godot release, change `GODOT_VERSION` and `GODOT_SHA512` in the workflow. The
 sum is in the release's `SHA512-SUMS.txt`.
 
@@ -102,6 +112,7 @@ levels/         the four courses (<id>.tscn, <id>.course.tres = CourseInfo, <id>
 physics_layers.gd  the physics layer bits (PhysicsLayers.SCENERY and so on)
 tools/courses/  course_tool.py and one JSON spec per course (hidden from Godot)
 test/           water_match.tscn (GPU/CPU height comparison), wave_bench.gd,
+                every_course.tscn (races every course, for every_course.scenario.json),
                 check_project.sh + check_project.gd (the CI check, see "CI"),
                 scenarios/ (regression scenarios), tools/autodrive.py (test driver),
                 craft/ (test-only craft and test races for the craft scenarios and
