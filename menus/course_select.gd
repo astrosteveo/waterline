@@ -83,6 +83,7 @@ func _build_ui() -> void:
 	mode.position = Vector2(80, 150)
 
 	var list := VBoxContainer.new()
+	MenuStyle.hover_after_layout(list)
 	list.name = "Courses"
 	list.add_theme_constant_override(&"separation", 18)
 	root.add_child(list)
@@ -92,7 +93,7 @@ func _build_ui() -> void:
 		button.name = info.id
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.focus_entered.connect(select.bind(info))
-		button.mouse_entered.connect(button.grab_focus)
+		MenuStyle.focus_on_hover(button)
 		button.pressed.connect(confirm)
 		list.add_child(button)
 		_buttons.append(button)

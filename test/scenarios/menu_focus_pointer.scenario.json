@@ -1,0 +1,116 @@
+{
+  "description": "Issue #38: with the mouse pointer resting over the top entry of the list as a menu screen opens, the screen focuses its own choice, not the entry added last, and only the entry under the pointer looks hovered. Clicking Marina leaves the pointer over the top of the list as the craft select opens (her Tradewind focused), backing out to the rider select (Marina focused) and going on to the course select (Gull Cove focused). Moving the pointer onto an entry then still focuses it.",
+  "start": {
+    "scene": "res://menus/rider_select.tscn",
+    "seed": 1,
+    "user_data": "fresh"
+  },
+  "steps": [
+    "step 5",
+    {
+      "step": 1,
+      "click_node": "UI/Root/List/Marina"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60,
+      "name": "clicking Marina opens the craft select"
+    },
+    "step 5",
+    {
+      "expect": "scene._buttons[0].get_global_rect().has_point(get_viewport().get_mouse_position())",
+      "name": "craft select: the pointer rests over the top entry"
+    },
+    {
+      "expect": "[Game.player_craft.id, get_viewport().gui_get_focus_owner().name, scene.selected.id]",
+      "equals": [
+        "tradewind",
+        "tradewind",
+        "tradewind"
+      ],
+      "name": "craft select: Marina's own craft has the focus, not the last entry"
+    },
+    {
+      "expect": "[scene._buttons[0].is_hovered(), scene._buttons[-1].is_hovered()]",
+      "equals": [
+        true,
+        false
+      ],
+      "name": "craft select: the top entry, under the pointer, looks hovered, not the last"
+    },
+    {
+      "step": 3,
+      "tap": "ui_cancel"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60,
+      "name": "back opens the rider select"
+    },
+    "step 5",
+    {
+      "expect": "[scene._buttons[0].get_global_rect().has_point(get_viewport().get_mouse_position()), get_viewport().gui_get_focus_owner().name]",
+      "equals": [
+        true,
+        "Marina"
+      ],
+      "name": "rider select: the current rider, Marina, has the focus, not the last entry"
+    },
+    {
+      "expect": "[scene._buttons[0].is_hovered(), scene._buttons[-1].is_hovered()]",
+      "equals": [
+        true,
+        false
+      ],
+      "name": "rider select: the top entry, under the pointer, looks hovered, not the last"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CraftSelect'",
+      "max": 60
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'CourseSelect'",
+      "max": 60,
+      "name": "confirming the craft opens the course select"
+    },
+    "step 5",
+    {
+      "expect": "[scene._buttons[0].get_global_rect().has_point(get_viewport().get_mouse_position()), get_viewport().gui_get_focus_owner().name, scene.selected.id]",
+      "equals": [
+        true,
+        "gull_cove",
+        "gull_cove"
+      ],
+      "name": "course select: the first course, Gull Cove, has the focus, not the last entry"
+    },
+    {
+      "expect": "[scene._buttons[0].is_hovered(), scene._buttons[-1].is_hovered()]",
+      "equals": [
+        true,
+        false
+      ],
+      "name": "course select: the top entry, under the pointer, looks hovered, not the last"
+    },
+    {
+      "step": 3,
+      "move": "186,320"
+    },
+    {
+      "expect": "[scene._buttons[2].get_global_rect().has_point(get_viewport().get_mouse_position()), get_viewport().gui_get_focus_owner() == scene._buttons[2]]",
+      "equals": [
+        true,
+        true
+      ],
+      "name": "moving the pointer onto the third course focuses it"
+    }
+  ]
+}
