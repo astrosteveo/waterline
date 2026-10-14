@@ -82,12 +82,32 @@ func _build_ui() -> void:
 	root.add_child(mode)
 	mode.position = Vector2(80, 150)
 
+	# The list scrolls between the mode line and the controls hint, keeping the focused course
+	# in view, so any number of courses fit. Up to seven show whole; with more, six and a half
+	# rows show, so the cut-off one says the list goes on. The margin leaves room for the
+	# buttons' slant and focus frame, which the scroll area clips.
+	var scroll := ScrollContainer.new()
+	scroll.name = "Scroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	scroll.follow_focus = true
+	root.add_child(scroll)
+	scroll.position = Vector2(56, 222)
+	var rows := float(Game.courses.size()) if Game.courses.size() <= 7 else 6.5
+	# Rows of 86 px buttons 18 px apart, plus the margin above and below.
+	scroll.size = Vector2(508, rows * (86 + 18) - 18 + 2 * 8)
+	var margin := MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override(&"margin_left", 24)
+	margin.add_theme_constant_override(&"margin_right", 24)
+	margin.add_theme_constant_override(&"margin_top", 8)
+	margin.add_theme_constant_override(&"margin_bottom", 8)
+	scroll.add_child(margin)
 	var list := VBoxContainer.new()
 	MenuStyle.hover_after_layout(list)
 	list.name = "Courses"
 	list.add_theme_constant_override(&"separation", 18)
-	root.add_child(list)
-	list.position = Vector2(80, 230)
+	margin.add_child(list)
 	for info in Game.courses:
 		var button := MenuStyle.button(info.display_name.to_upper(), 42, Vector2(460, 86))
 		button.name = info.id
