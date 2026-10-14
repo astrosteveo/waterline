@@ -91,6 +91,9 @@ var watching: bool = false
 var watched: RacerState
 ## Laps in this race.
 var laps: int = 3
+## Added to each computer rider's skill (kept within 0 to 1): a championship cup's
+## [member CupInfo.skill_offset], else 0.
+var skill_offset: float = 0.0
 ## In stunt mode, the run's scoring; in a time trial, the records and ghost. Null otherwise.
 var stunt_mode: StuntMode
 var time_trial: TimeTrial
@@ -126,6 +129,12 @@ func _ready() -> void:
 	add_child(course)
 	move_child(course, 0)
 	laps = laps_override if laps_override > 0 else course.laps
+	# A championship cup sets the laps and how well the computer riders ride.
+	var cup := Game.championship.cup if Game.mode == Game.Mode.CHAMPIONSHIP and Game.championship != null else null
+	if cup != null:
+		skill_offset = cup.skill_offset
+		if cup.laps > 0:
+			laps = cup.laps
 	# `-- --laps N`: shorter races for tests.
 	if Game.arg_value("--laps").is_valid_int():
 		laps = maxi(int(Game.arg_value("--laps")), 1)
@@ -262,7 +271,7 @@ func _spawn_computer(profile: RiderProfile, slot: int) -> void:
 	racer.craft_profile = profile.default_craft
 	var driver := AIDriver.new()
 	driver.name = "AIDriver"
-	driver.skill = profile.ai_skill
+	driver.skill = clampf(profile.ai_skill + skill_offset, 0.0, 1.0)
 	# Different mistakes each race; the same ones again in a replay with the same seed.
 	driver.mistake_seed = profile.ai_seed + randi()
 	driver.race = self

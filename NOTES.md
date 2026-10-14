@@ -92,13 +92,14 @@ debug/          WaterProbe, DebugHud (F3 readout), RideRecorder (ride statistics
 course/         Course (centre line, walls, gates, progress, tide), CourseGate, CourseProgress,
                 CourseInfo, Buoy (with an optional lamp), Ramp, StartGate, StuntRing (all
                 code-built and swappable), wall_float.gdshader
-game/           Game autoload (riders, courses, modes, scene flow), Championship, Records,
-                Settings autoload (volumes, fullscreen, controls)
+game/           Game autoload (riders, courses, cups, modes, scene flow), Championship,
+                CupInfo, Records, Settings autoload (volumes, fullscreen, controls)
+cups/           the championship cups (<id>.cup.tres = CupInfo)
 effects/        Wake (+ wake.gdshader), Spray, EngineSound (all on jetski.tscn)
 audio/          SoundBank (every sound, generated in code)
 menus/          MainMenu (main_menu.tscn, the main scene), RiderSelect, CraftSelect (both
                 extend CraftShowcase: a craft on the water with the camera circling it),
-                CourseSelect, Standings, OptionsPanel,
+                CourseSelect, CupSelect, Standings, OptionsPanel,
                 MenuBackdrop (a course behind a menu), MenuStyle (shared look), StatBar
 race/           Race (race.tscn), StuntMode, TimeTrial, GhostRecorder, GhostRider, SoloResults,
                 RaceSounds, Announcer, PauseMenu, RacerState, RaceRules (rules/default_rules.tres),
@@ -939,10 +940,11 @@ craft on the water and the list and panel layout.
 ## Game flow and modes
 
 `Game` (`game/game.gd`, an autoload) holds the riders, the courses (`CourseInfo` resources:
-id, name, conditions line, scene), the chosen rider, course and mode, the championship under
-way and the records, and changes scenes: main menu → rider select → craft select → course
-select (or the championship's next course) → race → results → back. Each screen calls Game
-(`start_mode`, `rider_chosen`, `craft_chosen`, `course_chosen`, `goto_standings`,
+id, name, conditions line, scene), the cups (`CupInfo`), the chosen rider, course, cup and mode,
+the championship under way and the records, and changes scenes: main menu → (in a championship,
+cup select →) rider select → craft select → course select (or the championship's next course) →
+race → results → back. Each screen calls Game (`start_mode`, `cup_chosen`, `rider_chosen`,
+`craft_chosen`, `course_chosen`, `goto_standings`,
 `next_championship_race`, `goto_main_menu`...), so screens don't know about each other.
 ui_cancel goes back a screen.
 `Race` reads `Game.mode` and sets itself up; `-- --mode NAME` sets the mode from the command
@@ -950,13 +952,20 @@ line for tests.
 
 - **Quick race:** one race against the other three riders. Results: RACE AGAIN, COURSES,
   MAIN MENU.
-- **Championship** (`Championship`): the four courses in menu order, points 10/6/3/1 by place
-  (none when disqualified), standings after each race (`menus/standings.tscn`: this race's
-  points and the totals, then the next course), the champion after the last; equal points go
-  to the better place in the last race. The results screen adds a POINTS column and CONTINUE
-  records the order as it stands (riders still out are placed where they are). The original
-  needed a points total to go on; this one always runs all four races, so a bad race isn't
-  the end.
+- **Championship** (`Championship`): the player first picks a cup on the cup select screen
+  (`menus/cup_select.tscn`: each cup's courses, laps and rivals). A cup (`CupInfo`, one
+  `*.cup.tres` in `res://cups/`, found by `Game.find_cups()` and sorted by `order`) holds a
+  name, its courses in race order, the laps per race (0: each course's own) and a skill offset
+  added to each computer rider's skill in its races (kept within 0 to 1; `Race.skill_offset`).
+  The Coast Cup is today's four courses at 3 laps and today's skill; the Pro Cup is the same
+  four with the computer riders 0.1 sharper (Koa 1.0, Ines 0.9, Dax 0.8). Then each course of
+  the cup in turn, points 10/6/3/1 by place (none when disqualified), standings after each race
+  under the cup's name (`menus/standings.tscn`: this race's points and the totals, then the
+  next course), the champion after the last; equal points go to the better place in the last
+  race. The results screen adds a POINTS column and CONTINUE records the order as it stands
+  (riders still out are placed where they are). The original needed a points total to go on;
+  this one always runs every race of the cup, so a bad race isn't the end. Back from the rider
+  select returns to the cup select.
 - **Time trial** (`TimeTrial`): alone from the middle of the grid, 3 laps. The HUD shows the
   record and the best lap, and each lap call adds the difference from the record lap (green
   ahead, red behind). At the finish `Records` keeps the race time and best lap if they are

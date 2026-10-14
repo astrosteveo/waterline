@@ -10,6 +10,8 @@ const POINTS: Array[int] = [10, 6, 3, 1]
 var player: RiderProfile
 var riders: Array[RiderProfile] = []
 var courses: Array[CourseInfo] = []
+## The cup raced, or null: its name, laps and the computer riders' skill offset.
+var cup: CupInfo
 ## Index of the race to run next (or just run, before [method record] moves it on).
 var race_index: int = 0
 ## Points per rider, by display name.
@@ -18,10 +20,12 @@ var points: Dictionary[String, int] = {}
 var results: Array[Dictionary] = []
 
 
-func _init(p_player: RiderProfile, p_riders: Array[RiderProfile], p_courses: Array[CourseInfo]) -> void:
+func _init(p_player: RiderProfile, p_riders: Array[RiderProfile], p_courses: Array[CourseInfo],
+		p_cup: CupInfo = null) -> void:
 	player = p_player
 	riders = p_riders.duplicate()
 	courses = p_courses.duplicate()
+	cup = p_cup
 	for rider in riders:
 		points[rider.display_name] = 0
 

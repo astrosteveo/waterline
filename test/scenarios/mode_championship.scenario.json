@@ -1,5 +1,5 @@
 {
-  "description": "Championship: from the main menu, four one-lap races on the four courses in turn, points for each place (10, 6, 3, 1), standings after each race, the champion at the end, then back to the main menu.",
+  "description": "Championship: from the main menu, the cup select (the Coast Cup holds today's four courses at today's skill; the Pro Cup, chosen here, makes the computer riders sharper), then four one-lap races on the cup's courses in turn, points for each place (10, 6, 3, 1), standings under the cup's name after each race, the champion at the end, then back to the main menu.",
   "start": {
     "scene": "res://menus/main_menu.tscn",
     "seed": 4,
@@ -15,12 +15,46 @@
       "tap": "ui_accept"
     },
     {
-      "until": "scene.name == 'RiderSelect'",
-      "max": 60
+      "until": "scene.name == 'CupSelect'",
+      "max": 60,
+      "name": "championship opens the cup select"
     },
     {
       "expect": "Game.mode",
       "equals": 1
+    },
+    "step 5",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "coast_cup",
+      "name": "the first cup has the focus"
+    },
+    {
+      "expect": "[Game.cups[0].courses.size(), Game.cups[0].courses[0].id, Game.cups[0].courses[3].id, Game.cups[0].skill_offset]",
+      "equals": [
+        4,
+        "gull_cove",
+        "ebb_reef",
+        0.0
+      ],
+      "name": "the Coast Cup is today's championship: the four courses at today's skill"
+    },
+    {
+      "step": 3,
+      "tap": "ui_down"
+    },
+    "step 3",
+    {
+      "expect": "scene.selected.id",
+      "equals": "pro_cup"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60
     },
     "step 5",
     {
@@ -45,6 +79,16 @@
       "expect": "scene.course.course_name",
       "equals": "Gull Cove",
       "name": "race 1 is on Gull Cove"
+    },
+    {
+      "expect": "[scene.racers[1].craft.get_node('AIDriver').skill, scene.racers[2].craft.get_node('AIDriver').skill, scene.racers[3].craft.get_node('AIDriver').skill]",
+      "approx": [
+        1.0,
+        0.9,
+        0.8
+      ],
+      "within": 0.001,
+      "name": "the Pro Cup's +0.1 skill reaches the computer riders (Koa 0.9, Ines 0.8, Dax 0.7)"
     },
     {
       "eval": "scene.autopilot(scene.player, 1.0)"
@@ -73,6 +117,11 @@
     {
       "expect": "Game.championship.race_index",
       "equals": 1
+    },
+    {
+      "expect": "scene.find_child('Cup', true, false).text",
+      "equals": "PRO CUP",
+      "name": "the standings show the cup's name"
     },
     {
       "expect": "Game.championship.points['Marina'] + Game.championship.points['Koa'] + Game.championship.points['Ines'] + Game.championship.points['Dax']",
@@ -223,6 +272,11 @@
     {
       "expect": "scene.find_child('Title', true, false).text.begins_with('CHAMPION: ')",
       "name": "after the last race: the champion"
+    },
+    {
+      "expect": "scene.find_child('Cup', true, false).text",
+      "equals": "PRO CUP",
+      "name": "the champion screen shows the cup's name"
     },
     {
       "step": 3,

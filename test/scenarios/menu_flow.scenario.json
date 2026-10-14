@@ -1,5 +1,5 @@
 {
-  "description": "The menus: the main menu leads to each mode through the rider select, the craft select and the course select (or, in a championship, from the craft select straight to the first race); back goes back a screen; a race starts on the chosen course with the chosen rider and craft.",
+  "description": "The menus: the main menu leads to each mode through the rider select, the craft select and the course select (a championship starts with the cup select, and goes from the craft select straight to the first race); back goes back a screen; a race starts on the chosen course with the chosen rider and craft.",
   "start": {
     "scene": "res://menus/main_menu.tscn",
     "seed": 1
@@ -233,13 +233,48 @@
       "tap": "ui_accept"
     },
     {
-      "until": "scene.name == 'RiderSelect'",
-      "max": 60
+      "until": "scene.name == 'CupSelect'",
+      "max": 60,
+      "name": "a championship starts with the cup select"
     },
     {
       "expect": "Game.mode",
       "equals": 1,
       "name": "championship chosen"
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60,
+      "name": "then the rider select"
+    },
+    "step 5",
+    {
+      "step": 3,
+      "tap": "ui_cancel"
+    },
+    {
+      "until": "scene.name == 'CupSelect'",
+      "max": 60,
+      "name": "back from the rider select returns to the cup select"
+    },
+    "step 5",
+    {
+      "expect": "scene.get_viewport().gui_get_focus_owner().name",
+      "equals": "coast_cup",
+      "name": "with the cup chosen focused"
+    },
+    {
+      "step": 3,
+      "tap": "ui_accept"
+    },
+    {
+      "until": "scene.name == 'RiderSelect'",
+      "max": 60
     },
     "step 5",
     {

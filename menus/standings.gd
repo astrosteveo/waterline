@@ -1,7 +1,7 @@
 class_name Standings
 extends Node3D
-## The championship standings after a race: each rider's points from that race and in all,
-## best first, then the next course, or the champion after the last race.
+## The championship standings after a race, under the cup's name: each rider's points from
+## that race and in all, best first, then the next course, or the champion after the last race.
 
 var _next: Button
 
@@ -44,6 +44,11 @@ func _build_ui() -> void:
 		return
 	var order := champ.standings()
 	var over := champ.is_over()
+	if champ.cup != null:
+		var cup := MenuStyle.label(champ.cup.display_name.to_upper(), 34, MenuStyle.CYAN)
+		cup.name = "Cup"
+		cup.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		column.add_child(cup)
 	var title := MenuStyle.label("CHAMPION: %s" % order[0].to_upper() if over else "STANDINGS", 68, MenuStyle.YELLOW)
 	title.name = "Title"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
