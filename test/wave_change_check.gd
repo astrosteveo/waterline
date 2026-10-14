@@ -77,7 +77,18 @@ func run() -> Dictionary:
 	var shared := half.changing_to(to, 0.0, 1.0)
 	var shared_error := maxf(_largest_difference(shared, half, points, 0.0), _largest_difference(shared, to, points, 1.0))
 
+	# Too many waves: the change warns and keeps the first MAX_WAVES (this warning is
+	# expected in the output).
+	var many := WaveSet.new()
+	var extra: Array[GerstnerWave] = []
+	for i in 9:
+		extra.append(GerstnerWave.new(i * 40.0, 5.0 + i, 0.02))
+	many.waves = extra
+	var capped := from.changing_to(many, 0.0, 1.0)
+
 	return {
+		"capped_waves": capped.wave_count(),
+		"capped_ok": capped.wave_count() == WaveSet.MAX_WAVES,
 		"start_error_m": start_error,
 		"start_ok": start_error < 1e-9,
 		"end_error_m": end_error,
