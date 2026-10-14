@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CupInfo" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://game/cup_info.gd" id="1"]
+[ext_resource type="Script" path="res://course/course_info.gd" id="2"]
+[ext_resource type="Resource" path="res://levels/gull_cove.course.tres" id="3"]
+[ext_resource type="Resource" path="res://levels/whitecap_point.course.tres" id="4"]
+[ext_resource type="Resource" path="res://levels/lantern_harbor.course.tres" id="5"]
+[ext_resource type="Resource" path="res://levels/ebb_reef.course.tres" id="6"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+id = "coast_cup"
+display_name = "Coast Cup"
+courses = Array[ExtResource("2")]([ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+laps = 3
+skill_offset = 0.0

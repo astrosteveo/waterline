@@ -4,7 +4,7 @@ extends CraftShowcase
 ## craft floating on the water behind, and the rider's name, line and weight on the right. How
 ## the craft rides belongs to the craft, which the craft select screen chooses next. Confirming
 ## hands the rider to [method Game.rider_chosen], which opens the craft select; backing out
-## returns to the main menu.
+## returns to the main menu (in a championship, to the cup select).
 
 ## Emitted when the player confirms a rider.
 signal rider_chosen(rider: RiderProfile)
@@ -46,7 +46,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		cancelled.emit()
-		Game.goto_main_menu()
+		Game.back_from_rider_select()
 
 
 func _build_ui() -> void:

@@ -22,6 +22,7 @@ const MAIN_MENU := "res://menus/main_menu.tscn"
 const RIDER_SELECT := "res://menus/rider_select.tscn"
 const CRAFT_SELECT := "res://menus/craft_select.tscn"
 const COURSE_SELECT := "res://menus/course_select.tscn"
+const CUP_SELECT := "res://menus/cup_select.tscn"
 const RACE := "res://race/race.tscn"
 const STANDINGS := "res://menus/standings.tscn"
 
@@ -45,6 +46,12 @@ const COURSES_DIR := "res://levels/"
 ## Every course in [constant COURSES_DIR], in the order the menus list them (and a championship
 ## runs them): by [member CourseInfo.order], then by id.
 var courses: Array[CourseInfo] = find_courses(COURSES_DIR)
+## Where the championship cups are: every `*.cup.tres` in it is a cup.
+const CUPS_DIR := "res://cups/"
+
+## Every cup in [constant CUPS_DIR], in the order the cup select screen lists them: by
+## [member CupInfo.order], then by id.
+var cups: Array[CupInfo] = find_cups(CUPS_DIR)
 ## The mode being played.
 var mode: Mode = Mode.QUICK_RACE
 ## True once the player has picked a mode from the main menu, so the menu can refocus it.
@@ -56,6 +63,8 @@ var player_rider: RiderProfile
 var player_craft: CraftProfile
 ## The course for the next race, or null to use the race scene's own.
 var course: CourseInfo
+## The cup chosen for the championship, or null.
+var cup: CupInfo
 ## The championship under way, or null.
 var championship: Championship
 ## Best times, scores and ghosts.
@@ -106,6 +115,23 @@ static func find_courses(dir: String) -> Array[CourseInfo]:
 	return found
 
 
+## Every [CupInfo] in [param dir] (its `*.cup.tres` files), sorted by [member CupInfo.order],
+## then by id.
+static func find_cups(dir: String) -> Array[CupInfo]:
+	var found: Array[CupInfo] = []
+	for file in ResourceLoader.list_directory(dir):
+		if not file.ends_with(".cup.tres"):
+			continue
+		var info := load(dir.path_join(file)) as CupInfo
+		if info == null:
+			push_error("%s is not a CupInfo." % dir.path_join(file))
+			continue
+		found.append(info)
+	found.sort_custom(func(a: CupInfo, b: CupInfo) -> bool:
+		return a.order < b.order if a.order != b.order else a.id < b.id)
+	return found
+
+
 ## The rider called [param display_name] (any case), or null.
 func rider_named(display_name: String) -> RiderProfile:
 	for rider in riders:
@@ -151,11 +177,18 @@ func mode_name() -> String:
 
 # --- Scene flow ----------------------------------------------------------------------
 
-## Starts [param new_mode]: the rider select screen comes first.
+## Starts [param new_mode]: the rider select screen comes first, or in a championship the cup
+## select.
 func start_mode(new_mode: Mode) -> void:
 	mode = new_mode
 	mode_chosen = true
 	championship = null
+	_change(CUP_SELECT if mode == Mode.CHAMPIONSHIP else RIDER_SELECT)
+
+
+## The cup select screen chose [param info]: the rider select comes next.
+func cup_chosen(info: CupInfo) -> void:
+	cup = info
 	_change(RIDER_SELECT)
 
 
@@ -168,11 +201,13 @@ func rider_chosen(rider: RiderProfile) -> void:
 
 
 ## The craft select screen chose [param craft]: the course select comes next, or in a
-## championship the first race.
+## championship the cup's first race.
 func craft_chosen(craft: CraftProfile) -> void:
 	player_craft = craft
 	if mode == Mode.CHAMPIONSHIP:
-		championship = Championship.new(player_rider, riders, courses)
+		if cup == null:
+			cup = cups[0]
+		championship = Championship.new(player_rider, riders, cup.courses, cup)
 		course = championship.current_course()
 		_change(RACE)
 	else:
@@ -201,6 +236,14 @@ func next_championship_race() -> void:
 
 func goto_rider_select() -> void:
 	_change(RIDER_SELECT)
+
+
+## Back from the rider select: the cup select in a championship, else the main menu.
+func back_from_rider_select() -> void:
+	if mode == Mode.CHAMPIONSHIP:
+		_change(CUP_SELECT)
+	else:
+		goto_main_menu()
 
 
 func goto_craft_select() -> void:
