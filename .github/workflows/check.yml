@@ -5,10 +5,13 @@ name: Check
 # fails to import, and a scene or resource that refers to a missing file. The gdh scenarios in
 # test/scenarios/ need a GPU, so they run locally, not here.
 
+# Changes to Markdown and docs/ (which Godot ignores) can't break the import, so they skip it.
 on:
   pull_request:
+    paths-ignore: ['**.md', 'docs/**']
   push:
     branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
 
 permissions:
   contents: read
