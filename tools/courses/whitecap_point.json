@@ -1,5 +1,6 @@
 {
  "id": "whitecap_point",
+ "order": 2,
  "name": "Whitecap Point",
  "conditions": "Open sea and choppy water: the chop throws the craft into the air on every straight.",
  "root": "WhitecapPoint",

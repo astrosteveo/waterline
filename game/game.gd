@@ -39,13 +39,12 @@ var crafts: Array[CraftProfile] = [
 	preload("res://craft/petrel.tres"),
 	preload("res://craft/skipjack.tres"),
 ]
-## Every course, in the order the menus list them (and a championship runs them).
-var courses: Array[CourseInfo] = [
-	preload("res://levels/gull_cove.course.tres"),
-	preload("res://levels/whitecap_point.course.tres"),
-	preload("res://levels/lantern_harbor.course.tres"),
-	preload("res://levels/ebb_reef.course.tres"),
-]
+## Where the courses are: every `*.course.tres` in it is a course.
+const COURSES_DIR := "res://levels/"
+
+## Every course in [constant COURSES_DIR], in the order the menus list them (and a championship
+## runs them): by [member CourseInfo.order], then by id.
+var courses: Array[CourseInfo] = find_courses(COURSES_DIR)
 ## The mode being played.
 var mode: Mode = Mode.QUICK_RACE
 ## True once the player has picked a mode from the main menu, so the menu can refocus it.
@@ -87,6 +86,24 @@ func _exit_tree() -> void:
 	# leaked when the game quits.
 	MenuStyle.release()
 	SoundBank.release()
+
+
+## Every [CourseInfo] in [param dir] (its `*.course.tres` files), sorted by
+## [member CourseInfo.order], then by id. [method ResourceLoader.list_directory] lists the
+## original file names in exported builds too, where the files themselves are renamed.
+static func find_courses(dir: String) -> Array[CourseInfo]:
+	var found: Array[CourseInfo] = []
+	for file in ResourceLoader.list_directory(dir):
+		if not file.ends_with(".course.tres"):
+			continue
+		var info := load(dir.path_join(file)) as CourseInfo
+		if info == null:
+			push_error("%s is not a CourseInfo." % dir.path_join(file))
+			continue
+		found.append(info)
+	found.sort_custom(func(a: CourseInfo, b: CourseInfo) -> bool:
+		return a.order < b.order if a.order != b.order else a.id < b.id)
+	return found
 
 
 ## The rider called [param display_name] (any case), or null.
