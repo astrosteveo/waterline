@@ -1,0 +1,78 @@
+{
+  "description": "A race in a forecast that changes the weather (-- --weather clear,storm): it starts clear, and when the leader starts lap 2 the announcer calls the storm and the waves, light, sky, water, rain and wind change together over the forecast's 10 s, eased the same way, and the wind pushes the spray. The next race starts clear again, and a time trial keeps the course's own conditions.",
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1,
+    "args": ["--no-opponents", "--weather", "clear,storm", "--weather-time", "10"]
+  },
+  "steps": [
+    {"until": "phase == 1", "max": 400},
+    {"eval": "rules.set('misses_to_disqualify', 0)", "name": "no disqualification: this test skips every buoy"},
+    {
+      "expect": "[weather.weather.id, forecast.later.id, forecast.change_lap, Ocean.wave_set.amplitude_scale, weather.value('sun_energy'), weather.rain.strength, Ocean.wind.is_equal_approx(Game.weather_named('clear').wind())]",
+      "equals": ["clear", "storm", 2, 0.6375, 1.25, 0.0, true],
+      "name": "lap 1 is clear: Gull Cove's waves at 85%, full sun, no rain, a light wind"
+    },
+    {"eval": "place_racer(player, 100, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 220, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 340, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 460, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 580, 0, 0)"},
+    "step 3",
+    {"eval": "place_racer(player, 620, 0, 15)"},
+    {"until": "player.laps_done == 1", "hold": "throttle", "max": 180, "name": "the player starts lap 2"},
+    {
+      "expect": "[weather.weather.id, weather.is_changing(), Ocean.wave_set.is_changing(), abs(Ocean.wave_set.change_end() - Ocean.end_time - 10.0) < 0.001, get_node('Announcer').history.back()[1]]",
+      "equals": ["storm", true, true, true, "HERE COMES THE STORM! HOLD ON TIGHT!"],
+      "name": "lap 2 brings the storm: the waves and the weather start a 10 s change, and the announcer calls it"
+    },
+    {"step": 300, "hold": "throttle"},
+    {
+      "expect": "[weather.change_weight(Ocean.render_time()) > 0.4, weather.change_weight(Ocean.render_time()) < 0.6, abs(weather.change_weight(Ocean.render_time()) - Ocean.wave_set.change_weight(Ocean.render_time())) < 0.000001, abs(weather.value('rain') - weather.change_weight(Ocean.render_time())) < 0.000001]",
+      "equals": [true, true, true, true],
+      "name": "half way after 5 s, with the waves, the rain and the rest at the same point of the change"
+    },
+    {"step": 330, "hold": "throttle"},
+    {
+      "expect": "[weather.is_changing(), Ocean.wave_set.is_changing(), weather.value('sun_energy'), weather.rain.strength, Ocean.wind.is_equal_approx(Game.weather_named('storm').wind()), course.get_node('OceanSurface').wave_set == Ocean.wave_set, abs(course.get_node('WorldEnvironment').environment.fog_density - 0.004) < 0.000001]",
+      "equals": [false, false, 0.375, 1.0, true, true, true],
+      "name": "after 11 s the storm is in: dim sun, full rain, strong wind, fog, and the drawn water follows the physics"
+    },
+    {
+      "expect": "[player.craft.get_node('Spray/RoosterTail').process_material.gravity.is_equal_approx(Vector3(Ocean.wind.x * 0.8, -9.8, Ocean.wind.z * 0.8)), player.craft.get_node('Spray/Splash').process_material.gravity.x > 9.0]",
+      "equals": [true, true],
+      "name": "the wind pushes the spray downwind"
+    },
+    {
+      "expect": "Ocean.wave_set.max_height() / ResourceLoader.load('res://water/presets/cove_calm.tres').max_height()",
+      "approx": 1.3,
+      "within": 0.001,
+      "name": "the waves are Gull Cove's at 1.3 times the height"
+    },
+    {
+      "expect": "[ResourceLoader.load('res://water/presets/cove_calm.tres').amplitude_scale, ResourceLoader.load('res://environment/day_environment.tres').fog_density]",
+      "approx": [0.75, 0.00045],
+      "within": 0.000001,
+      "name": "the preset and the environment file are unchanged"
+    },
+    {"eval": "tree.reload_current_scene()"},
+    "step 3",
+    {
+      "expect": "[weather.weather.id, Ocean.wave_set.amplitude_scale, Ocean.wave_set.is_changing(), weather.rain.strength]",
+      "equals": ["clear", 0.6375, false, 0.0],
+      "name": "the next race starts clear again"
+    },
+    {"eval": "Game.set('mode', 2)", "name": "time trial"},
+    {"eval": "tree.reload_current_scene()"},
+    "step 3",
+    {
+      "expect": "[weather == null, forecast == null, Ocean.wave_set == ResourceLoader.load('res://water/presets/cove_calm.tres'), Ocean.wind.length() == 0.0]",
+      "equals": [true, true, true, true],
+      "name": "a time trial ignores the forecast, so its records and ghost are set on the course's own water"
+    }
+  ]
+}
