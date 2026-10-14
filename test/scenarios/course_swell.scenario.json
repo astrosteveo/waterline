@@ -10,8 +10,13 @@
     "step 3",
     {
       "expect": "[course.course_name, course.scene_file_path, time_trial.course_id]",
-      "equals": ["Gull Cove", "res://levels/gull_cove.tscn", "gull_cove_swell"],
-      "name": "the Gull Cove scene, under the swell course's id"
+      "equals": ["Gull Cove Swell", "res://levels/gull_cove.tscn", "gull_cove_swell"],
+      "name": "the Gull Cove scene, under the swell course's id and name"
+    },
+    {
+      "until": "str(get_node('Announcer').history).contains('TIME TRIAL AT GULL COVE SWELL')",
+      "max": 240,
+      "name": "the announcer names the course Gull Cove Swell"
     },
     {
       "expect": "[course.get_node('OceanSurface').wave_set.resource_path, Ocean.wave_set.resource_path]",
