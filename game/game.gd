@@ -52,6 +52,15 @@ const CUPS_DIR := "res://cups/"
 ## Every cup in [constant CUPS_DIR], in the order the cup select screen lists them: by
 ## [member CupInfo.order], then by id.
 var cups: Array[CupInfo] = find_cups(CUPS_DIR)
+## Where the weathers are: every `*.weather.tres` in it is a weather.
+const WEATHERS_DIR := "res://weather/"
+
+## Every weather in [constant WEATHERS_DIR], in the order the menus list them: by
+## [member Weather.order], then by id.
+var weathers: Array[Weather] = find_weathers(WEATHERS_DIR)
+## The weather for the next race, or null for the course's own conditions. Time trials and
+## stunt runs don't use it. `-- --weather` replaces it.
+var forecast: Forecast
 ## The mode being played.
 var mode: Mode = Mode.QUICK_RACE
 ## True once the player has picked a mode from the main menu, so the menu can refocus it.
@@ -132,6 +141,23 @@ static func find_cups(dir: String) -> Array[CupInfo]:
 	return found
 
 
+## Every [Weather] in [param dir] (its `*.weather.tres` files), sorted by
+## [member Weather.order], then by id.
+static func find_weathers(dir: String) -> Array[Weather]:
+	var found: Array[Weather] = []
+	for file in ResourceLoader.list_directory(dir):
+		if not file.ends_with(".weather.tres"):
+			continue
+		var weather := load(dir.path_join(file)) as Weather
+		if weather == null:
+			push_error("%s is not a Weather." % dir.path_join(file))
+			continue
+		found.append(weather)
+	found.sort_custom(func(a: Weather, b: Weather) -> bool:
+		return a.order < b.order if a.order != b.order else a.id < b.id)
+	return found
+
+
 ## The rider called [param display_name] (any case), or null.
 func rider_named(display_name: String) -> RiderProfile:
 	for rider in riders:
@@ -153,6 +179,14 @@ func course_named(id: String) -> CourseInfo:
 	for info in courses:
 		if info.id == id:
 			return info
+	return null
+
+
+## The weather with [param id] (any case), or null.
+func weather_named(id: String) -> Weather:
+	for weather in weathers:
+		if weather.id.to_lower() == id.to_lower():
+			return weather
 	return null
 
 

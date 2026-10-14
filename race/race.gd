@@ -32,8 +32,13 @@ signal all_finished
 ## [param level].
 signal tide_turned(level: float)
 ## The leader started a lap with other waves: they now change into [param waves] over
-## [member Course.wave_change_time] seconds.
+## [member Course.wave_change_time] seconds, or the forecast's
+## [member Forecast.change_time] when the weather changes too.
 signal waves_changed(waves: WaveSet)
+## The leader started the lap that brings the forecast's next weather: the race now
+## changes into [param weather] (null: the course's own conditions) over
+## [member Forecast.change_time] seconds.
+signal weather_changed(weather: Weather)
 ## In watch mode, the camera moved to another rider.
 signal watched_changed(racer: RacerState)
 ## The player finished or was disqualified; the race is over for them.
@@ -100,12 +105,17 @@ var skill_offset: float = 0.0
 ## In stunt mode, the run's scoring; in a time trial, the records and ghost. Null otherwise.
 var stunt_mode: StuntMode
 var time_trial: TimeTrial
+## The weather this race follows, or null for the course's own conditions all the way.
+var forecast: Forecast
+## Puts the forecast's weather on the course and changes it; null without a forecast.
+var weather: RaceWeather
 
 var _ticks := 0
 # The lap whose water level the tide moves toward: the leader's.
 var _tide_lap := 0
-# The waves the race started with, for laps whose Course.lap_waves entry is empty.
-var _start_waves: WaveSet
+# The course's own waves (its scene's, or its CourseInfo's), before any weather, for laps
+# whose Course.lap_waves entry is empty.
+var _course_waves: WaveSet
 var _countdown_left := 0.0
 var _last_countdown_second := -1
 
@@ -139,8 +149,20 @@ func _ready() -> void:
 	# another's scene (Gull Cove Swell on Gull Cove's) has a name of its own.
 	if info != null:
 		course.course_name = info.display_name
+	var surface := CourseConditions._find(course, func(node: Node) -> bool: return node is OceanSurface) as OceanSurface
+	_course_waves = surface.wave_set if surface != null else null
+	# The weather goes on top, also before the scene is ready.
+	forecast = _choose_forecast()
+	if forecast != null and not forecast.is_empty():
+		weather = RaceWeather.new()
+		weather.name = "Weather"
+		weather.setup(course, forecast)
 	add_child(course)
 	move_child(course, 0)
+	if weather != null:
+		add_child(weather)
+	if _course_waves == null:
+		_course_waves = Ocean.wave_set
 	laps = laps_override if laps_override > 0 else course.laps
 	# A championship cup sets the laps and how well the computer riders ride.
 	var cup := Game.championship.cup if Game.mode == Game.Mode.CHAMPIONSHIP and Game.championship != null else null
@@ -175,9 +197,9 @@ func _ready() -> void:
 	if player_craft == null and player_rider != null:
 		player_craft = player_rider.default_craft
 	# The waves before the racers spawn on them.
-	_start_waves = Ocean.wave_set
-	if course.waves_for_lap(0) != null:
-		Ocean.wave_set = course.waves_for_lap(0)
+	var first_waves := _waves_for_lap(0)
+	if first_waves != Ocean.wave_set:
+		Ocean.wave_set = first_waves
 	racing_line = RacingLine.new(course)
 	_spawn_player()
 	# `-- --no-opponents` races the player alone, for tests and practice.
@@ -521,10 +543,17 @@ func _complete_lap(racer: RacerState, at_time: float) -> void:
 		_tide_lap = racer.laps_done
 		if not is_equal_approx(course.level_for_lap(_tide_lap), course.level_for_lap(_tide_lap - 1)):
 			tide_turned.emit(course.level_for_lap(_tide_lap))
+		# A new weather changes the waves and everything else over the same time.
+		var next_weather := _weather_for_lap(_tide_lap)
+		var weather_turns := weather != null and next_weather != _weather_for_lap(_tide_lap - 1)
+		var change_time := forecast.change_time if weather_turns else course.wave_change_time
 		var waves := _waves_for_lap(_tide_lap)
 		if waves != _waves_for_lap(_tide_lap - 1):
-			Ocean.change_waves(waves, course.wave_change_time)
+			Ocean.change_waves(waves, change_time)
 			waves_changed.emit(waves)
+		if weather_turns:
+			weather.change_to(next_weather, change_time)
+			weather_changed.emit(next_weather)
 	if racer.laps_done >= laps:
 		racer.finished = true
 		racer.finish_time = at_time
@@ -536,9 +565,50 @@ func _complete_lap(racer: RacerState, at_time: float) -> void:
 		_check_all_done()
 
 
+## The waves on lap [param lap] (0 for the first): the course's for that lap, in that
+## lap's weather.
 func _waves_for_lap(lap: int) -> WaveSet:
 	var waves := course.waves_for_lap(lap)
-	return waves if waves != null else _start_waves
+	if waves == null:
+		waves = _course_waves
+	if weather != null:
+		waves = weather.waves_for(_weather_for_lap(lap), waves)
+	return waves
+
+
+## The weather on lap [param lap] (0 for the first), or null for the course's own.
+func _weather_for_lap(lap: int) -> Weather:
+	return forecast.weather_for_lap(lap, laps) if forecast != null else null
+
+
+## The forecast to race in: the one `-- --weather` names, else [member Game.forecast].
+## Time trials and stunt runs keep the course's own conditions, so their records and ghosts
+## are always set on the same water.
+func _choose_forecast() -> Forecast:
+	if Game.is_solo():
+		return null
+	var named := Game.arg_value("--weather")
+	if named == "":
+		return Game.forecast
+	return forecast_from_text(named, Game.arg_value("--weather-lap"), Game.arg_value("--weather-time"))
+
+
+## A forecast from the command line: [param names] is one weather id (`storm`), or two
+## separated by a comma (`clear,storm`) for a change on lap [param lap] (default 2) over
+## [param seconds] seconds (default 20). Unknown ids are reported and left out.
+static func forecast_from_text(names: String, lap: String = "", seconds: String = "") -> Forecast:
+	var found: Array[Weather] = []
+	for id in names.split(",", false):
+		var named := Game.weather_named(id.strip_edges())
+		if named == null:
+			push_error("No weather called '%s'. Weathers: %s." % [id, ", ".join(PackedStringArray(Game.weathers.map(func(w: Weather) -> String: return w.id)))])
+		found.append(named)
+	var result := Forecast.new(found[0] if found.size() > 0 else null, found[1] if found.size() > 1 else null)
+	if lap.is_valid_int():
+		result.change_lap = maxi(int(lap), 2)
+	if seconds.is_valid_float():
+		result.change_time = maxf(float(seconds), 0.0)
+	return result
 
 
 ## The race is over for the player: the computer takes the player's craft round at an easy

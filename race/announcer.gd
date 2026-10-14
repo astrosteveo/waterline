@@ -2,7 +2,7 @@ class_name Announcer
 extends CanvasLayer
 ## The race announcer, as text across the top of the screen: the start, lead changes, the
 ## player moving up, the final lap, crashes, stunts, disqualifications, the finish, the tide,
-## and in the solo modes ring chains, lap records and the clock running down.
+## the weather, and in the solo modes ring chains, lap records and the clock running down.
 ##
 ## Lines queue up and show one at a time for [member line_time] seconds; a line waiting
 ## longer than [member stale_time] is dropped, so the calls stay current. A more important
@@ -79,6 +79,9 @@ func _ready() -> void:
 			say("%s IS AT FULL POWER!" % _name(racer), PRIORITY_LOW))
 	race.tide_turned.connect(func(_level: float) -> void:
 		say("THE TIDE IS GOING OUT. WATCH FOR ROCKS!", PRIORITY_NORMAL))
+	race.weather_changed.connect(func(weather: Weather) -> void:
+		say(weather.announcement if weather != null and weather.announcement != "" else "THE WEATHER IS CHANGING!",
+				PRIORITY_NORMAL))
 
 
 ## Queues [param text] (uppercase, with [b]names[/b] already coloured by [method _name]).
