@@ -87,6 +87,7 @@ func _add_ui(title: String, hint: String) -> Control:
 	mode.position = Vector2(80, 150)
 
 	var list := VBoxContainer.new()
+	MenuStyle.hover_after_layout(list)
 	list.name = "List"
 	list.add_theme_constant_override(&"separation", 18)
 	root.add_child(list)
@@ -102,12 +103,12 @@ func _add_ui(title: String, hint: String) -> Control:
 
 
 ## Adds a button showing [param text] to the list down the left, named [param node_name].
-## The mouse focuses it on hover. Call [method _link_focus] after the last one.
+## Moving the mouse over it focuses it. Call [method _link_focus] after the last one.
 func _add_choice(root: Control, text: String, node_name: String) -> Button:
 	var button := MenuStyle.button(text, 46, Vector2(400, 86))
 	button.name = node_name
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	button.mouse_entered.connect(button.grab_focus)
+	MenuStyle.focus_on_hover(button)
 	root.get_node(^"List").add_child(button)
 	_buttons.append(button)
 	return button

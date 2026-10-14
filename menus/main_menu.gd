@@ -45,6 +45,7 @@ func _build_ui() -> void:
 	subtitle.position = Vector2(108, 290)
 
 	var list := VBoxContainer.new()
+	MenuStyle.hover_after_layout(list)
 	list.name = "Modes"
 	list.add_theme_constant_override(&"separation", 16)
 	root.add_child(list)
@@ -62,7 +63,7 @@ func _build_ui() -> void:
 		button.name = (entry[0] as String).capitalize().replace(" ", "")
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(entry[1])
-		button.mouse_entered.connect(button.grab_focus)
+		MenuStyle.focus_on_hover(button)
 		list.add_child(button)
 		_buttons.append(button)
 	for i in _buttons.size():

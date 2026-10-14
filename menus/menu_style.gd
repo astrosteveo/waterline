@@ -71,6 +71,27 @@ static func button(text: String, size: int = 38, min_size: Vector2 = Vector2(300
 	return node
 
 
+## Makes the pointer focus [param button] when it moves over it. A pointer that only rests
+## there as a screen opens leaves the screen's own choice alone: until a list's container lays
+## its buttons out they all sit in its first slot, and [signal Control.mouse_entered] would
+## hand the focus to whichever was added last.
+static func focus_on_hover(button: Control) -> void:
+	button.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseMotion and not button.has_focus():
+			button.grab_focus())
+
+
+## Has the viewport check again which button is under the pointer once [param list] has laid
+## its buttons out for the first time. Until then they all sit in its first slot, so a pointer
+## resting there as a screen opens hovers the one added last, and it keeps the hover look
+## until the pointer moves.
+static func hover_after_layout(list: Container) -> void:
+	list.sort_children.connect(func() -> void:
+		if list.is_inside_tree():
+			list.get_viewport().update_mouse_cursor_state(),
+		Object.CONNECT_DEFERRED | Object.CONNECT_ONE_SHOT)
+
+
 ## A dark blue panel with a yellow border, slightly slanted.
 static func panel(margin_x: int = 64, margin_y: int = 38) -> PanelContainer:
 	var node := PanelContainer.new()
