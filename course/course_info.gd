@@ -14,3 +14,7 @@ extends Resource
 @export_file("*.tscn") var scene: String = ""
 ## The top-down map the course select screen shows (`levels/<id>_map.png`), or null.
 @export var map: Texture2D
+## The waves, sky, water look and tide to race [member scene] in instead of its own, or null
+## for the scene's own. Several courses can share a scene this way, each with its own
+## [member id], so each keeps its own records and ghost.
+@export var overrides: CourseConditions

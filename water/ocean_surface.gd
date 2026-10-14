@@ -27,12 +27,19 @@ extends MeshInstance3D
 @export var water_material: ShaderMaterial:
 	set(value):
 		water_material = value
+		_material_is_copy = false
 		material_override = value
 		_push_static_uniforms()
 
 ## Shader parameters this surface sets on its own copy of [member water_material], for a
 ## course whose water should look different (darker at night, say), as {name: value}.
-@export var shader_overrides: Dictionary = {}
+## Setting it while the surface is in the tree changes the water at once; a key left out
+## keeps the value it had.
+@export var shader_overrides: Dictionary = {}:
+	set(value):
+		shader_overrides = value
+		if is_node_ready():
+			_apply_shader_overrides()
 
 @export_group("Grid")
 ## Grid cells along each side of the mesh. The vertex count is about this squared.
@@ -62,6 +69,8 @@ extends MeshInstance3D
 var last_render_time: float = 0.0
 
 var _editor_time := 0.0
+# True once water_material is this surface's own copy, which the overrides change.
+var _material_is_copy := false
 
 
 func _ready() -> void:
@@ -69,11 +78,7 @@ func _ready() -> void:
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	layers = ShoreMap.WATER_LAYER
-	if not shader_overrides.is_empty() and water_material != null:
-		var copy := water_material.duplicate() as ShaderMaterial
-		for key: String in shader_overrides:
-			copy.set_shader_parameter(key, shader_overrides[key])
-		water_material = copy
+	_apply_shader_overrides()
 	material_override = water_material
 	_rebuild_mesh()
 	_on_wave_set_changed()
@@ -116,6 +121,18 @@ func _follow(camera: Camera3D) -> void:
 		return
 	var at := camera.global_position
 	global_position = Vector3(snappedf(at.x, inner_spacing), global_position.y, snappedf(at.z, inner_spacing))
+
+
+## Sets [member shader_overrides] on a copy of [member water_material], made the first time,
+## so the shared material file and other surfaces keep their look.
+func _apply_shader_overrides() -> void:
+	if shader_overrides.is_empty() or water_material == null:
+		return
+	if not _material_is_copy:
+		water_material = water_material.duplicate() as ShaderMaterial
+		_material_is_copy = true
+	for key: String in shader_overrides:
+		water_material.set_shader_parameter(key, shader_overrides[key])
 
 
 func _rebuild_mesh() -> void:
