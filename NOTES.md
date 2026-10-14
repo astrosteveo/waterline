@@ -406,7 +406,10 @@ spawns the racers on the starting grid and runs the race, so one race scene serv
   optional: an empty one leaves the scene's value, and its `water_overrides` are added to the
   scene's own `shader_overrides`, key by key. `Race` calls `CourseConditions.apply_to()` on the
   course after instantiating it and before adding it to the tree, so the water, sky and tide
-  start that way and the racers spawn on the new waves. `apply_to()` also works on a course
+  start that way and the racers spawn on the new waves. This comes before the race reads
+  `Course.lap_waves`, so a lap with no waves of its own keeps the overridden waves; a scene's
+  own `lap_waves` still apply on top, because `CourseConditions` has no field for them.
+  `apply_to()` also works on a course
   already in the tree (the waves, sky and water change at once, and the race moves the level
   toward the new tide), so a weather resource can reuse it. Records and ghosts are kept per
   `CourseInfo.id`, so a course that shares a scene keeps its own.
