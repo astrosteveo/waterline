@@ -1,6 +1,7 @@
 extends Node
 ## Races four computer riders over every course in [member Game.courses], one after another,
-## all laps, and records what went wrong.
+## all laps, and records what went wrong. `-- --courses id,id` races only those courses, and
+## `-- --weather` races them in that weather.
 ##
 ## A rider fails a course if it doesn't finish within [member time_limit_per_lap] per lap,
 ## crashes, is disqualified or misses more than [member max_misses] buoys. Any engine error or
@@ -25,6 +26,8 @@ var courses_raced: PackedStringArray = PackedStringArray()
 var results: Dictionary = {}
 ## The race under way, or null.
 var race: Race
+## The courses to race: [member Game.courses], or those `-- --courses id,id` names.
+var courses: Array[CourseInfo] = []
 
 var _logger := _WarningLogger.new()
 var _index := -1
@@ -35,6 +38,11 @@ func _ready() -> void:
 	Game.mode = Game.Mode.QUICK_RACE
 	Game.player_rider = null
 	Game.player_craft = null
+	courses = Game.courses.duplicate()
+	var named := Game.arg_value("--courses")
+	if named != "":
+		var ids := named.split(",", false)
+		courses.assign(Game.courses.filter(func(info: CourseInfo) -> bool: return info.id in ids))
 	_next_course.call_deferred()
 
 
@@ -52,18 +60,24 @@ func _physics_process(_delta: float) -> void:
 
 func _next_course() -> void:
 	_index += 1
-	if _index >= Game.courses.size():
+	if _index >= courses.size():
 		Game.course = null
 		_report_log()
 		done = true
 		print("every course: %s" % ("passed" if failures.is_empty() else "FAILED\n  " + "\n  ".join(failures)))
 		return
-	Game.course = Game.courses[_index]
+	Game.course = courses[_index]
 	race = (load("res://race/race.tscn") as PackedScene).instantiate() as Race
 	add_child(race)
 	# The player's rider rides too, at its own skill, so all four are computer riders.
 	race.autopilot(race.player, race.player_rider.ai_skill if race.player_rider != null else 0.85)
 	race.all_finished.connect(_finish_course, CONNECT_ONE_SHOT)
+	# Where and how each crash happened, to tell a rock from a ramp or a bad landing.
+	race.racer_crashed.connect(func(racer: RacerState, reason: StringName) -> void:
+		var hit: Object = racer.craft.last_impact_with
+		print("  crash: %s, %s at %.0f m (lateral %.1f), lap %d, %.1f s, hit %s" % [racer.display_name, reason,
+				racer.progress.offset, racer.progress.lateral, racer.laps_done + 1, race.race_time,
+				(hit as Node).name if hit is Node else "-"]))
 
 
 func _finish_course() -> void:
@@ -104,7 +118,7 @@ func _finish_course() -> void:
 
 ## Adds the engine errors and warnings logged since the last call to [member failures].
 func _report_log() -> void:
-	var context := Game.courses[_index].id if _index < Game.courses.size() else "after the races"
+	var context := courses[_index].id if _index < courses.size() else "after the races"
 	for line in _logger.take():
 		failures.append("%s: %s" % [context, line])
 

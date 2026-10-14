@@ -25,7 +25,8 @@ extends CourseConditions
 @export_group("Waves")
 ## Multiplies the height of the course's waves when [member CourseConditions.wave_set] is
 ## empty. The waves keep their lengths and directions, so a change into this weather only
-## makes them grow or shrink.
+## makes them grow or shrink. Above 1 they grow no higher than the course's ramps take
+## ([method Course.wave_height_limit]).
 @export_range(0.0, 2.0, 0.01) var wave_scale: float = 1.0
 
 @export_group("Sky")
@@ -64,7 +65,8 @@ extends CourseConditions
 @export_group("Rain and wind")
 ## How hard it rains, from 0 (dry) to 1 (a downpour).
 @export_range(0.0, 1.0, 0.01) var rain: float = 0.0
-## Where the wind blows toward, in degrees clockwise from north (-Z): 90 blows toward +X.
+## Where the wind blows toward, in degrees, as for a wave ([member GerstnerWave.direction_degrees]):
+## 0 toward +X, 90 toward +Z.
 @export_range(0.0, 360.0, 0.1, "degrees") var wind_direction: float = 0.0
 ## The wind's speed. Spray and rain drift with it.
 @export_range(0.0, 30.0, 0.1, "suffix:m/s") var wind_speed: float = 0.0
@@ -73,21 +75,35 @@ extends CourseConditions
 ## The wind as a horizontal velocity, in m/s.
 func wind() -> Vector3:
 	var angle := deg_to_rad(wind_direction)
-	return Vector3(sin(angle), 0.0, -cos(angle)) * wind_speed
+	return Vector3(cos(angle), 0.0, sin(angle)) * wind_speed
 
 
 ## The waves of this weather on a course whose own waves are [param course_waves]:
 ## [member CourseConditions.wave_set] when set, else [param course_waves] at
-## [member wave_scale] times their height. The scaled set is a new resource; call it once
+## [member wave_scale] times their height, but grown no higher than [param height_limit]
+## (see [method Course.wave_height_limit]). The scaled set is a new resource; call it once
 ## per race and keep the result, since the race tells waves apart by identity.
-func waves_on(course_waves: WaveSet) -> WaveSet:
+func waves_on(course_waves: WaveSet, height_limit: float = INF) -> WaveSet:
 	if wave_set != null:
 		return wave_set
-	if course_waves == null or is_equal_approx(wave_scale, 1.0):
+	var scale := scale_on(course_waves, height_limit)
+	if course_waves == null or is_equal_approx(scale, 1.0):
 		return course_waves
 	var scaled := course_waves.duplicate() as WaveSet
-	scaled.amplitude_scale = course_waves.amplitude_scale * wave_scale
+	scaled.amplitude_scale = course_waves.amplitude_scale * scale
 	return scaled
+
+
+## What [method waves_on] multiplies the height of [param course_waves] by: [member wave_scale],
+## or less when that would make them higher than [param height_limit], but never below 1
+## because of the limit.
+func scale_on(course_waves: WaveSet, height_limit: float = INF) -> float:
+	if wave_scale <= 1.0 or course_waves == null:
+		return wave_scale
+	var height := course_waves.max_height()
+	if height <= 0.0:
+		return wave_scale
+	return clampf(height_limit / height, 1.0, wave_scale)
 
 
 ## Sets the fields from [CourseConditions], and the waves scaled by [member wave_scale]
@@ -98,4 +114,4 @@ func apply_to(course: Course) -> void:
 	if wave_set == null and not is_equal_approx(wave_scale, 1.0):
 		var surface := _find(course, func(node: Node) -> bool: return node is OceanSurface) as OceanSurface
 		if surface != null:
-			surface.wave_set = waves_on(surface.wave_set)
+			surface.wave_set = waves_on(surface.wave_set, course.wave_height_limit())

@@ -136,6 +136,35 @@ func level_for_lap(lap: int) -> float:
 	return lap_levels[clampi(lap, 0, lap_levels.size() - 1)]
 
 
+## The highest waves ([method WaveSet.max_height]) the course's ramps take: the depth of the
+## shallowest ramp's leading edge under the lowest water level of [member lap_levels], less
+## [param margin]. A deeper trough bares the leading edge, and riders hit it head-on. INF
+## for a course without ramps. It works before the course enters the tree.
+func wave_height_limit(margin: float = 0.2) -> float:
+	var lowest := 0.0
+	for level in lap_levels:
+		lowest = minf(lowest, level)
+	var limit := INF
+	for ramp in _ramps(self):
+		# The ramp's height in the course, through its parents.
+		var place := ramp.transform
+		var parent := ramp.get_parent()
+		while parent != self and parent is Node3D:
+			place = (parent as Node3D).transform * place
+			parent = parent.get_parent()
+		limit = minf(limit, lowest - (place.origin.y + ramp.bottom) - margin)
+	return limit
+
+
+static func _ramps(root: Node) -> Array[Ramp]:
+	var found: Array[Ramp] = []
+	for child in root.get_children():
+		if child is Ramp:
+			found.append(child)
+		found.append_array(_ramps(child))
+	return found
+
+
 ## The waves on lap [param lap] (0 for the first), from [member lap_waves], or null for the
 ## waves the race started with.
 func waves_for_lap(lap: int) -> WaveSet:

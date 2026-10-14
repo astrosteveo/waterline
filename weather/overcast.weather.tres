@@ -18,5 +18,5 @@ ambient_energy = 0.9
 fog_density = 0.0012
 water_grey = 0.35
 water_brightness = 0.85
-wind_direction = 60.0
+wind_direction = 330.0
 wind_speed = 6.0

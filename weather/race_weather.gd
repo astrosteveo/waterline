@@ -44,6 +44,8 @@ var _to: Dictionary = {}
 var _change_start := 0.0
 var _change_duration := -1.0
 var _sky_wait := 0.0
+# The highest waves the course's ramps take.
+var _wave_height_limit := INF
 # Waves already made for a weather: {[weather, source waves]: waves}, so the same weather
 # on the same waves is the same resource.
 var _waves: Dictionary = {}
@@ -72,6 +74,7 @@ func setup(course: Course, p_forecast: Forecast) -> void:
 		weather.apply_to(course)
 		if _surface != null:
 			_waves[[weather, course_waves]] = _surface.wave_set
+	_wave_height_limit = course.wave_height_limit()
 	var world := CourseConditions._find(course, func(node: Node) -> bool: return node is WorldEnvironment) as WorldEnvironment
 	if world != null and world.environment != null:
 		_environment = _copy_environment(world.environment)
@@ -112,7 +115,7 @@ func waves_for(p_weather: Weather, course_waves: WaveSet) -> WaveSet:
 		return course_waves
 	var key := [p_weather, course_waves]
 	if not _waves.has(key):
-		_waves[key] = p_weather.waves_on(course_waves)
+		_waves[key] = p_weather.waves_on(course_waves, _wave_height_limit)
 	return _waves[key]
 
 

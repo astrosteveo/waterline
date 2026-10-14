@@ -18,5 +18,5 @@ fog_sky_affect = 0.9
 fog_aerial_perspective = 0.0
 water_grey = 0.4
 water_brightness = 0.9
-wind_direction = 200.0
+wind_direction = 110.0
 wind_speed = 1.5
