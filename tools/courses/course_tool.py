@@ -4,17 +4,33 @@
     python3 tools/courses/course_tool.py tools/courses/gull_cove.json --scene   # the .tscn and .course.tres
     python3 tools/courses/course_tool.py tools/courses/gull_cove.json --thumb   # the menu map
 
-The spec gives the course's id, name, conditions line and menu order (for the menus), the centre line's control points [x, z, half width] (clockwise or not, in
-order of travel), buoys, ramps and rocks by [offset along the course from the start line,
-meters right of the centre line, ...], and terrain islands [x, z, radius, peak height]. The
+The spec gives the course's id, name, conditions line and menu order (for the menus), the
+centre line's control points [x, z, half width] (clockwise or not, in order of travel), buoys,
+ramps and rocks by [offset along the course from the start line, meters right of the centre
+line, ...], and terrain islands [x, z, radius, peak height]. The
 centre line is the same centripetal Catmull-Rom curve the game builds (course/course.gd), so
 offsets here match offsets in the game. The map shows the walls (with the loops on the
 inside of tight turns cut out), the buoys and their passing sides, ramps, rocks and the
 islands, and circles in magenta every wall point over water shallower than 2.5 m with the
 coastline variation at its largest: the walls, not the seabed, must stop a craft.
 
+--reverse, --mirror or both lay out another version of the course from the same spec, with its
+own id (<id>_reverse, <id>_mirror, <id>_reverse_mirror), name, scene, menu map and CourseInfo;
+the other options then apply to that version:
+
+    python3 tools/courses/course_tool.py tools/courses/gull_cove.json --reverse --scene --thumb
+
+Reversed, the control points run the other way from the same start line, and each offset s
+along the course becomes length - s. Mirrored, x is negated in the control points, the start,
+rocks, islands, props and the sun, and props turn the other way. Either one alone flips every
+lateral offset and swaps red and yellow buoys, because the side the racer keeps each buoy on
+flips; both together leave them as they are. Ramps face along the course, so they turn round
+with it, and a ramp's landing ends up where its approach used to be: race each version before
+shipping it. A spec's "versions" entry ({"reverse": {"order": 101, "conditions": "..."}})
+overrides any of a version's keys.
+
 --scene writes the course scene named in the spec and, next to it, the CourseInfo the menus
-list (<id>.course.tres: id, name, conditions line, scene and menu map). Both are overwritten:
+list (<id>.course.tres: menu order, id, name, conditions line, scene and menu map). Both are overwritten:
 changes made to them in the editor are lost.
 Needs numpy and Pillow.
 """
@@ -26,6 +42,8 @@ import sys
 
 import numpy as np
 from PIL import Image, ImageDraw
+
+DEFAULT_SUN = {"rotation": [-50, 205, 0], "color": [1, 0.96, 0.88], "energy": 1.25}
 
 
 def catmull_rom_closed(cps, step=1.0):
@@ -285,7 +303,7 @@ def write_scene(course, path):
                  if spec.get("lap_levels") else []) + [
             'control_points = PackedVector3Array(%s)' % ", ".join("%g, 0, %g" % (c[0], c[1]) for c in cps),
             'half_widths = PackedFloat32Array(%s)' % ", ".join("%g" % c[2] for c in cps), '']
-    sun = spec.get("sun", {"rotation": [-50, 205, 0], "color": [1, 0.96, 0.88], "energy": 1.25})
+    sun = spec.get("sun", DEFAULT_SUN)
     out += ['[node name="WorldEnvironment" type="WorldEnvironment" parent="."]', 'environment = ExtResource("env")', '',
             '[node name="Sun" type="DirectionalLight3D" parent="."]',
             'rotation_degrees = Vector3(%g, %g, %g)' % tuple(sun["rotation"]),
@@ -346,6 +364,71 @@ def write_scene(course, path):
     out += write_props(spec, course)
     with open(path, "w") as f:
         f.write("\n".join(out))
+
+
+VERSIONS = {
+    # key: (name suffix, conditions prefix, order added to the course's)
+    "reverse": ("Reverse", "Reversed", 100),
+    "mirror": ("Mirror", "Mirrored", 200),
+    "reverse_mirror": ("Reverse Mirror", "Reversed and mirrored", 300),
+}
+
+
+def version_spec(spec, reverse=False, mirror=False):
+    """The spec of the course run the other way (reverse), mirrored left to right (mirror), or both."""
+    if not reverse and not mirror:
+        return spec
+    key = "_".join(k for k, on in (("reverse", reverse), ("mirror", mirror)) if on)
+    length = Course(spec).length
+    out = json.loads(json.dumps(spec))
+    out.pop("versions", None)
+    sx = -1 if mirror else 1
+    # Lateral offsets and buoy colours flip when exactly one of the two applies.
+    flip = -1 if reverse != mirror else 1
+
+    def offset(s):
+        return round((length - s) % length, 1) if reverse else s
+
+    def along(item):
+        """An [offset, lateral, ...] entry."""
+        return [offset(item[0]), item[1] * flip] + list(item[2:])
+
+    start = spec.get("start", spec["control_points"][0][:2])
+    out["start"] = [start[0] * sx, start[1]]
+    cps = [[c[0] * sx, c[1], c[2]] for c in spec["control_points"]]
+    out["control_points"] = cps[::-1] if reverse else cps
+    swap = {"red": "yellow", "yellow": "red"}
+    buoys = [[swap[k] if flip < 0 else k, offset(s), lat * flip] for k, s, lat in spec["buoys"]]
+    out["buoys"] = sorted(buoys, key=lambda b: b[1])
+    out["ramps"] = sorted((along(r) for r in spec.get("ramps", [])), key=lambda r: r[0])
+    out["course_rocks"] = [along(r) for r in spec.get("course_rocks", [])]
+    out["rocks"] = [[r[0] * sx] + list(r[1:]) for r in spec.get("rocks", [])]
+    out["islands"] = [[i[0] * sx] + list(i[1:]) for i in spec["islands"]]
+    props = []
+    for prop in spec.get("props", []):
+        prop = dict(prop)
+        if "offset" in prop:
+            prop["offset"] = along(prop["offset"])
+        if "at" in prop:
+            prop["at"] = [prop["at"][0] * sx, prop["at"][1]]
+        if mirror and "yaw" in prop:
+            prop["yaw"] = -prop["yaw"]
+        props.append(prop)
+    if props:
+        out["props"] = props
+    if mirror:
+        sun = dict(spec.get("sun", DEFAULT_SUN))
+        sun["rotation"] = [sun["rotation"][0], -sun["rotation"][1], -sun["rotation"][2]]
+        out["sun"] = sun
+    suffix, prefix, order = VERSIONS[key]
+    out["id"] = "%s_%s" % (spec["id"], key)
+    out["name"] = "%s %s" % (spec["name"], suffix)
+    out["root"] = spec["root"] + suffix.replace(" ", "")
+    out["scene"] = os.path.join(os.path.dirname(spec["scene"]), out["id"] + ".tscn")
+    out["order"] = spec.get("order", 0) + order
+    out["conditions"] = "%s. %s" % (prefix, spec["conditions"])
+    out.update(spec.get("versions", {}).get(key, {}))
+    return out
 
 
 def godot_string(text):
@@ -417,9 +500,11 @@ def main():
     ap.add_argument("--scene", action="store_true",
                     help="write the course scene named in the spec and its CourseInfo (<id>.course.tres)")
     ap.add_argument("--thumb", action="store_true", help="write the menu map next to the course scene (<scene>_map.png)")
+    ap.add_argument("--reverse", action="store_true", help="lay out the course run the other way (<id>_reverse)")
+    ap.add_argument("--mirror", action="store_true", help="lay out the course mirrored left to right (<id>_mirror)")
     ap.add_argument("--project", default=os.path.join(os.path.dirname(__file__), "..", ".."))
     args = ap.parse_args()
-    spec = json.load(open(args.spec))
+    spec = version_spec(json.load(open(args.spec)), args.reverse, args.mirror)
     course = Course(spec)
     print("%s: %.1f m a lap, %d buoys" % (spec["name"], course.length, len(spec["buoys"])))
     if args.map:

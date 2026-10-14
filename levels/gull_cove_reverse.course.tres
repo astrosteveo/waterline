@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CourseInfo" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://course/course_info.gd" id="1"]
+[ext_resource type="Texture2D" path="res://levels/gull_cove_reverse_map.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+order = 101
+id = "gull_cove_reverse"
+display_name = "Gull Cove Reverse"
+conditions = "Reversed. Calm water in a sheltered cove. Two ramps and a hairpin round the rock spit."
+scene = "res://levels/gull_cove_reverse.tscn"
+map = ExtResource("2")
