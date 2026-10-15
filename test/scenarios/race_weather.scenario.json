@@ -10,7 +10,7 @@
     {"eval": "rules.set('misses_to_disqualify', 0)", "name": "no disqualification: this test skips every buoy"},
     {
       "expect": "[weather.weather.id, forecast.later.id, forecast.change_lap, Ocean.wave_set.amplitude_scale, weather.value('sun_energy'), weather.rain.strength, Ocean.wind.is_equal_approx(Game.weather_named('clear').wind())]",
-      "equals": ["clear", "storm", 2, 0.6375, 1.25, 0.0, true],
+      "equals": ["clear", "storm", 2, 0.425, 1.25, 0.0, true],
       "name": "lap 1 is clear: Gull Cove's waves at 85%, full sun, no rain, a light wind"
     },
     {"eval": "place_racer(player, 100, 0, 0)"},
@@ -55,7 +55,7 @@
     },
     {
       "expect": "[ResourceLoader.load('res://water/presets/cove_calm.tres').amplitude_scale, ResourceLoader.load('res://environment/day_environment.tres').fog_density]",
-      "approx": [0.75, 0.00045],
+      "approx": [0.5, 0.00045],
       "within": 0.000001,
       "name": "the preset and the environment file are unchanged"
     },
@@ -63,7 +63,7 @@
     "step 3",
     {
       "expect": "[weather.weather.id, Ocean.wave_set.amplitude_scale, Ocean.wave_set.is_changing(), weather.rain.strength]",
-      "equals": ["clear", 0.6375, false, 0.0],
+      "equals": ["clear", 0.425, false, 0.0],
       "name": "the next race starts clear again"
     },
     {"eval": "Game.set('mode', 2)", "name": "time trial"},

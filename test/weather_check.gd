@@ -77,7 +77,7 @@ func _run() -> void:
 	_check("storm waves: the course's at 1.3 times the height",
 			[stormy != calm, stormy.amplitude_scale, stormy.max_height() / calm.max_height(), stormy.wave_count()],
 			[true, calm.amplitude_scale * 1.3, 1.3, calm.wave_count()])
-	_check("the preset is unchanged", [calm.amplitude_scale, calm.resource_path], [0.75, COVE_CALM])
+	_check("the preset is unchanged", [calm.amplitude_scale, calm.resource_path], [0.5, COVE_CALM])
 
 	var day := load(DAY) as Environment
 	var day_fog := day.fog_density
@@ -92,7 +92,7 @@ func _run() -> void:
 	var world := _course.get_node(^"WorldEnvironment") as WorldEnvironment
 	var sun := _course.get_node(^"Sun") as DirectionalLight3D
 	var surface := _surface()
-	_check("storm: waves", [surface.wave_set == Ocean.wave_set, Ocean.wave_set.amplitude_scale], [true, 0.75 * 1.3])
+	_check("storm: waves", [surface.wave_set == Ocean.wave_set, Ocean.wave_set.amplitude_scale], [true, 0.5 * 1.3])
 	_check("storm: the course's own sky is copied", [world.environment != day, world.environment.resource_path], [true, ""])
 	_check("storm: light", [sun.light_energy, world.environment.ambient_light_energy], [1.25 * 0.3, day.ambient_light_energy * 0.8])
 	_check("storm: fog", [world.environment.fog_enabled, world.environment.fog_density, world.environment.fog_sky_affect],

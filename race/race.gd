@@ -116,6 +116,9 @@ var _tide_lap := 0
 # The course's own waves (its scene's, or its CourseInfo's), before any weather, for laps
 # whose Course.lap_waves entry is empty.
 var _course_waves: WaveSet
+# Draws the computer riders' mistake seeds. It is seeded once, first thing, so nothing
+# the race makes before the riders (a weather's rain draws a particle seed) changes them.
+var _mistake_rng := RandomNumberGenerator.new()
 var _countdown_left := 0.0
 var _last_countdown_second := -1
 
@@ -126,6 +129,7 @@ func _ready() -> void:
 	# Every race starts on the same waves, so a time-trial ghost rides the water it was
 	# recorded on, and a replay with the same seed repeats.
 	Ocean.reset_time(0.0)
+	_mistake_rng.seed = randi()
 	if rules == null:
 		rules = RaceRules.new()
 	# The course chosen in the menus, or `-- --course ID`.
@@ -312,7 +316,7 @@ func _spawn_computer(profile: RiderProfile, slot: int) -> void:
 	driver.name = "AIDriver"
 	driver.skill = clampf(profile.ai_skill + skill_offset, 0.0, 1.0)
 	# Different mistakes each race; the same ones again in a replay with the same seed.
-	driver.mistake_seed = profile.ai_seed + randi()
+	driver.mistake_seed = profile.ai_seed + _mistake_rng.randi()
 	driver.race = self
 	driver.racer = racer
 	craft.add_child(driver)
