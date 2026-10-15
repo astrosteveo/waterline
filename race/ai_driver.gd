@@ -35,6 +35,9 @@ extends Node
 ## Chance of a barrel roll on a jump long enough for one (judged from the climb and the
 ## height). A less skilled rider judges the air time less carefully and can land mid-roll.
 @export_range(0.0, 1.0, 0.01) var stunt_chance: float = 0.5
+## No stunt with another craft this close: a rolling craft can't steer clear of it and
+## lands in it.
+@export_range(0.0, 30.0, 0.1, "suffix:m") var stunt_room: float = 10.0
 ## Seed for this rider's mistakes, so a race replays the same way.
 @export var mistake_seed: int = 1
 
@@ -175,8 +178,16 @@ func _consider_stunt() -> void:
 	var height := maxf(_craft.clearance, 0.0)
 	var air_left := (climb + sqrt(climb * climb + 2.0 * 9.8 * height)) / 9.8
 	var margin := lerpf(-0.08, 0.15, skill) + _rng.randf_range(-0.25, 0.05) * (1.0 - skill)
-	if air_left > _craft.tuning.barrel_roll_time + margin and _rng.randf() < stunt_chance:
+	if air_left > _craft.tuning.barrel_roll_time + margin and _rng.randf() < stunt_chance and _has_stunt_room():
 		_craft.controls.request_stunt(Vector2(-1.0 if _rng.randf() < 0.5 else 1.0, 0.0))
+
+
+## True when no other craft is within [member stunt_room].
+func _has_stunt_room() -> bool:
+	for other in race.racers:
+		if other != racer and other.craft.global_position.distance_to(_craft.global_position) < stunt_room:
+			return false
+	return true
 
 
 ## The craft's neutral full-lock turn rate at [param speed], as [JetSki] computes it.

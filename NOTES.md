@@ -68,13 +68,12 @@ too). It starts `test/every_course.tscn`, which races four computer riders over 
 raced with no change to the test. The scenario fails if a rider doesn't finish within 150 s of race
 time per lap, crashes, is disqualified or misses more than 3 buoys (computer races measured 0–2
 misses per rider), and on any engine error or warning. It prints each course's lap times, misses
-and crashes per rider as `game:` lines on stderr. It doesn't pass on every seed: computer riders
-crash in a few races in every hundred (issue #66). Over seeds 1–3 (84 rider races), 2 crashes and
-46 misses; seeds 1 and 3 fail.
+and crashes per rider as `game:` lines on stderr. Over seeds 1–3 (84 rider races) it passes with
+no crashes and 44 misses, at most 3 by one rider (Gull Cove Swell).
 
 `test/scenarios/every_course_storm.scenario.json` races the same courses in the storm weather
-(`-- --weather storm`), with the same limits. Over seeds 1–3, 4 crashes and 59 misses (seed 3
-passes); see "Weather".
+(`-- --weather storm`), with the same limits. Over seeds 1–3 it passes with no crashes and 45
+misses; see "Weather".
 
 To move to a new Godot release, change `GODOT_VERSION` and `GODOT_SHA512` in the workflow. The
 sum is in the release's `SHA512-SUMS.txt`.
@@ -429,12 +428,11 @@ Cove Swell) and fog (80%, fog density 0.02, grey sky). Nothing in the menus choo
 yet (issue #24 adds the forecast).
 
 **In races:** every course with four computer riders on seeds 1–3, in calm water and in the
-storm (84 rider races each): calm 2 crashes and 46 misses, storm 4 crashes and 59 misses. Most of
-the storm's extra misses are on Gull Cove Reverse (16 against 8) and Gull Cove Mirror (11
-against 3). The crashes, in both, are the riders' own (issue #66): Dax into Rock1 at 315 m on
-Gull Cove Swell, and riders colliding as they land stunts off a ramp. On Gull Cove Swell the storm
-adds no height (its swell is at the ramps' limit), and with the same seed the race is the same to
-the millimetre with and without it.
+storm (84 rider races each): no crashes in either, 44 misses in calm water and 45 in the storm.
+Before issue #66 the riders crashed in both (2 in calm water, 4 in the storm: into Rock1 on Gull
+Cove Swell after flying off a crest in a bend, and into each other landing stunts); see
+"Computer riders". On Gull Cove Swell the storm adds no height (its swell is at the ramps'
+limit), and with the same seed the race is the same to the millimetre with and without it.
 
 **Rain** (`effects/rain.gd`): 10 000 GPU particles at full strength, falling at 9 m/s plus the
 wind, emitted 9 m above the camera over 44 × 44 m, ahead of the camera by its own speed and
@@ -620,10 +618,14 @@ alone.
   from the centre line at every sample. Each buoy gives a key point 4 m past it on its marked side;
   real turns without a buoy (radius under 30 m, 35° or more) give a key point on the inside. The
   line holds each key from 12 m before to 6 m after and eases between them, then is fitted round
-  the rocks (`Course.obstacles()`: every `Rock`, radius grown by its lumps, plus 2.2 m): ten
-  rounds of averaging each sample with its neighbours 6 m either side, then pushing it back out
-  of the rocks' way, so the line bends round each rock over several meters instead of jumping
-  sideways at its edge. It also keeps a free gap per sample
+  the rocks (`Course.obstacles()`: every `Rock`, radius grown by its lumps, plus 2.2 m, and 5 m
+  more for each meter the waves' height (`WaveSet.max_height()` as the race starts) passes 1 m):
+  ten rounds of averaging each sample with its neighbours 6 m either side, then pushing it back
+  out of the rocks' way, so the line bends round each rock over several meters instead of jumping
+  sideways at its edge. The wider berth in high waves is for the crests that throw a craft into
+  the air: it can't turn there, and in a bend it flies wide. On Gull Cove Swell (1.81 m) Dax flew
+  5 m wide in a second off a crest in the bend before Rock1 and hit it on 4 seeds in 10; with the
+  margin 6.3 m there, none did. It also keeps a free gap per sample
   (walls, rocks, and at least 2.6 m on each buoy's passing side) that bounds every sideways shift a
   rider makes. Its curvature gives the speed it can be taken at. On Gull Cove it passes every buoy
   2.6–3.9 m on its marked side and runs over both ramps.
@@ -636,7 +638,10 @@ alone.
   if the line's curvature needs a lower speed than it could brake to, at 3.5 m/s², counting on the
   craft's turn rate and on 15 m/s² of sideways grip. Without the grip limit the riders entered the
   hairpin too fast, ran wide and hit the pillar after it.
-- **In the air** the rider levels the nose to 4° up for a flat landing.
+- **In the air** the rider levels the nose to 4° up for a flat landing. It tries a barrel roll
+  on a jump long enough for one (half the time), but not with another craft within 10 m
+  (`AIDriver.stunt_room`): a rolling craft can't steer, and riders rolling off a ramp side by
+  side landed in each other.
 - **Skill** (0 to 1): the throttle cap (80% at 0, full at 1), the grip it counts on (80–100%), how
   late it reacts (0.16 s at 0, 0.04 s at 1), a slow wander off the line (up to 3 m at 0), and how
   boldly it takes the turns each lap (cautious on the whole at low skill, but sometimes overcooking
