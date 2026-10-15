@@ -1,0 +1,4 @@
+# Waterline's art: every recipe under this folder builds into godot/assets/ (see pipeline/README.md).
+# Run from the repository root: uv run --project pipeline kiln build
+output = "../godot/assets"
+reports = "../build/kiln"
