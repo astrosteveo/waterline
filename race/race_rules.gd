@@ -1,7 +1,7 @@
 class_name RaceRules
 extends Resource
 ## The rules of a race: the power meter, disqualification and the start. [Race] reads them;
-## NOTES.md records the chosen values and why.
+## the wiki page Races records the chosen values and why.
 
 ## Levels on the power meter. Each buoy passed on the correct side adds one, up to this.
 @export_range(1, 10, 1) var power_levels: int = 5

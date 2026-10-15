@@ -2,7 +2,8 @@
 class_name JetSkiTuning
 extends Resource
 ## Every number that shapes how a jet ski rides. [JetSki] reads these each physics tick,
-## so they can be changed while the game runs. NOTES.md records the chosen values and why.
+## so they can be changed while the game runs. The wiki page Jet ski records the chosen values
+## and why.
 
 @export_group("Body")
 ## Craft plus rider, in kilograms.

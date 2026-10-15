@@ -23,7 +23,7 @@ const MAX_WAVES := 16
 ## horizontal amplitude, phase, wavelength.
 const STRIDE := 8
 ## Newton iterations when inverting the horizontal displacement. Each one roughly squares
-## the error; see NOTES.md for the measured accuracy.
+## the error; the wiki page Water gives the measured accuracy.
 const SOLVE_ITERATIONS := 4
 
 ## The wave trains, summed. Long swells move the jet ski; short ones add chop.
