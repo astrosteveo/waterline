@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://jetski/jetski.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/craft/petrel.glb" id="2"]
+
+[node name="Petrel" instance=ExtResource("1")]
+
+[node name="Model" parent="."]
+hull_scene = ExtResource("2")
+
+[node name="Seat" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.16, 0.41)
+
+[node name="Stern" parent="BoardingPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.7)

@@ -64,16 +64,20 @@ class Kit:
     def mesh(self, name: str, mesh: geometry.Mesh, material=None, parent=None,
              smooth_angle: float | None = None, position: Sequence[float] = (0, 0, 0)) -> bpy.types.Object:
         """An object from a `kiln.geometry.Mesh`, its origin at `position` (the mesh's
-        vertices are relative to it). With `smooth_angle` (degrees) its shading is smooth
-        across edges whose faces meet at less than that angle, sharp elsewhere."""
+        vertices are relative to it). `material` is one material, or a list with one per
+        material slot of the mesh. With `smooth_angle` (degrees) its shading is smooth across
+        edges whose faces meet at less than that angle, sharp elsewhere."""
         data = bpy.data.meshes.new(name)
         data.from_pydata([tuple(to_blender(v)) for v in mesh.vertices], [], [list(f) for f in mesh.faces])
+        if mesh.materials is not None:
+            data.polygons.foreach_set("material_index", mesh.materials)
         data.validate()
         if smooth_angle is not None:
             data.shade_smooth()
             data.set_sharp_from_angle(angle=math.radians(smooth_angle))
-        if material is not None:
-            data.materials.append(material)
+        for slot_material in (material if isinstance(material, (list, tuple)) else [material]):
+            if slot_material is not None:
+                data.materials.append(slot_material)
         obj = bpy.data.objects.new(name, data)
         obj.location = to_blender(position)
         self.collection.objects.link(obj)
@@ -90,9 +94,10 @@ class Kit:
         return obj
 
     def loft(self, name: str, sections, caps: bool = True, material=None, parent=None,
-             smooth_angle: float | None = 35.0) -> bpy.types.Object:
-        """A surface through rings of points (see `kiln.geometry.loft`)."""
-        return self.mesh(name, geometry.loft(sections, caps), material, parent, smooth_angle)
+             smooth_angle: float | None = 35.0, bands=None, cap_slot: int = 0) -> bpy.types.Object:
+        """A surface through rings of points (see `kiln.geometry.loft`); with `bands`,
+        `material` is a list with one material per slot."""
+        return self.mesh(name, geometry.loft(sections, caps, bands, cap_slot), material, parent, smooth_angle)
 
     def lathe(self, name: str, profile, segments: int = 16, material=None, parent=None,
               smooth_angle: float | None = 35.0) -> bpy.types.Object:

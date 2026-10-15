@@ -1,10 +1,12 @@
 {
-  "description": "A time-trial ghost of a craft with a hull scene: the computer rides one lap of Gull Cove on the example craft (craft/generated_hull.tscn), which sets the record; on the retry the ghost draws that craft's model with its hull scene, see-through and without shadows (hull_paint_ghost.gdshader), with the rider at the craft's Seat marker, and rides beside the player.",
+  "description": "A time-trial ghost of a craft with a hull scene: the computer rides one lap of Gull Cove as Koa on the Swordfish (craft/swordfish.tscn, a kiln hull), which sets the record; on the retry the ghost draws that craft's model with its hull scene, see-through and without shadows (hull_paint_ghost.gdshader), with the rider at the craft's Seat marker, and rides beside the player.",
   "start": {
-    "scene": "res://test/craft/race_generated_hull.tscn",
+    "scene": "res://race/race.tscn",
     "seed": 1,
     "user_data": "fresh",
     "args": [
+      "--rider",
+      "koa",
       "--mode",
       "time_trial",
       "--laps",
@@ -18,9 +20,9 @@
       "equals": [
         true,
         true,
-        "res://craft/generated_hull.tscn"
+        "res://craft/swordfish.tscn"
       ],
-      "name": "a time trial on the example craft, with no ghost yet"
+      "name": "a time trial on the Swordfish, with no ghost yet"
     },
     {
       "eval": "autopilot(player, 0.9)"
@@ -34,7 +36,7 @@
       "expect": "[time_trial.new_records['race'], Game.records.load_ghost('gull_cove').get('craft')]",
       "equals": [
         true,
-        "generated_hull_test"
+        "swordfish"
       ],
       "name": "the run sets the record and saves its ghost with the craft"
     },
@@ -47,13 +49,13 @@
       "expect": "[time_trial.ghost != null, time_trial.ghost.get_child(0).hull_scene.resource_path, time_trial.ghost.get_child(0).ghost]",
       "equals": [
         true,
-        "res://craft/hulls/generated_hull.tscn",
+        "res://assets/models/craft/swordfish.glb",
         true
       ],
       "name": "retry: the ghost draws the craft's model with its hull scene"
     },
     {
-      "expect": "[time_trial.ghost.get_child(0).get_node('Hull/Model/jetski_hull').get_surface_override_material(0).shader.resource_path, time_trial.ghost.get_child(0).get_node('Hull/Model/jetski_hull').cast_shadow, time_trial.ghost.get_child(0).get_node('Hull/Handlebar/Bar').cast_shadow]",
+      "expect": "[time_trial.ghost.get_child(0).get_node('Hull/Hull').get_surface_override_material(0).shader.resource_path, time_trial.ghost.get_child(0).get_node('Hull/Hull').cast_shadow, time_trial.ghost.get_child(0).get_node('Hull/Handlebar/Bar').cast_shadow]",
       "equals": [
         "res://jetski/model/hull_paint_ghost.gdshader",
         0,
@@ -63,7 +65,11 @@
     },
     {
       "expect": "time_trial.ghost.get_child(0).seat",
-      "approx": [0.0, 1.35, 0.4],
+      "approx": [
+        0.0,
+        1.16,
+        0.517
+      ],
       "name": "the ghost's rider sits at the craft's Seat marker"
     },
     {

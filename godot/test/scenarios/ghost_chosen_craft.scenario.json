@@ -1,5 +1,5 @@
 {
-  "description": "Issue #31's last criterion, through the real menus with fresh user data: Koa (whose own craft is the Swordfish) picks the Petrel on the craft select, sets both records on Gull Cove, and the course select then names the Petrel with Koa for both records. Racing Gull Cove again, the ghost rides the Petrel's scene, drawn as a ghost in Koa's colours, on the recorded line. The four shipped craft share res://jetski/jetski.tscn, so the Petrel's ghost looks the same as a Swordfish ghost would; time_trial_craft.scenario.json covers a craft with a model of its own.",
+  "description": "Issue #31's last criterion, through the real menus with fresh user data: Koa (whose own craft is the Swordfish) picks the Petrel on the craft select, sets both records on Gull Cove, and the course select then names the Petrel with Koa for both records. Racing Gull Cove again, the ghost rides the Petrel's scene, drawn as a ghost in Koa's colours, on the recorded line. craft_hull_time_trial.scenario.json checks that a ghost draws its craft's own hull.",
   "start": {
     "scene": "res://menus/main_menu.tscn",
     "seed": 2,
@@ -53,7 +53,7 @@
       "equals": [
         "petrel",
         "",
-        "res://jetski/jetski.tscn"
+        "res://craft/petrel.tscn"
       ],
       "name": "down moves to the Petrel, not Koa's own craft"
     },

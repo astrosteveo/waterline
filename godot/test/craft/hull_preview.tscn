@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://test/craft/hull_preview.gd" id="1"]
 [ext_resource type="Environment" uid="uid://cawbju5i13ao3" path="res://environment/day_environment.tres" id="2"]
 [ext_resource type="PackedScene" path="res://jetski/model/jetski_model.tscn" id="3"]
-[ext_resource type="PackedScene" path="res://craft/hulls/generated_hull.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://assets/models/craft/skipjack.glb" id="4"]
 
 [node name="HullPreview" type="Node3D"]
 script = ExtResource("1")
@@ -24,7 +24,7 @@ fov = 50.0
 [node name="CodeHull" parent="." instance=ExtResource("3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4)
 
-[node name="GeneratedHull" parent="." instance=ExtResource("3")]
+[node name="KilnHull" parent="." instance=ExtResource("3")]
 hull_scene = ExtResource("4")
 hull_color = Color(1, 0.45, 0.1, 1)
 trim_color = Color(0.96, 0.96, 0.96, 1)

@@ -1,9 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="PackedScene" path="res://race/race.tscn" id="1"]
-[ext_resource type="PackedScene" path="res://craft/generated_hull.tscn" id="2"]
-[ext_resource type="Resource" path="res://test/craft/generated_hull.tres" id="3"]
-
-[node name="Race" instance=ExtResource("1")]
-craft_scene = ExtResource("2")
-player_craft = ExtResource("3")

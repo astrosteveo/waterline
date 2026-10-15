@@ -62,15 +62,17 @@ at (0, 0.8, 0.4) is at (0, 0.8, 0.4) in the game.
 |---|---|
 | `k.material(name, color, roughness, metallic)` | a flat-colour material (`"#rrggbb"` or sRGB floats); imports as a StandardMaterial3D |
 | `k.box(name, size, center, bevel, bevel_segments, material, parent)` | a box, its edges rounded by `bevel` metres |
-| `k.loft(name, sections, caps, material, parent, smooth_angle)` | a surface through rings of points (hulls, tubes) |
+| `k.loft(name, sections, caps, material, parent, smooth_angle, bands, cap_slot)` | a surface through rings of points (hulls, tubes); `bands` gives each strip round the rings a material slot |
 | `k.lathe(name, profile, segments, material, parent, smooth_angle)` | a solid of revolution about Y from (radius, height) points |
-| `k.mesh(name, mesh, material, parent, smooth_angle)` | an object from any `kiln.geometry.Mesh` |
+| `k.mesh(name, mesh, material, parent, smooth_angle, position)` | an object from any `kiln.geometry.Mesh`, its origin at `position`; `material` is one material or a list, one per slot |
 | `k.marker(name, position, rotation, parent)` | a named empty; the game finds it by name (imports as a Node3D) |
 | `k.parent(child, parent)` | makes `child` move with `parent`, where it is now |
 | `k.bevel(obj, width, segments, angle)` | rounds an object's sharp edges |
 
 Recipes can also use `bpy` directly for anything the kit lacks. `kiln.geometry` builds meshes
-as plain data (`box`, `loft`, `lathe`, `ring`, `mirrored_ring`) and is tested without Blender.
+as plain data (`box`, `loft`, `lathe`, `ring`, `mirrored_ring`), moves them (`translated`,
+`rotated`, `scaled`, `merged`), gives faces material slots (`materials`, `with_material`) and
+is tested without Blender.
 
 ## Checks
 

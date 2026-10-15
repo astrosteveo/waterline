@@ -1,5 +1,5 @@
 {
-  "description": "The time-trial ghost look (JetSkiModel.ghost) on a hull scene: test/craft/hull_preview.tscn shows the code-built hull, the generated hull and the generated hull as a ghost. The ghost's hull scene meshes are drawn see-through by hull_paint_ghost.gdshader, after the water (render priority 1) and without shadows, still in the rider's colours; the other generated hull is drawn by hull_paint.gdshader with shadows. A model that gets a new colour in the frame it enters the tree is rebuilt without engine errors.",
+  "description": "The time-trial ghost look (JetSkiModel.ghost) on a hull scene: test/craft/hull_preview.tscn shows the code-built hull, the Skipjack's kiln hull and that hull as a ghost. The ghost's hull scene meshes are drawn see-through by hull_paint_ghost.gdshader, after the water (render priority 1) and without shadows, still in the rider's colours; the other kiln hull is drawn by hull_paint.gdshader with shadows. A model that gets a new colour in the frame it enters the tree is rebuilt without engine errors.",
   "start": {
     "scene": "res://test/craft/hull_preview.tscn",
     "seed": 1
@@ -7,16 +7,16 @@
   "steps": [
     "step 2",
     {
-      "expect": "[get_node('GeneratedHull/Hull/Model/jetski_hull').get_surface_override_material(0).shader.resource_path, get_node('GeneratedHull/Hull/Model/jetski_hull').cast_shadow, get_node('GeneratedHull/Hull/Handlebar/Bar').cast_shadow]",
+      "expect": "[get_node('KilnHull/Hull/Hull').get_surface_override_material(0).shader.resource_path, get_node('KilnHull/Hull/Hull').cast_shadow, get_node('KilnHull/Hull/Handlebar/Bar').cast_shadow]",
       "equals": [
         "res://jetski/model/hull_paint.gdshader",
         1,
         1
       ],
-      "name": "the generated hull is painted and casts shadows"
+      "name": "the kiln hull is painted and casts shadows"
     },
     {
-      "expect": "[get_node('GhostHull/Hull/Model/jetski_hull').get_surface_override_material(0).shader.resource_path, get_node('GhostHull/Hull/Handlebar/Bar').get_surface_override_material(0).shader.resource_path, get_node('GhostHull/Hull/Model/jetski_hull').get_surface_override_material(0).render_priority]",
+      "expect": "[get_node('GhostHull/Hull/Hull').get_surface_override_material(0).shader.resource_path, get_node('GhostHull/Hull/Handlebar/Bar').get_surface_override_material(0).shader.resource_path, get_node('GhostHull/Hull/Hull').get_surface_override_material(0).render_priority]",
       "equals": [
         "res://jetski/model/hull_paint_ghost.gdshader",
         "res://jetski/model/hull_paint_ghost.gdshader",
@@ -25,26 +25,34 @@
       "name": "the ghost's hull and handlebar are see-through and drawn after the water"
     },
     {
-      "expect": "[get_node('GhostHull/Hull/Model/jetski_hull').cast_shadow, get_node('GhostHull/Hull/Handlebar/Bar').cast_shadow, get_node('GhostHull/Rider/torso').cast_shadow]",
-      "equals": [0, 0, 0],
+      "expect": "[get_node('GhostHull/Hull/Hull').cast_shadow, get_node('GhostHull/Hull/Handlebar/Bar').cast_shadow, get_node('GhostHull/Rider/torso').cast_shadow]",
+      "equals": [
+        0,
+        0,
+        0
+      ],
       "name": "no part of the ghost casts a shadow"
     },
     {
-      "expect": "get_node('GhostHull/Hull/Model/jetski_hull').get_surface_override_material(0).get_shader_parameter('hull_color') == get_node('GhostHull').hull_color",
+      "expect": "get_node('GhostHull/Hull/Hull').get_surface_override_material(0).get_shader_parameter('hull_color') == get_node('GhostHull').hull_color",
       "name": "the ghost keeps the rider's colours"
     },
     {
       "expect": "get_node('GhostHull/Rider/torso').position - get_node('GhostHull/Rider/torso').basis.y * 0.5",
-      "approx": [0.0, 1.35, 0.4],
+      "approx": [
+        0.0,
+        1.16,
+        0.33
+      ],
       "name": "the ghost's rider sits at the seat it was given"
     },
     {
-      "eval": "[set_meta('late', ResourceLoader.load('res://jetski/model/jetski_model.tscn').instantiate()), get_meta('late').set('hull_scene', ResourceLoader.load('res://craft/hulls/generated_hull.tscn')), get_meta('late').set('position', Vector3(0, 0, 8)), add_child(get_meta('late')), get_meta('late').set('hull_color', Color(0.2, 0.7, 0.4))]",
+      "eval": "[set_meta('late', ResourceLoader.load('res://jetski/model/jetski_model.tscn').instantiate()), get_meta('late').set('hull_scene', ResourceLoader.load('res://assets/models/craft/skipjack.glb')), get_meta('late').set('position', Vector3(0, 0, 8)), add_child(get_meta('late')), get_meta('late').set('hull_color', Color(0.2, 0.7, 0.4))]",
       "name": "a model with a hull scene gets a new colour in the frame it enters the tree, as on the craft select screen, so it is rebuilt before it is drawn"
     },
     "step 2",
     {
-      "expect": "get_meta('late').get_node('Hull/Model/jetski_hull').get_surface_override_material(0).get_shader_parameter('hull_color') == Color(0.2, 0.7, 0.4)",
+      "expect": "get_meta('late').get_node('Hull/Hull').get_surface_override_material(0).get_shader_parameter('hull_color') == Color(0.2, 0.7, 0.4)",
       "name": "the rebuilt hull has the new colour, and freeing the first hull raised no engine errors"
     }
   ]

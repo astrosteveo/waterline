@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://w32uu32o88tn"
-path="res://.godot/imported/jetski_hull.glb-b7d5840de273b05ebdd5dea033270c27.scn"
+uid="uid://comjsjl77b1ao"
+path="res://.godot/imported/swordfish.glb-701ed6e254025711eb09ce0287f78fbd.scn"
 
 [deps]
 
-source_file="res://assets/generated/jetski_hull.glb"
-dest_files=["res://.godot/imported/jetski_hull.glb-b7d5840de273b05ebdd5dea033270c27.scn"]
+source_file="res://assets/models/craft/swordfish.glb"
+dest_files=["res://.godot/imported/swordfish.glb-701ed6e254025711eb09ce0287f78fbd.scn"]
 
 [params]
 

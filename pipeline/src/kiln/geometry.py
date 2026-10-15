@@ -16,10 +16,27 @@ Vec3 = tuple[float, float, float]
 
 @dataclass(frozen=True)
 class Mesh:
-    """Vertices and faces. Each face lists vertex indices counter-clockwise seen from outside."""
+    """Vertices and faces. Each face lists vertex indices counter-clockwise seen from outside.
+
+    `materials`, when given, holds a material slot for each face (0, 1, ...), so one mesh
+    can have several materials; `kiln.blender.Kit.mesh` takes a material per slot.
+    """
 
     vertices: tuple[Vec3, ...]
     faces: tuple[tuple[int, ...], ...]
+    materials: tuple[int, ...] | None = None
+
+    def __post_init__(self) -> None:
+        if self.materials is not None and len(self.materials) != len(self.faces):
+            raise ValueError(f"{len(self.materials)} material slots for {len(self.faces)} faces")
+
+    def slots(self) -> tuple[int, ...]:
+        """Each face's material slot (all 0 without `materials`)."""
+        return self.materials if self.materials is not None else (0,) * len(self.faces)
+
+    def with_material(self, slot: int) -> "Mesh":
+        """The mesh with every face in material slot `slot`."""
+        return Mesh(self.vertices, self.faces, (slot,) * len(self.faces))
 
     def triangle_count(self) -> int:
         """Triangles once every face is split into a fan."""
@@ -56,27 +73,45 @@ class Mesh:
 
     def flipped(self) -> "Mesh":
         """The same mesh with every face turned the other way."""
-        return Mesh(self.vertices, tuple(tuple(reversed(face)) for face in self.faces))
+        return Mesh(self.vertices, tuple(tuple(reversed(face)) for face in self.faces), self.materials)
 
     def outward(self) -> "Mesh":
         """The mesh with its faces turned outward, judged by the sign of its volume."""
         return self.flipped() if self.signed_volume() < 0 else self
 
     def translated(self, offset: Vec3) -> "Mesh":
-        return Mesh(tuple(_add(v, offset) for v in self.vertices), self.faces)
+        return Mesh(tuple(_add(v, offset) for v in self.vertices), self.faces, self.materials)
 
     def scaled(self, factor: Vec3) -> "Mesh":
         """Scaled per axis. A negative factor mirrors the mesh, and its faces are turned back
         outward."""
         mesh = Mesh(tuple((v[0] * factor[0], v[1] * factor[1], v[2] * factor[2])
-                          for v in self.vertices), self.faces)
+                          for v in self.vertices), self.faces, self.materials)
         return mesh.flipped() if factor[0] * factor[1] * factor[2] < 0 else mesh
+
+    def rotated(self, axis: str, degrees: float) -> "Mesh":
+        """Turned about the X, Y or Z axis through the origin (counter-clockwise looking down
+        the axis toward the origin, as Godot turns)."""
+        a = math.radians(degrees)
+        c, s = math.cos(a), math.sin(a)
+        if axis == "x":
+            turn = lambda v: (v[0], v[1] * c - v[2] * s, v[1] * s + v[2] * c)  # noqa: E731
+        elif axis == "y":
+            turn = lambda v: (v[0] * c + v[2] * s, v[1], -v[0] * s + v[2] * c)  # noqa: E731
+        elif axis == "z":
+            turn = lambda v: (v[0] * c - v[1] * s, v[0] * s + v[1] * c, v[2])  # noqa: E731
+        else:
+            raise ValueError(f"axis {axis!r} isn't x, y or z")
+        return Mesh(tuple(turn(v) for v in self.vertices), self.faces, self.materials)
 
     def merged(self, other: "Mesh") -> "Mesh":
         """Both meshes as one (their vertices aren't joined)."""
         shift = len(self.vertices)
+        materials = None
+        if self.materials is not None or other.materials is not None:
+            materials = self.slots() + other.slots()
         return Mesh(self.vertices + other.vertices,
-                    self.faces + tuple(tuple(i + shift for i in face) for face in other.faces))
+                    self.faces + tuple(tuple(i + shift for i in face) for face in other.faces), materials)
 
 
 def box(size: Vec3, center: Vec3 = (0.0, 0.0, 0.0)) -> Mesh:
@@ -89,13 +124,20 @@ def box(size: Vec3, center: Vec3 = (0.0, 0.0, 0.0)) -> Mesh:
     return Mesh(vertices, faces).outward()
 
 
-def loft(sections: Sequence[Sequence[Vec3]], caps: bool = True) -> Mesh:
+def loft(sections: Sequence[Sequence[Vec3]], caps: bool = True, bands: Sequence[int] | None = None,
+         cap_slot: int = 0) -> Mesh:
     """A surface through closed rings of points, each joined to the next with quads.
 
     Every ring has the same number of points, in the same order around it. With `caps`, the
     first and last ring are closed with a fan around their centre, so the mesh is closed;
     a ring of one point is a tip and needs no cap. The faces are turned outward.
+
+    `bands` gives a material slot for each strip along the loft: strip i runs between ring
+    points i and i + 1 (the last between the last point and the first). The caps take
+    `cap_slot`.
     """
+    if bands is not None and len(bands) != max(len(ring) for ring in sections):
+        raise ValueError("loft needs one band slot per ring point")
     if len(sections) < 2:
         raise ValueError("loft needs at least two sections")
     count = max(len(ring) for ring in sections)
@@ -107,6 +149,7 @@ def loft(sections: Sequence[Sequence[Vec3]], caps: bool = True) -> Mesh:
         starts.append(len(vertices))
         vertices.extend(tuple(map(float, p)) for p in ring)
     faces: list[tuple[int, ...]] = []
+    slots: list[int] = []
     for k in range(len(sections) - 1):
         a, b = starts[k], starts[k + 1]
         a_tip, b_tip = len(sections[k]) == 1, len(sections[k + 1]) == 1
@@ -120,6 +163,7 @@ def loft(sections: Sequence[Sequence[Vec3]], caps: bool = True) -> Mesh:
                 faces.append((a + i, a + j, b))
             else:
                 faces.append((a + i, a + j, b + j, b + i))
+            slots.append(bands[i] if bands is not None else 0)
     if caps:
         for k in (0, len(sections) - 1):
             if len(sections[k]) == count:
@@ -131,7 +175,9 @@ def loft(sections: Sequence[Sequence[Vec3]], caps: bool = True) -> Mesh:
                     faces.extend((c, s + (i + 1) % count, s + i) for i in range(count))
                 else:
                     faces.extend((c, s + i, s + (i + 1) % count) for i in range(count))
-    return Mesh(tuple(vertices), tuple(faces)).outward()
+                slots.extend([cap_slot] * count)
+    materials = tuple(slots) if bands is not None or cap_slot else None
+    return Mesh(tuple(vertices), tuple(faces), materials).outward()
 
 
 def lathe(profile: Sequence[tuple[float, float]], segments: int = 16) -> Mesh:
