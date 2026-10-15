@@ -68,11 +68,13 @@ too). It starts `test/every_course.tscn`, which races four computer riders over 
 raced with no change to the test. The scenario fails if a rider doesn't finish within 150 s of race
 time per lap, crashes, is disqualified or misses more than 3 buoys (computer races measured 0–2
 misses per rider), and on any engine error or warning. It prints each course's lap times, misses
-and crashes per rider as `game:` lines on stderr. On seed 1 every rider finishes every course, with
-2 misses at most (Marina on Gull Cove) and no crashes.
+and crashes per rider as `game:` lines on stderr. It doesn't pass on every seed: computer riders
+crash in a few races in every hundred (issue #66). Over seeds 1–3 (84 rider races), 2 crashes and
+46 misses; seeds 1 and 3 fail.
 
 `test/scenarios/every_course_storm.scenario.json` races the same courses in the storm weather
-(`-- --weather storm`), with the same limits; see "Weather" for its results.
+(`-- --weather storm`), with the same limits. Over seeds 1–3, 4 crashes and 59 misses (seed 3
+passes); see "Weather".
 
 To move to a new Godot release, change `GODOT_VERSION` and `GODOT_SHA512` in the workflow. The
 sum is in the release's `SHA512-SUMS.txt`.
@@ -426,6 +428,14 @@ in `weather/`: clear (waves at 85%, fewer clouds), overcast (115%, grey sky, ris
 Cove Swell) and fog (80%, fog density 0.02, grey sky). Nothing in the menus chooses a weather
 yet (issue #24 adds the forecast).
 
+**In races:** every course with four computer riders on seeds 1–3, in calm water and in the
+storm (84 rider races each): calm 2 crashes and 46 misses, storm 4 crashes and 59 misses. Most of
+the storm's extra misses are on Gull Cove Reverse (16 against 8) and Gull Cove Mirror (11
+against 3). The crashes, in both, are the riders' own (issue #66): Dax into Rock1 at 315 m on
+Gull Cove Swell, and riders colliding as they land stunts off a ramp. On Gull Cove Swell the storm
+adds no height (its swell is at the ramps' limit), and with the same seed the race is the same to
+the millimetre with and without it.
+
 **Rain** (`effects/rain.gd`): 10 000 GPU particles at full strength, falling at 9 m/s plus the
 wind, emitted 9 m above the camera over 44 × 44 m, ahead of the camera by its own speed and
 upwind by the drift, so the chase camera stays in the rain at full speed. Each drop is a lit
@@ -635,8 +645,12 @@ alone.
   on the wrong side (aiming for the wrong side of that buoy ignores the 2.6 m it otherwise
   keeps from buoys, but still keeps clear of rocks). Crashes come from the
   physics, as for the player: running wide into a rock, bumping in a pack.
-  The mistakes are seeded from the rider's seed plus `randi()` at the start of each race, so
-  every race differs but a gdh replay with the same `--seed` repeats.
+  The mistakes are seeded from the rider's seed plus a draw from `Race._mistake_rng`, itself
+  seeded with `randi()` first thing in `Race._ready()`, so every race differs but a gdh replay with
+  the same `--seed` repeats. Its own generator keeps anything else the race makes from changing
+  them: a weather's rain is a `GPUParticles3D`, which takes a seed from the global generator when
+  it is made, and drawn from that generator the riders' mistakes differed with and without rain.
+  Now the same seed rides the same race in any weather whose waves are the same.
 - **Traffic:** a craft within 14 m ahead and 2.5 m to the side moves the rider's target 3.5 m to
   the other side to pass it, shrinking to nothing in turns tighter than about 25 m. A craft
   alongside (within 3 m back to 4 m ahead) moves it 2.4 m away. Alongside a craft that is further
