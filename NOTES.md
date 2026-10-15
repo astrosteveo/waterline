@@ -453,15 +453,18 @@ terrain and scenery as children. `levels/gull_cove.tscn` is the first one. `Race
 spawns the racers on the starting grid and runs the race, so one race scene serves every course.
 
 - **Conditions.** The scene sets the waves (`OceanSurface.wave_set`), the sky
-  (`WorldEnvironment.environment`), the water's look (`OceanSurface.shader_overrides`) and the
-  tide (`Course.lap_levels`). A `CourseInfo` can race the scene in other conditions with
+  (`WorldEnvironment.environment`), the water's look (`OceanSurface.shader_overrides`), the
+  tide (`Course.lap_levels`), the waves per lap (`Course.lap_waves`) and the sun (its
+  `DirectionalLight3D`). A `CourseInfo` can race the scene in other conditions with
   `overrides`, a `CourseConditions` (`course/course_conditions.gd`) whose fields are each
   optional: an empty one leaves the scene's value, and its `water_overrides` are added to the
   scene's own `shader_overrides`, key by key. `Race` calls `CourseConditions.apply_to()` on the
   course after instantiating it and before adding it to the tree, so the water, sky and tide
   start that way and the racers spawn on the new waves. This comes before the race reads
-  `Course.lap_waves`, so a lap with no waves of its own keeps the overridden waves; a scene's
-  own `lap_waves` still apply on top, because `CourseConditions` has no field for them.
+  `Course.lap_waves`, so a lap with no waves of its own keeps the overridden waves, and
+  `CourseConditions.lap_waves` replaces the scene's own. The sun's light colour, energy (0
+  turns it off) and direction (toward the sun) are three more optional fields, so a night
+  version of a day course can dim the sun to moonlight (issue #54).
   `apply_to()` also works on a course
   already in the tree (the waves, sky and water change at once, and the race moves the level
   toward the new tide), so a weather resource can reuse it. Records and ghosts are kept per

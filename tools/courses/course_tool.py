@@ -37,8 +37,10 @@ A spec's "variants" entry ships the same scene in other conditions as courses of
 Each variant is a CourseInfo (<id>_<key>.course.tres, here gull_cove_swell) with its own id, so
 its records and ghost are kept apart. It points at the course's scene and menu map and sets
 the conditions it names on top of the scene's: "waves" (a WaveSet), "environment" (an
-Environment), "water" (water shader parameters, added to the spec's own "water") and
-"lap_levels". The name and conditions line default to the course's, and the menu order to the
+Environment), "water" (water shader parameters, added to the spec's own "water"),
+"lap_levels", "lap_waves" (a WaveSet path per lap, or null to keep the lap before's waves) and
+"sun" ({"color": [r, g, b], "energy": 0.7, "direction": [x, y, z]}, each optional: the light's
+colour, its energy, 0 for no sun, and the direction toward it). The name and conditions line default to the course's, and the menu order to the
 course's plus 400. Variants belong to the course as laid out: --reverse and --mirror drop them.
 
 --scene writes the course scene named in the spec and, next to it, the CourseInfo the menus
@@ -514,8 +516,27 @@ def write_variant_info(variant, path):
         fields.append("water_overrides = %s" % godot_dict(variant["water"]))
     if variant.get("lap_levels"):
         fields.append("lap_levels = PackedFloat32Array(%s)" % ", ".join("%g" % v for v in variant["lap_levels"]))
+    if variant.get("lap_waves"):
+        ext.append(("Script", "res://water/wave_set.gd", str(len(ext) + 1)))
+        script_id = ext[-1][2]
+        entries = []
+        for waves in variant["lap_waves"]:
+            if waves is None:
+                entries.append("null")
+            else:
+                ext.append(("Resource", waves, str(len(ext) + 1)))
+                entries.append('ExtResource("%s")' % ext[-1][2])
+        fields.append('lap_waves = Array[ExtResource("%s")]([%s])' % (script_id, ", ".join(entries)))
+    sun = variant.get("sun", {})
+    if "color" in sun:
+        fields.append("sun_light_color = Color(%g, %g, %g, 1)" % tuple(sun["color"][:3]))
+    if "energy" in sun:
+        fields.append("sun_light_energy = %g" % sun["energy"])
+    if "direction" in sun:
+        fields.append("sun_direction = Vector3(%g, %g, %g)" % tuple(sun["direction"]))
     if not fields:
-        sys.exit("variant %s sets no conditions: give it waves, environment, water or lap_levels" % variant["id"])
+        sys.exit("variant %s sets no conditions: give it waves, environment, water, lap_levels, lap_waves or sun"
+                 % variant["id"])
     out = ['[gd_resource type="Resource" script_class="CourseInfo" load_steps=%d format=3]' % (len(ext) + 2), ""]
     out += ['[ext_resource type="%s" path="%s" id="%s"]' % e for e in ext]
     out += ["", '[sub_resource type="Resource" id="overrides"]', 'script = ExtResource("3")'] + fields
