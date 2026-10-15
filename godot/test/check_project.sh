@@ -3,7 +3,7 @@
 # (test/check_project.gd). Fails if Godot exits non-zero or prints an error line in either
 # step, because Godot's import exits 0 even when a file fails to import or a script fails to
 # parse. CI runs this (.github/workflows/check.yml); it runs the same way locally:
-#   test/check_project.sh
+#   godot/test/check_project.sh
 # Set GODOT to the Godot binary to use (default: godot on the PATH).
 set -uo pipefail
 

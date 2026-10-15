@@ -2,12 +2,13 @@
 
 A jet ski racer in Godot 4.7 (typed GDScript, Jolt physics). The [README](README.md) says how to run
 it; the [wiki](https://github.com/astrosteveo/waterline/wiki) explains how each part works and why;
-the issues are the backlog. Read the wiki page for the part you're changing before changing it.
+the issues are the backlog. The Godot project is in `godot/` (where `res://` points); the README
+lists the other top-level folders. Read the wiki page for the part you're changing first.
 
 ## Things that are easy to break
 
 - **The waves exist twice:** `water/gerstner.gdshaderinc` (GPU) and `WaveSet.surface_point()` /
-  `sample()` (CPU). Change both or the craft floats off the drawn water. `test/water_match.tscn`
+  `sample()` (CPU). Change both or the craft floats off the drawn water. `res://test/water_match.tscn`
   checks they agree.
 - **Wave time is `Ocean.time` / `Ocean.render_time()`, never the shader's `TIME`**, which runs on
   while the game is paused or held by gdh.
@@ -24,19 +25,19 @@ the issues are the backlog. Read the wiki page for the part you're changing befo
 
 ## Checking your work
 
-- CI (`test/check_project.sh`) only checks that everything loads. Gameplay is checked by the gdh
-  scenarios in `test/scenarios/`, which need the GPU and run locally: `gdh test --project .`
-  (or `gdh scenario run --project . FILES`). Run the ones for what you changed before calling it
+- CI (`godot/test/check_project.sh`) only checks that everything loads. Gameplay is checked by the gdh
+  scenarios in `godot/test/scenarios/`, which need the GPU and run locally: `gdh test --project godot`
+  (or `gdh scenario run --project godot FILES`). Run the ones for what you changed before calling it
   done, and add a scenario for new behaviour.
 - After a change to physics, computer riders, courses or waves, run the every-course race on a few
-  seeds (`gdh live start --project . --scene res://test/every_course.tscn --seed N`, optionally
+  seeds (`gdh live start --project godot --scene res://test/every_course.tscn --seed N`, optionally
   `-- --courses id,id`; about 3 minutes a seed): no crashes, at most 3 misses a rider.
 - Look at what you changed: `gdh capture` for a scene or shader, `gdh live` to drive it.
 - gdh quirks: `eval` takes no lambdas, ternaries or class names (call statics through an
   instance); gdh holds the game with `SceneTree.paused`, so it can't show that pausing stops a
   race; `gdh live reload` doesn't hook up a newly added `_input`, so restart instead.
 - Builds need `godot-mono` (only the `.mono` export templates are installed):
-  `GODOT=/usr/bin/godot-mono gdh export --project . --preset Linux --smoke 10`, and `--preset Windows`.
+  `GODOT=/usr/bin/godot-mono gdh export --project godot --preset Linux --smoke 10`, and `--preset Windows`.
 
 ## Style
 

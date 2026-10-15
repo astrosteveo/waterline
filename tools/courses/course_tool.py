@@ -618,7 +618,7 @@ def main():
     ap.add_argument("--thumb", action="store_true", help="write the menu map next to the course scene (<scene>_map.png)")
     ap.add_argument("--reverse", action="store_true", help="lay out the course run the other way (<id>_reverse)")
     ap.add_argument("--mirror", action="store_true", help="lay out the course mirrored left to right (<id>_mirror)")
-    ap.add_argument("--project", default=os.path.join(os.path.dirname(__file__), "..", ".."))
+    ap.add_argument("--project", default=os.path.join(os.path.dirname(__file__), "..", "..", "godot"))
     args = ap.parse_args()
     spec = version_spec(json.load(open(args.spec)), args.reverse, args.mirror)
     course = Course(spec)

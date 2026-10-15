@@ -5,9 +5,10 @@ the course (through each buoy's passing side), and steers toward it with the gam
 stick (left_x) while holding the throttle, as a player would. It is a test tool: the
 computer riders in the game have their own driver.
 
-    uv run --project ~/Projects/gdh python test/tools/autodrive.py --laps 1
+    uv run --project ~/Projects/gdh python godot/test/tools/autodrive.py --laps 1
 """
 import argparse
+import os
 import json
 import math
 import sys
@@ -15,7 +16,7 @@ import sys
 from gdh.client import Session
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--project", default=".")
+ap.add_argument("--project", default=os.path.join(os.path.dirname(__file__), "..", ".."))
 ap.add_argument("--scene", default="res://race/race.tscn")
 ap.add_argument("--session", default="autodrive")
 ap.add_argument("--laps", type=int, default=1)
