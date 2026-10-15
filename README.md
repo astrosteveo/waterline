@@ -47,6 +47,8 @@ Shift, the right mouse button to look and the wheel for speed.
 | Folder | What's in it |
 |---|---|
 | `godot/` | the game: the Godot project, its scenes, scripts, assets and tests (`res://` is here) |
+| `art/` | the recipes for the game's models, which kiln builds into `godot/assets/` |
+| `pipeline/` | kiln, the asset pipeline: builds models from Python recipes in headless Blender |
 | `tools/` | the course tool and the course specs it builds into `godot/levels/` |
 | `docs/` | screenshots |
 | `build/` | exports (not in git) |
@@ -56,6 +58,8 @@ Shift, the right mouse button to look and the wheel for speed.
 - The [wiki](https://github.com/astrosteveo/waterline/wiki) explains how each part of the game
   works and why: the water, the jet ski, courses, races, computer riders, weather, testing.
 - [Issues](https://github.com/astrosteveo/waterline/issues) hold what's planned and what's broken.
-- CI checks that every script, scene and resource loads. The gameplay scenarios in
+- Models are built from recipes in `art/` with kiln (`uv run --project pipeline kiln build`,
+  which needs Blender); see [pipeline/README.md](pipeline/README.md).
+- CI checks that every script, scene and resource loads, and runs kiln's tests. The gameplay scenarios in
   `godot/test/scenarios/` need a GPU and run locally with [gdh](https://github.com/astrosteveo/gdh):
   `gdh test --project godot`. See the wiki's [Testing](https://github.com/astrosteveo/waterline/wiki/Testing) page.

@@ -1,7 +1,7 @@
 name: Check
 
 # Imports the project headless with the Godot release it uses, then loads every script, scene
-# and resource (godot/test/check_project.sh). It fails on a script parse or type error, a file that
+# and resource (godot/test/check_project.sh). Also runs kiln's tests (pipeline/tests). It fails on a script parse or type error, a file that
 # fails to import, and a scene or resource that refers to a missing file. The gdh scenarios in
 # godot/test/scenarios/ need a GPU, so they run locally, not here.
 
@@ -63,3 +63,17 @@ jobs:
 
       - name: Import and load the project
         run: GODOT="$HOME/godot/godot" godot/test/check_project.sh
+
+  kiln:
+    name: Kiln tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The runner has no Blender, so the tests that build in Blender skip themselves.
+      - name: Run the tests
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet pytest
+          PYTHONPATH=pipeline/src "$RUNNER_TEMP/venv/bin/python" -m pytest pipeline/tests

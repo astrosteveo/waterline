@@ -1,0 +1,4 @@
+# The example project's builds
+examples/*/out/
+examples/*/reports/
+examples/*/kiln.lock.json

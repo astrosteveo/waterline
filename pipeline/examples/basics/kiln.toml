@@ -1,0 +1,3 @@
+# An example kiln project: `kiln build` here builds every recipe below into out/.
+output = "out"
+reports = "reports"
