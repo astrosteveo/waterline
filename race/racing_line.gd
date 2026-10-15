@@ -12,6 +12,8 @@ var clearance: float = 4.0
 var wall_margin: float = 3.0
 ## Distance kept from rocks, past their radius.
 var obstacle_margin: float = 2.2
+## More distance kept from rocks for each meter the waves' height passes 1 m.
+var high_wave_margin: float = 5.0
 ## Least distance from a buoy's centre on its passing side, near the buoy.
 var buoy_margin: float = 2.6
 
@@ -36,6 +38,9 @@ var _key_laterals := PackedFloat32Array()
 func _init(course: Course, p_clearance: float = 4.0) -> void:
 	_course = course
 	clearance = p_clearance
+	# High waves throw a craft off the crests, where it can't turn and flies wide in a bend:
+	# keep further from the rocks.
+	obstacle_margin += maxf(Ocean.wave_set.max_height() - 1.0, 0.0) * high_wave_margin
 	_build()
 
 
