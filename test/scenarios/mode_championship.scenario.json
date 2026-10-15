@@ -1,5 +1,5 @@
 {
-  "description": "Championship: from the main menu, the cup select (the Coast Cup holds today's four courses at today's skill; the Pro Cup, chosen here, makes the computer riders sharper and races Gull Cove Swell in place of Gull Cove), then four one-lap races on the cup's courses in turn, points for each place (10, 6, 3, 1), standings under the cup's name after each race, the champion at the end, then back to the main menu.",
+  "description": "Championship: from the main menu, the cup select (the Coast Cup holds today's four courses at today's skill; the Pro Cup, chosen here, makes the computer riders sharper and races Gull Cove Swell in place of Gull Cove), each race's weather drawn from the championship's seed and shown on the craft select and the standings, then four one-lap races on the cup's courses in turn, points for each place (10, 6, 3, 1), standings under the cup's name after each race, the champion at the end, then back to the main menu.",
   "start": {
     "scene": "res://menus/main_menu.tscn",
     "seed": 4,
@@ -65,6 +65,29 @@
       "until": "scene.name == 'CraftSelect'",
       "max": 60
     },
+    {
+      "expect": "[Game.championship.forecasts[0].describe(3), Game.championship.forecasts[1].describe(3), Game.championship.forecasts[2].describe(3), Game.championship.forecasts[3].describe(3)]",
+      "equals": [
+        "FOG, THEN STORM ON LAP 2",
+        "CLEAR",
+        "CLEAR, THEN OVERCAST ON LAP 2",
+        "STORM, THEN FOG ON LAP 3"
+      ],
+      "name": "seed 4 gives these forecasts"
+    },
+    {
+      "expect": "[Game.championship.draw_forecasts(Game.championship.courses, Game.championship.weather_seed, 3)[0].describe(3), Game.championship.draw_forecasts(Game.championship.courses, Game.championship.weather_seed, 3)[3].describe(3)]",
+      "equals": [
+        "FOG, THEN STORM ON LAP 2",
+        "STORM, THEN FOG ON LAP 3"
+      ],
+      "name": "the same seed draws the same forecasts again"
+    },
+    {
+      "expect": "scene.find_child('Forecast', true, false).text",
+      "equals": "FORECAST: FOG, THEN STORM ON LAP 2",
+      "name": "the craft select shows race 1's forecast"
+    },
     "step 3",
     {
       "step": 3,
@@ -76,12 +99,14 @@
     },
     "step 3",
     {
-      "expect": "[Game.course.id, Ocean.wave_set.resource_path]",
+      "expect": "[Game.course.id, scene.forecast == Game.championship.forecasts[0], scene.weather.weather.id, snappedf(Ocean.wave_set.max_height(), 0.001)]",
       "equals": [
         "gull_cove_swell",
-        "res://water/presets/cove_swell.tres"
+        true,
+        "fog",
+        1.45
       ],
-      "name": "race 1 is on Gull Cove Swell, on the swell"
+      "name": "race 1 is on Gull Cove Swell's swell, in its forecast weather"
     },
     {
       "expect": "[scene.racers[1].craft.get_node('AIDriver').skill, scene.racers[2].craft.get_node('AIDriver').skill, scene.racers[3].craft.get_node('AIDriver').skill]",
@@ -132,6 +157,14 @@
       "name": "the standings show the cup's name"
     },
     {
+      "expect": "[scene.find_child('Forecast', true, false).text, scene.find_child('ChangeCraft', true, false) != null]",
+      "equals": [
+        "FORECAST: CLEAR",
+        true
+      ],
+      "name": "the standings show race 2's forecast and offer CHANGE CRAFT"
+    },
+    {
       "expect": "Game.championship.points['Marina'] + Game.championship.points['Koa'] + Game.championship.points['Ines'] + Game.championship.points['Dax']",
       "equals": 20,
       "name": "20 points handed out per race"
@@ -149,6 +182,10 @@
       "expect": "scene.course.course_name",
       "equals": "Whitecap Point",
       "name": "race 2 is on Whitecap Point"
+    },
+    {
+      "expect": "scene.forecast == Game.championship.forecasts[1]",
+      "name": "race 2 runs in its forecast weather"
     },
     {
       "eval": "scene.autopilot(scene.player, 1.0)"

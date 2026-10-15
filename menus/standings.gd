@@ -1,7 +1,8 @@
 class_name Standings
 extends Node3D
 ## The championship standings after a race, under the cup's name: each rider's points from
-## that race and in all, best first, then the next course, or the champion after the last race.
+## that race and in all, best first, then the next course and its forecast, with a choice of
+## another craft for it, or the champion after the last race.
 
 var _next: Button
 
@@ -80,6 +81,10 @@ func _build_ui() -> void:
 		var next := MenuStyle.label("NEXT: %s" % champ.current_course().display_name.to_upper(), 34, MenuStyle.CYAN)
 		next.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		column.add_child(next)
+		var weather := MenuStyle.label("FORECAST: %s" % CraftSelect.forecast_text(champ), 30, MenuStyle.WHITE)
+		weather.name = "Forecast"
+		weather.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		column.add_child(weather)
 	var buttons := HBoxContainer.new()
 	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 	buttons.add_theme_constant_override(&"separation", 40)
@@ -94,6 +99,10 @@ func _build_ui() -> void:
 		_next.name = "NextRace"
 		_next.pressed.connect(Game.next_championship_race)
 		buttons.add_child(_next)
+		var craft := MenuStyle.button("CHANGE CRAFT")
+		craft.name = "ChangeCraft"
+		craft.pressed.connect(Game.change_craft)
+		buttons.add_child(craft)
 		var quit := MenuStyle.button("QUIT")
 		quit.name = "Quit"
 		quit.pressed.connect(Game.goto_main_menu)

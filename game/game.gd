@@ -61,6 +61,9 @@ var weathers: Array[Weather] = find_weathers(WEATHERS_DIR)
 ## The weather for the next race, or null for the course's own conditions. Time trials and
 ## stunt runs don't use it. `-- --weather` replaces it.
 var forecast: Forecast
+## The weather chosen for quick races on the course select screen, or null for a random one
+## from the course's weathers.
+var quick_weather: Weather
 ## The mode being played.
 var mode: Mode = Mode.QUICK_RACE
 ## True once the player has picked a mode from the main menu, so the menu can refocus it.
@@ -182,6 +185,11 @@ func course_named(id: String) -> CourseInfo:
 	return null
 
 
+## The weathers a race on [param info] can have: its own list, or every weather.
+func weathers_for(info: CourseInfo) -> Array[Weather]:
+	return info.weathers if info != null and not info.weathers.is_empty() else weathers
+
+
 ## The weather with [param id] (any case), or null.
 func weather_named(id: String) -> Weather:
 	for weather in weathers:
@@ -217,12 +225,15 @@ func start_mode(new_mode: Mode) -> void:
 	mode = new_mode
 	mode_chosen = true
 	championship = null
+	forecast = null
 	_change(CUP_SELECT if mode == Mode.CHAMPIONSHIP else RIDER_SELECT)
 
 
-## The cup select screen chose [param info]: the rider select comes next.
+## The cup select screen chose [param info]: the rider select comes next. The championship
+## starts here, so its forecasts are drawn and the craft select can show the first race's.
 func cup_chosen(info: CupInfo) -> void:
 	cup = info
+	championship = Championship.new(null, riders, cup.courses, cup, randi())
 	_change(RIDER_SELECT)
 
 
@@ -235,22 +246,34 @@ func rider_chosen(rider: RiderProfile) -> void:
 
 
 ## The craft select screen chose [param craft]: the course select comes next, or in a
-## championship the cup's first race.
+## championship the next race (the first, or the next after the standings).
 func craft_chosen(craft: CraftProfile) -> void:
 	player_craft = craft
 	if mode == Mode.CHAMPIONSHIP:
-		if cup == null:
-			cup = cups[0]
-		championship = Championship.new(player_rider, riders, cup.courses, cup)
-		course = championship.current_course()
-		_change(RACE)
+		if championship == null:
+			_start_championship()
+		if not championship.is_under_way():
+			championship.player = player_rider
+		next_championship_race()
 	else:
 		_change(COURSE_SELECT)
 
 
-## The course select screen chose [param info].
+# Starts a championship in the cup chosen, or the first cup, for one begun past the cup
+# select, as tests do.
+func _start_championship() -> void:
+	if cup == null:
+		cup = cups[0]
+	championship = Championship.new(player_rider, riders, cup.courses, cup, randi())
+
+
+## The course select screen chose [param info]. A quick race gets the weather chosen there,
+## or one drawn from the course's weathers.
 func course_chosen(info: CourseInfo) -> void:
 	course = info
+	forecast = null
+	if mode == Mode.QUICK_RACE:
+		forecast = Forecast.new(quick_weather) if quick_weather != null else Forecast.pick(weathers_for(info), randi(), 3)
 	_change(RACE)
 
 
@@ -265,7 +288,22 @@ func next_championship_race() -> void:
 		goto_main_menu()
 		return
 	course = championship.current_course()
+	forecast = championship.current_forecast()
 	_change(RACE)
+
+
+## From the standings: choose another craft for the next race.
+func change_craft() -> void:
+	_change(CRAFT_SELECT)
+
+
+## Back from the craft select: the standings between championship races, else the rider
+## select.
+func back_from_craft_select() -> void:
+	if mode == Mode.CHAMPIONSHIP and championship != null and championship.is_under_way():
+		goto_standings()
+	else:
+		goto_rider_select()
 
 
 func goto_rider_select() -> void:
@@ -290,6 +328,7 @@ func goto_course_select() -> void:
 
 func goto_main_menu() -> void:
 	championship = null
+	forecast = null
 	_change(MAIN_MENU)
 
 

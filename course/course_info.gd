@@ -18,3 +18,6 @@ extends Resource
 ## for the scene's own. Several courses can share a scene this way, each with its own
 ## [member id], so each keeps its own records and ghost.
 @export var overrides: CourseConditions
+## The weathers a race here can have: a championship's forecast and a random quick race draw
+## from them. Empty: every weather in [member Game.weathers].
+@export var weathers: Array[Weather] = []

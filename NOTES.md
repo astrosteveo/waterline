@@ -424,8 +424,21 @@ forecasts, so records and ghosts are always set on the course's own water. The f
 in `weather/`: clear (waves at 85%, fewer clouds), overcast (115%, grey sky, rising wind), storm
 (130%, dark grey sky, no sun disc, rain, 14 m/s wind, darker water; within the limit that is
 130% on Gull Cove and Lantern Harbor, 121% on Ebb Reef, 104% on Whitecap Point and 100% on Gull
-Cove Swell) and fog (80%, fog density 0.02, grey sky). Nothing in the menus chooses a weather
-yet (issue #24 adds the forecast).
+Cove Swell) and fog (80%, fog density 0.02, grey sky).
+
+**Forecasts** (issue #24): a course lists the weathers it can have (`CourseInfo.weathers`, the
+course tool's "weathers"; empty: every weather, as on every course today). A championship draws
+each race's forecast as the cup is chosen (`Championship.draw_forecasts`: `Forecast.pick` from
+the course's weathers, seeded with `hash([weather_seed, race])`, half of them changing weather at
+a lap), so the craft select can show race 1's ("RACE 1: GULL COVE SWELL / FORECAST: FOG, THEN
+STORM ON LAP 2", in a panel under the list) and the standings the next race's, with CHANGE CRAFT
+between NEXT RACE and QUIT. A craft chosen between races goes into the next race, and backing
+out returns to the standings. `Game.next_championship_race` sets `Game.forecast`, which the race
+follows. In a quick race the course select's WEATHER button (left and right, or a click, which
+leaves the focus on the list) chooses random or one of the course's weathers
+(`Game.quick_weather`); random draws a forecast, with a chance of a change, as a championship
+does. `mode_championship` checks seed 4's forecasts and that drawing them again from the same
+seed gives the same; `quick_race_weather` checks the choice and that the race follows it.
 
 **In races:** every course with four computer riders on seeds 1–3, in calm water and in the
 storm (84 rider races each): no crashes in either, 44 misses in calm water and 45 in the storm.
@@ -1087,7 +1100,7 @@ id, name, conditions line, scene), the cups (`CupInfo`), the chosen rider, cours
 the championship under way and the records, and changes scenes: main menu → (in a championship,
 cup select →) rider select → craft select → course select (or the championship's next course) →
 race → results → back. Each screen calls Game (`start_mode`, `cup_chosen`, `rider_chosen`,
-`craft_chosen`, `course_chosen`, `goto_standings`,
+`craft_chosen`, `course_chosen`, `goto_standings`, `change_craft`,
 `next_championship_race`, `goto_main_menu`...), so screens don't know about each other.
 ui_cancel goes back a screen.
 The course select's list holds any number of courses: up to seven show whole, and with more it
@@ -1109,7 +1122,7 @@ line for tests.
   1.0, Ines 0.9, Dax 0.8), so it is rougher as well as faster. Then each course of
   the cup in turn, points 10/6/3/1 by place (none when disqualified), standings after each race
   under the cup's name (`menus/standings.tscn`: this race's points and the totals, then the
-  next course), the champion after the last; equal points go to the better place in the last
+  next course and its forecast, with CHANGE CRAFT for it; see "Weather"), the champion after the last; equal points go to the better place in the last
   race. The results screen adds a POINTS column and CONTINUE records the order as it stands
   (riders still out are placed where they are). The original needed a points total to go on;
   this one always runs every race of the cup, so a bad race isn't the end. Back from the rider

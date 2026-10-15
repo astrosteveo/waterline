@@ -1,7 +1,8 @@
 class_name CourseSelect
 extends Node3D
 ## The course select screen: the courses down the left; the focused course's map,
-## conditions and records on the right. Confirming starts the race there.
+## conditions and records on the right. Confirming starts the race there. In a quick race, left
+## and right (or clicking it) choose the weather: random, or one of the focused course's.
 
 var selected: CourseInfo
 
@@ -10,6 +11,8 @@ var _name: Label
 var _conditions: Label
 var _map: TextureRect
 var _records: Label
+## The quick race's weather choice, or null outside quick races.
+var _weather: Button
 
 
 func _ready() -> void:
@@ -25,6 +28,29 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		Game.goto_craft_select()
+
+
+# Left and right step the weather. Caught before the GUI, which would take them as focus moves.
+func _input(event: InputEvent) -> void:
+	if _weather != null and (event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"ui_right")):
+		get_viewport().set_input_as_handled()
+		cycle_weather(-1 if event.is_action_pressed(&"ui_left") else 1)
+
+
+## Steps the quick race's weather by [param step] through random and the selected course's
+## weathers ([method Game.weathers_for]).
+func cycle_weather(step: int) -> void:
+	var choices: Array = [null]
+	choices.append_array(Game.weathers_for(selected))
+	Game.quick_weather = choices[posmod(choices.find(Game.quick_weather) + step, choices.size())]
+	_show_weather()
+
+
+func _show_weather() -> void:
+	if _weather == null:
+		return
+	var weather := Game.quick_weather
+	_weather.text = "WEATHER:  < %s >" % (weather.display_name.to_upper() if weather != null else "RANDOM")
 
 
 ## Shows [param info]: its map, conditions and records, each with the rider and craft that set
@@ -47,6 +73,10 @@ func select(info: CourseInfo) -> void:
 					_credit(records.best_stunt_rider(info.id), records.best_stunt_craft(info.id))]
 		_:
 			_records.text = ""
+	# A weather this course can't have goes back to random.
+	if Game.quick_weather != null and not Game.weathers_for(info).has(Game.quick_weather):
+		Game.quick_weather = null
+	_show_weather()
 
 
 ## Who set a record: "  (RIDER, CRAFT)" for [param rider] on the craft with the id
@@ -150,8 +180,18 @@ func _build_ui() -> void:
 	# from a course with records to one without.
 	_records.custom_minimum_size = Vector2(640, 0)
 	column.add_child(_records)
+	if Game.mode == Game.Mode.QUICK_RACE:
+		_weather = MenuStyle.button("", 30, Vector2(0, 56))
+		_weather.name = "Weather"
+		# Clicking it steps the weather without taking the focus from the course list.
+		_weather.focus_mode = Control.FOCUS_NONE
+		_weather.pressed.connect(cycle_weather.bind(1))
+		column.add_child(_weather)
 
-	var hint := MenuStyle.label("UP / DOWN: CHOOSE     ENTER / A: RACE     ESC / B: BACK", 28, MenuStyle.DIM)
+	var hint_text := "UP / DOWN: CHOOSE     ENTER / A: RACE     ESC / B: BACK"
+	if _weather != null:
+		hint_text = "UP / DOWN: CHOOSE     LEFT / RIGHT: WEATHER     ENTER / A: RACE     ESC / B: BACK"
+	var hint := MenuStyle.label(hint_text, 28, MenuStyle.DIM)
 	root.add_child(hint)
 	hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	hint.grow_horizontal = Control.GROW_DIRECTION_BOTH
