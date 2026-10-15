@@ -5,8 +5,9 @@ extends CraftShowcase
 ## stats on the right. The craft in [member Game.player_craft] has the focus first: the
 ## rider's default craft after the rider select, the craft chosen here when coming back from
 ## the course select. Confirming hands the craft to [method Game.craft_chosen], which opens
-## the course select (or the championship's first race); backing out returns to the rider
-## select.
+## the course select (or the championship's next race); backing out returns to the rider
+## select, or between championship races to the standings. In a championship it shows the
+## next race's course and forecast.
 
 ## Emitted when the player confirms a craft.
 signal craft_chosen(craft: CraftProfile)
@@ -55,11 +56,25 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		cancelled.emit()
-		Game.goto_rider_select()
+		Game.back_from_craft_select()
 
 
 func _build_ui() -> void:
 	var root := _add_ui("CHOOSE YOUR CRAFT", "UP / DOWN: CHOOSE     ENTER / A: SELECT     ESC / B: BACK")
+	var champ := Game.championship
+	if Game.mode == Game.Mode.CHAMPIONSHIP and champ != null and not champ.is_over():
+		# Under the list: the race the craft is for, and its weather.
+		var panel := MenuStyle.panel(36, 20)
+		panel.name = "NextRace"
+		root.add_child(panel)
+		panel.position = Vector2(72, 700)
+		var lines := VBoxContainer.new()
+		panel.add_child(lines)
+		lines.add_child(MenuStyle.label("RACE %d: %s" % [champ.race_index + 1, champ.current_course().display_name.to_upper()],
+				34, MenuStyle.YELLOW))
+		var forecast := MenuStyle.label("FORECAST: %s" % forecast_text(champ), 30, MenuStyle.WHITE)
+		forecast.name = "Forecast"
+		lines.add_child(forecast)
 	for craft in Game.crafts:
 		var button := _add_choice(root, craft.display_name.to_upper(), craft.id)
 		button.focus_entered.connect(select.bind(craft))
@@ -81,3 +96,9 @@ func _build_ui() -> void:
 	column.add_child(_own)
 	for i in CraftProfile.STATS.size():
 		_bars.append(_add_stat_row(column, CraftProfile.STAT_LABELS[i]))
+
+
+## The weather of [param champ]'s next race: "CLEAR, THEN STORM ON LAP 2".
+static func forecast_text(champ: Championship) -> String:
+	var forecast := champ.current_forecast()
+	return forecast.describe(champ.laps) if forecast != null else "AS USUAL"

@@ -43,9 +43,13 @@ Environment), "water" (water shader parameters, added to the spec's own "water")
 colour, its energy, 0 for no sun, and the direction toward it). The name and conditions line default to the course's, and the menu order to the
 course's plus 400. Variants belong to the course as laid out: --reverse and --mirror drop them.
 
+A spec's "weathers" entry (["clear", "storm"]) lists the weathers a race on the course can have,
+by id (weather/<id>.weather.tres); without it, any weather. Variants take the course's unless
+they give their own.
+
 --scene writes the course scene named in the spec and, next to it, the CourseInfo the menus
-list (<id>.course.tres: menu order, id, name, conditions line, scene and menu map), and each
-variant's CourseInfo. They are overwritten: changes made to them in the editor are lost.
+list (<id>.course.tres: menu order, id, name, conditions line, scene, menu map and weathers),
+and each variant's CourseInfo. They are overwritten: changes made to them in the editor are lost.
 Needs numpy and Pillow.
 """
 import argparse
@@ -455,20 +459,38 @@ def thumb_path(spec, project):
 
 
 def write_info(spec, path):
-    """The CourseInfo resource the menus list: menu order, id, name, conditions, scene and menu map."""
-    out = ['[gd_resource type="Resource" script_class="CourseInfo" load_steps=3 format=3]', '',
-           '[ext_resource type="Script" path="res://course/course_info.gd" id="1"]',
-           '[ext_resource type="Texture2D" path="res://%s" id="2"]' % thumb_path(spec, "").lstrip("/"), '',
-           '[resource]',
-           'script = ExtResource("1")',
-           'order = %d' % spec.get("order", 0),
-           'id = %s' % godot_string(spec["id"]),
-           'display_name = %s' % godot_string(spec["name"]),
-           'conditions = %s' % godot_string(spec["conditions"]),
-           'scene = %s' % godot_string("res://" + spec["scene"]),
-           'map = ExtResource("2")', '']
+    """The CourseInfo resource the menus list: menu order, id, name, conditions, scene, menu map
+    and weathers."""
+    ext = [("Script", "res://course/course_info.gd", "1"),
+           ("Texture2D", "res://" + thumb_path(spec, "").lstrip("/"), "2")]
+    weathers = weathers_field(spec, ext)
+    out = ['[gd_resource type="Resource" script_class="CourseInfo" load_steps=%d format=3]' % (len(ext) + 1), '']
+    out += ['[ext_resource type="%s" path="%s" id="%s"]' % e for e in ext]
+    out += ['',
+            '[resource]',
+            'script = ExtResource("1")',
+            'order = %d' % spec.get("order", 0),
+            'id = %s' % godot_string(spec["id"]),
+            'display_name = %s' % godot_string(spec["name"]),
+            'conditions = %s' % godot_string(spec["conditions"]),
+            'scene = %s' % godot_string("res://" + spec["scene"]),
+            'map = ExtResource("2")'] + weathers + ['']
     with open(path, "w") as f:
         f.write("\n".join(out))
+
+
+def weathers_field(spec, ext):
+    """The CourseInfo's weathers line for the spec's "weathers" ids, adding the resources it
+    needs to ext; no line without them."""
+    if not spec.get("weathers"):
+        return []
+    ext.append(("Script", "res://weather/weather.gd", str(len(ext) + 1)))
+    script_id = ext[-1][2]
+    entries = []
+    for weather in spec["weathers"]:
+        ext.append(("Resource", "res://weather/%s.weather.tres" % weather, str(len(ext) + 1)))
+        entries.append('ExtResource("%s")' % ext[-1][2])
+    return ['weathers = Array[ExtResource("%s")]([%s])' % (script_id, ", ".join(entries))]
 
 
 def godot_dict(water):
@@ -497,6 +519,7 @@ def variant_specs(spec):
         v.setdefault("name", "%s %s" % (spec["name"], key.replace("_", " ").title()))
         v.setdefault("order", spec.get("order", 0) + 400)
         v.setdefault("conditions", spec["conditions"])
+        v.setdefault("weathers", spec.get("weathers", []))
         v["scene"] = spec["scene"]
         out.append(v)
     return out
@@ -534,6 +557,7 @@ def write_variant_info(variant, path):
         fields.append("sun_light_energy = %g" % sun["energy"])
     if "direction" in sun:
         fields.append("sun_direction = Vector3(%g, %g, %g)" % tuple(sun["direction"]))
+    weathers = weathers_field(variant, ext)
     if not fields:
         sys.exit("variant %s sets no conditions: give it waves, environment, water, lap_levels, lap_waves or sun"
                  % variant["id"])
@@ -548,7 +572,7 @@ def write_variant_info(variant, path):
             "conditions = %s" % godot_string(variant["conditions"]),
             "scene = %s" % godot_string("res://" + variant["scene"]),
             'map = ExtResource("2")',
-            'overrides = SubResource("overrides")', ""]
+            'overrides = SubResource("overrides")'] + weathers + [""]
     with open(path, "w") as f:
         f.write("\n".join(out))
 

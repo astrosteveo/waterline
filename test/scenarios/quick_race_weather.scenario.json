@@ -1,0 +1,26 @@
+{
+  "description": "Issue #24: in a quick race the course select chooses the weather. It starts at RANDOM; right steps through the course's weathers (clear, overcast, storm, fog) and back to random, left steps back, and clicking the weather button steps on without taking the focus from the course list. Racing then starts in the chosen weather, the whole race through.",
+  "start": {"scene": "res://menus/course_select.tscn", "seed": 1, "user_data": "fresh"},
+  "steps": [
+    "step 5",
+    {"expect": "[Game.quick_weather == null, scene.find_child('Weather', true, false).text]", "equals": [true, "WEATHER:  < RANDOM >"], "name": "random to begin with"},
+    {"step": 3, "tap": "ui_right"},
+    {"step": 3, "tap": "ui_right"},
+    {"step": 3, "tap": "ui_right"},
+    {"expect": "[Game.quick_weather.id, scene.find_child('Weather', true, false).text, get_viewport().gui_get_focus_owner().name]", "equals": ["storm", "WEATHER:  < STORM >", "gull_cove"], "name": "right three times: storm, and the course keeps the focus"},
+    {"step": 3, "tap": "ui_right"},
+    {"step": 3, "tap": "ui_right"},
+    {"expect": "Game.quick_weather == null", "name": "past fog, back to random"},
+    {"step": 3, "tap": "ui_left"},
+    {"expect": "Game.quick_weather.id", "equals": "fog", "name": "left from random: fog"},
+    {"step": 3, "click_text": "WEATHER:  < FOG >"},
+    {"expect": "[Game.quick_weather == null, get_viewport().gui_get_focus_owner().name]", "equals": [true, "gull_cove"], "name": "clicking steps on, the focus stays on the list"},
+    {"step": 3, "tap": "ui_left"},
+    {"step": 3, "tap": "ui_left"},
+    {"expect": "Game.quick_weather.id", "equals": "storm"},
+    {"step": 3, "tap": "ui_accept"},
+    {"until": "scene.name == 'Race'", "max": 120, "name": "racing starts the race"},
+    "step 3",
+    {"expect": "[scene.forecast.start.id, scene.forecast.changes_in(scene.laps), scene.weather.weather.id, scene.weather.rain.strength]", "equals": ["storm", false, "storm", 1.0], "name": "the race is in the storm all the way"}
+  ]
+}
