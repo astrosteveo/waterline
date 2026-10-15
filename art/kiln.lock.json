@@ -1,0 +1,46 @@
+{
+  "models/craft/petrel": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "c5bee050cc934bee2fe0c896293ea846679785f23a965c74b10ebbd4a84328ac",
+    "output": "../godot/assets/models/craft/petrel.glb",
+    "size": [
+      1.11975,
+      1.064,
+      3.02
+    ],
+    "triangles": 1808
+  },
+  "models/craft/skipjack": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "b9f60d11f650112fc570dda6292e1ec4a05dd5000e9e713d8770ac70b22fb393",
+    "output": "../godot/assets/models/craft/skipjack.glb",
+    "size": [
+      1.19998,
+      1.064,
+      2.84
+    ],
+    "triangles": 1808
+  },
+  "models/craft/swordfish": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "332f0d13c1c05bc05e435283f22d8b8c541c39f3d783fb2ffd2a0d69907357a3",
+    "output": "../godot/assets/models/craft/swordfish.glb",
+    "size": [
+      1.03988,
+      1.064,
+      3.32
+    ],
+    "triangles": 1808
+  },
+  "models/craft/tradewind": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "1fd7feed66c37c5ea0566ba1969a0d68d235c8a9d12260007b5b6f461b71cdfb",
+    "output": "../godot/assets/models/craft/tradewind.glb",
+    "size": [
+      1.13988,
+      1.064,
+      3.07
+    ],
+    "triangles": 1808
+  }
+}

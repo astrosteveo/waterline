@@ -1,10 +1,10 @@
 extends Node3D
-## Shows the code-built hull in the default colours, the generated hull
-## (craft/hulls/generated_hull.tscn) in Dax's hull colours, and the generated hull as a
-## time-trial ghost, for screenshots and the craft_hull_ghost scenario. Each model with a hull
+## Shows the code-built hull in the default colours, the Skipjack's kiln hull
+## (assets/models/craft/skipjack.glb) in Dax's hull colours, and that hull as a time-trial
+## ghost, for screenshots and the craft_hull_ghost scenario. Each model with a hull
 ## scene sits its rider at the Seat marker of [member craft], as [JetSki] would.
 
-@export var craft: PackedScene = preload("res://craft/generated_hull.tscn")
+@export var craft: PackedScene = preload("res://craft/skipjack.tscn")
 
 
 func _ready() -> void:

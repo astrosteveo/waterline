@@ -1,7 +1,7 @@
 {
-  "description": "A craft whose JetSkiModel draws a hull scene (craft/generated_hull.tscn, the assetgen hull in craft/hulls/generated_hull.tscn): the rider sits at the craft's Seat marker, holds the Handlebar marker, which turns with the steering, and stands on the FootLeft and FootRight markers; the hull takes the rider's three hull colours; the handstand holds the bars; and a thrown rider climbs back on to the Seat marker.",
+  "description": "A craft whose JetSkiModel draws a hull scene (Koa's Swordfish, craft/swordfish.tscn, whose hull is kiln's assets/models/craft/swordfish.glb): the rider sits at the craft's Seat marker, holds the Handlebar marker, which turns with the steering, and stands on the FootLeft and FootRight markers; the hull takes the rider's three hull colours; the handstand holds the bars; and a thrown rider climbs back on to the Seat marker.",
   "start": {
-    "scene": "res://test/craft/race_generated_hull.tscn",
+    "scene": "res://race/race.tscn",
     "seed": 1,
     "args": [
       "--no-opponents",
@@ -14,19 +14,27 @@
     {
       "expect": "[player.craft.get_node('Model').hull_scene.resource_path, player.display_name]",
       "equals": [
-        "res://craft/hulls/generated_hull.tscn",
+        "res://assets/models/craft/swordfish.glb",
         "Koa"
       ],
-      "name": "Koa rides the craft with the generated hull"
+      "name": "Koa rides the Swordfish and its hull"
     },
     {
       "expect": "player.craft.get_node('Model').seat",
-      "approx": [0.0, 1.35, 0.4],
+      "approx": [
+        0.0,
+        1.16,
+        0.517
+      ],
       "name": "the model's seat is the craft's Seat marker"
     },
     {
       "expect": "player.craft.get_node('Model/Rider/torso').position - player.craft.get_node('Model/Rider/torso').basis.y * 0.5",
-      "approx": [0.0, 1.35, 0.4],
+      "approx": [
+        0.0,
+        1.16,
+        0.517
+      ],
       "name": "the seated rider's pelvis is at the seat"
     },
     {
@@ -40,7 +48,7 @@
       "name": "the feet are on the FootLeft and FootRight markers"
     },
     {
-      "expect": "[player.craft.get_node('Model/Hull/Model/jetski_hull').get_surface_override_material(0).shader.resource_path, player.craft.get_node('Model/Hull/Model/jetski_hull').get_surface_override_material(0).get_shader_parameter('hull_color') == Game.rider_named('koa').hull_color, player.craft.get_node('Model/Hull/Model/jetski_hull').get_surface_override_material(0).get_shader_parameter('trim_color') == Game.rider_named('koa').trim_color, player.craft.get_node('Model/Hull/Model/jetski_hull').get_surface_override_material(0).get_shader_parameter('bottom_color') == Game.rider_named('koa').bottom_color]",
+      "expect": "[player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).shader.resource_path, player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('hull_color') == Game.rider_named('koa').hull_color, player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('trim_color') == Game.rider_named('koa').trim_color, player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('bottom_color') == Game.rider_named('koa').bottom_color]",
       "equals": [
         "res://jetski/model/hull_paint.gdshader",
         true,
@@ -50,13 +58,20 @@
       "name": "the hull is painted in Koa's hull, trim and bottom colours"
     },
     {
-      "expect": "[player.craft.get_node('Model/Hull/Model/jetski_hull').get_surface_override_material(0).get_shader_parameter('bottom_line'), player.craft.get_node('Model/Hull/Model/jetski_hull').get_surface_override_material(0).get_shader_parameter('trim_line')]",
-      "approx": [0.3, 0.42],
+      "expect": "[player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('bottom_line'), player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('trim_line')]",
+      "approx": [
+        0.2022,
+        0.2669
+      ],
       "name": "the paint changes colour at the BottomLine and TrimLine markers"
     },
     {
-      "expect": "[player.craft.get_node('Model/Hull/Model/jetski_hull').layers, player.craft.get_node('Model/Hull/Handlebar/Bar').layers, player.craft.get_node('Model/Hull/Model/jetski_hull').cast_shadow]",
-      "equals": [2, 2, 1],
+      "expect": "[player.craft.get_node('Model/Hull/Hull').layers, player.craft.get_node('Model/Hull/Handlebar/Bar').layers, player.craft.get_node('Model/Hull/Hull').cast_shadow]",
+      "equals": [
+        2,
+        2,
+        1
+      ],
       "name": "the hull scene's meshes are on the moving-things layer and cast shadows"
     },
     {
@@ -149,9 +164,13 @@
     },
     {
       "expect": "player.craft.get_node('Model/Rider').global_transform * (player.craft.get_node('Model/Rider/torso').position - player.craft.get_node('Model/Rider/torso').basis.y * 0.5) - player.craft.get_node('Model').get_global_transform_interpolated() * player.craft.get_node('Model').seat",
-      "approx": [0.0, 0.0, 0.0],
+      "approx": [
+        0.0,
+        0.0,
+        0.0
+      ],
       "within": 0.05,
-      "name": "the climb ends with the pelvis at the Seat marker (23 cm above the old fixed seat)"
+      "name": "the climb ends with the pelvis at the Seat marker"
     },
     {
       "until": "player.craft.rider_state == 0",
@@ -161,7 +180,11 @@
     "step 1",
     {
       "expect": "player.craft.get_node('Model/Rider/torso').position - player.craft.get_node('Model/Rider/torso').basis.y * 0.5",
-      "approx": [0.0, 1.35, 0.4],
+      "approx": [
+        0.0,
+        1.16,
+        0.517
+      ],
       "within": 0.1,
       "name": "seated at the Seat marker again"
     }

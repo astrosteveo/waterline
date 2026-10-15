@@ -1,19 +1,66 @@
 {
   "description": "Three computer riders race the player on Gull Cove with the same physics: they follow the racing line through the buoys, and places update live.",
-  "start": {"scene": "res://race/race.tscn", "seed": 1},
+  "start": {
+    "scene": "res://race/race.tscn",
+    "seed": 1
+  },
   "steps": [
-    {"expect": "racers.size()", "equals": 4, "name": "four racers on the grid"},
-    {"expect": "racers[1].craft.has_node('AIDriver') and racers[2].craft.has_node('AIDriver') and racers[3].craft.has_node('AIDriver')", "name": "three of them computer riders"},
-    {"expect": "racers[1].craft.scene_file_path == player.craft.scene_file_path", "name": "riding the same craft as the player"},
-    {"until": "phase == 1", "max": 400},
-    {"eval": "autopilot(player, 0.9)"},
-    {"step": 1800},
-    {"expect": "racers[1].progress.distance > 380 and racers[2].progress.distance > 380 and racers[3].progress.distance > 380", "name": "after 30 s every computer rider is over 380 m round"},
-    {"expect": "racers[1].buoys_passed + racers[2].buoys_passed + racers[3].buoys_passed >= 15", "name": "passing buoys on their marked sides"},
-    {"expect": "racers[1].power + racers[2].power + racers[3].power >= 6", "name": "and building power"},
-    {"expect": "[player.place, racers[1].place, racers[2].place, racers[3].place].has(1) and [player.place, racers[1].place, racers[2].place, racers[3].place].has(4)", "name": "places 1 to 4 are given"},
-    {"expect": "player.place + racers[1].place + racers[2].place + racers[3].place", "equals": 10, "name": "each place once"},
-    {"expect": "get_node('RaceHud')._place_value.text == ordinal(player.place)", "name": "the HUD shows the player's place"},
-    {"expect": "get_node('RaceHud')._place_total.text", "equals": "/4"}
+    {
+      "expect": "racers.size()",
+      "equals": 4,
+      "name": "four racers on the grid"
+    },
+    {
+      "expect": "racers[1].craft.has_node('AIDriver') and racers[2].craft.has_node('AIDriver') and racers[3].craft.has_node('AIDriver')",
+      "name": "three of them computer riders"
+    },
+    {
+      "expect": "[racers[1].craft.scene_file_path == racers[1].craft_profile.scene.resource_path, racers[2].craft.scene_file_path == racers[2].craft_profile.scene.resource_path, racers[3].craft.scene_file_path == racers[3].craft_profile.scene.resource_path]",
+      "equals": [
+        true,
+        true,
+        true
+      ],
+      "name": "each on its own craft's scene"
+    },
+    {
+      "until": "phase == 1",
+      "max": 400
+    },
+    {
+      "eval": "autopilot(player, 0.9)"
+    },
+    {
+      "step": 1800
+    },
+    {
+      "expect": "racers[1].progress.distance > 380 and racers[2].progress.distance > 380 and racers[3].progress.distance > 380",
+      "name": "after 30 s every computer rider is over 380 m round"
+    },
+    {
+      "expect": "racers[1].buoys_passed + racers[2].buoys_passed + racers[3].buoys_passed >= 15",
+      "name": "passing buoys on their marked sides"
+    },
+    {
+      "expect": "racers[1].power + racers[2].power + racers[3].power >= 6",
+      "name": "and building power"
+    },
+    {
+      "expect": "[player.place, racers[1].place, racers[2].place, racers[3].place].has(1) and [player.place, racers[1].place, racers[2].place, racers[3].place].has(4)",
+      "name": "places 1 to 4 are given"
+    },
+    {
+      "expect": "player.place + racers[1].place + racers[2].place + racers[3].place",
+      "equals": 10,
+      "name": "each place once"
+    },
+    {
+      "expect": "get_node('RaceHud')._place_value.text == ordinal(player.place)",
+      "name": "the HUD shows the player's place"
+    },
+    {
+      "expect": "get_node('RaceHud')._place_total.text",
+      "equals": "/4"
+    }
   ]
 }

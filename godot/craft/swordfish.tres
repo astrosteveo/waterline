@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="CraftProfile" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://craft/craft_profile.gd" id="1"]
-[ext_resource type="PackedScene" path="res://jetski/jetski.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://craft/swordfish.tscn" id="2"]
 [ext_resource type="Resource" path="res://jetski/tuning/default.tres" id="3"]
 
 [resource]
