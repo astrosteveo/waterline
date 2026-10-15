@@ -3,9 +3,10 @@
 # gdh output (screenshots, live sessions, recordings)
 captures/
 # Exports
-build/
+/build/
 *.tmp
-# Python bytecode
+# Python bytecode and environments
 __pycache__/
+.venv/
 # assetgen working files (raw generations, seam passes, previews, earlier model versions)
-assets/generated/.assetgen/
+godot/assets/generated/.assetgen/

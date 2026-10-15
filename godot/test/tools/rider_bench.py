@@ -1,15 +1,16 @@
 """Measures how each rider rides their default craft (or --craft) on open water: 0 to
 50 km/h, top speed, a full-lock U-turn at speed and the slip in it.
 
-    uv run --project ~/Projects/gdh python test/tools/rider_bench.py [--riders marina,koa]
+    uv run --project ~/Projects/gdh python godot/test/tools/rider_bench.py [--riders marina,koa]
 """
 import argparse
+import os
 import math
 
 from gdh.client import Session
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--project", default=".")
+ap.add_argument("--project", default=os.path.join(os.path.dirname(__file__), "..", ".."))
 ap.add_argument("--riders", default="marina,koa,ines,dax,marina")
 ap.add_argument("--craft", default="", help="put every rider on this craft (an id) instead of their own")
 ap.add_argument("--flat", action="store_true", help="flat water, to compare the stats alone")

@@ -1,9 +1,9 @@
 name: Check
 
 # Imports the project headless with the Godot release it uses, then loads every script, scene
-# and resource (test/check_project.sh). It fails on a script parse or type error, a file that
+# and resource (godot/test/check_project.sh). It fails on a script parse or type error, a file that
 # fails to import, and a scene or resource that refers to a missing file. The gdh scenarios in
-# test/scenarios/ need a GPU, so they run locally, not here.
+# godot/test/scenarios/ need a GPU, so they run locally, not here.
 
 # Changes to Markdown and docs/ (which Godot ignores) can't break the import, so they skip it.
 on:
@@ -62,4 +62,4 @@ jobs:
           key: ${{ steps.godot-cache.outputs.cache-primary-key }}
 
       - name: Import and load the project
-        run: GODOT="$HOME/godot/godot" test/check_project.sh
+        run: GODOT="$HOME/godot/godot" godot/test/check_project.sh
