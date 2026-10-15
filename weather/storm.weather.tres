@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="Weather" format=3]
+
+[ext_resource type="Script" path="res://weather/weather.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+water_overrides = {"crest_foam_start": 0.08, "ripple_strength": 0.22}
+order = 3
+id = "storm"
+display_name = "Storm"
+announcement = "HERE COMES THE STORM! HOLD ON TIGHT!"
+wave_scale = 1.3
+sky_grey = 0.85
+sky_brightness = 0.45
+cloud_coverage = 0.05
+sun_disc = 0.0
+sun_energy = 0.3
+ambient_energy = 0.8
+fog_density = 0.004
+fog_sky_affect = 0.3
+water_grey = 0.6
+water_brightness = 0.6
+rain = 1.0
+wind_direction = 330.0
+wind_speed = 14.0

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Weather" format=3]
+
+[ext_resource type="Script" path="res://weather/weather.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 4
+id = "fog"
+display_name = "Fog"
+announcement = "FOG ROLLS IN. WATCH FOR THE BUOYS!"
+wave_scale = 0.8
+sky_grey = 0.7
+cloud_coverage = 0.3
+sun_disc = 0.3
+sun_energy = 0.6
+fog_density = 0.02
+fog_sky_affect = 0.9
+fog_aerial_perspective = 0.0
+water_grey = 0.4
+water_brightness = 0.9
+wind_direction = 110.0
+wind_speed = 1.5

@@ -21,7 +21,8 @@ editor and press F5). The game opens on the main menu (`res://menus/main_menu.ts
 championship, quick race, time trial, stunt mode. The race scene also runs on its own
 (`--scene res://race/race.tscn`: a quick race on Gull Cove as Marina; `-- --rider koa`,
 `--course whitecap_point`, `--mode time_trial` (or `stunt`, `championship`) and `--laps 1` choose
-the rest) (`-- --no-opponents` races alone; `-- --watch` lets the
+the rest; `--weather storm`, or `--weather clear,storm` with `--weather-lap 3` and `--weather-time 30`
+for a change during the race, sets the weather of a race that isn't a time trial or stunt run) (`-- --no-opponents` races alone; `-- --watch` lets the
 computer ride the player's craft too, and Tab or the right shoulder button moves the camera
 from rider to rider, with the HUD and buoy arrow following that rider). `res://levels/open_water.tscn` is the milestone-2 free ride (one jet ski on open water
 with rolling swells, islands, rocks and floating crates; `godot --path . --scene
@@ -67,8 +68,13 @@ too). It starts `test/every_course.tscn`, which races four computer riders over 
 raced with no change to the test. The scenario fails if a rider doesn't finish within 150 s of race
 time per lap, crashes, is disqualified or misses more than 3 buoys (computer races measured 0–2
 misses per rider), and on any engine error or warning. It prints each course's lap times, misses
-and crashes per rider as `game:` lines on stderr. On seed 1 every rider finishes every course, with
-2 misses at most (Marina on Gull Cove) and no crashes.
+and crashes per rider as `game:` lines on stderr. It doesn't pass on every seed: computer riders
+crash in a few races in every hundred (issue #66). Over seeds 1–3 (84 rider races), 2 crashes and
+46 misses; seeds 1 and 3 fail.
+
+`test/scenarios/every_course_storm.scenario.json` races the same courses in the storm weather
+(`-- --weather storm`), with the same limits. Over seeds 1–3, 4 crashes and 59 misses (seed 3
+passes); see "Weather".
 
 To move to a new Godot release, change `GODOT_VERSION` and `GODOT_SHA512` in the workflow. The
 sum is in the release's `SHA512-SUMS.txt`.
@@ -95,7 +101,11 @@ course/         Course (centre line, walls, gates, progress, tide), CourseGate, 
 game/           Game autoload (riders, courses, cups, modes, scene flow), Championship,
                 CupInfo, Records, Settings autoload (volumes, fullscreen, controls)
 cups/           the championship cups (<id>.cup.tres = CupInfo)
-effects/        Wake (+ wake.gdshader), Spray, EngineSound (all on jetski.tscn)
+effects/        Wake (+ wake.gdshader), Spray, EngineSound (all on jetski.tscn), Rain
+                (+ rain.gdshader, added by RaceWeather)
+weather/        Weather (a CourseConditions with relative sky, light, fog, water, rain and wind
+                changes), Forecast (a race's weather and its change), RaceWeather (puts them
+                on a course and blends a change), the weathers (<id>.weather.tres)
 audio/          SoundBank (every sound, generated in code)
 menus/          MainMenu (main_menu.tscn, the main scene), RiderSelect, CraftSelect (both
                 extend CraftShowcase: a craft on the water with the camera circling it),
@@ -182,6 +192,9 @@ captures/       gdh output, git-ignored and hidden from Godot (.gdignore)
   The CPU sends the shader each wave's amplitude at the drawn time every frame during a change,
   and `Ocean` drops the faded waves when it ends. `OceanSurface` follows `Ocean.wave_set` in the
   game. A course schedules changes per lap with `Course.lap_waves` and `wave_change_time`.
+- **Wind.** `Ocean.wind` (m/s, horizontal) is the wind over the water; each `OceanSurface` resets
+  it to calm at load and a race's weather sets it. Spray and rain drift with it; the physics
+  doesn't read it.
 - **Visual layers.** 1 = static scenery (terrain, rocks, ramps, anything that should get
   shoreline foam), 2 = moving things (`JetSkiModel` and `Floater` set it on their meshes), 3 =
   water, 20 = the ShoreMap capture pass, which the game cameras exclude (it also discards itself
@@ -392,6 +405,48 @@ preview scene.
 | Air control delay | 0.35 s | The lean's air pitch fades in over this much air time, so a hop while carving with a forward lean keeps the nose above −16° (it dived to −38°). |
 | Air roll | level toward 10° × steer, stiffness 12/s², damping 5/s | Without it, a turn that launched off a swell kept rolling to 46–80° and landed on its side; now under 26° in the air and 14° at touchdown. |
 
+## Weather
+
+A race can have weather (issue #23; details and decisions in the wiki page "Weather"). `Weather`
+(`weather/weather.gd`) extends `CourseConditions` with changes relative to the course: the
+waves' height (`wave_scale`; it grows them no higher than the course's ramps take,
+`Course.wave_height_limit()`: the shallowest ramp foot under the lowest tide less 0.2 m, 1.8 m
+with the usual 2 m foot, because deeper troughs bare the ramp's front edge), how grey and bright
+the sky, fog and water are, the cloud cover, the sun's disc and light, the ambient light, the
+fog's density, rain (0 to 1) and wind. So one weather works on every course, day or night.
+`Forecast` holds the weather a race starts in and, optionally, the weather it changes into when
+the leader starts a given lap, and over how long; `Forecast.pick(weathers, seed, laps)` draws
+one from a seed. `Race` races in `Game.forecast` or the one `-- --weather` names, and adds a
+`RaceWeather` node, which sets the start weather on copies of the course's environment, sky
+material and water material before the course enters the tree, then blends every value into the
+next weather with the waves' own ease (`Ocean.change_waves`), over the same wave time. The
+announcer calls the change with the weather's `announcement`. Time trials and stunt runs ignore
+forecasts, so records and ghosts are always set on the course's own water. The four weathers are
+in `weather/`: clear (waves at 85%, fewer clouds), overcast (115%, grey sky, rising wind), storm
+(130%, dark grey sky, no sun disc, rain, 14 m/s wind, darker water; within the limit that is
+130% on Gull Cove and Lantern Harbor, 121% on Ebb Reef, 104% on Whitecap Point and 100% on Gull
+Cove Swell) and fog (80%, fog density 0.02, grey sky). Nothing in the menus chooses a weather
+yet (issue #24 adds the forecast).
+
+**In races:** every course with four computer riders on seeds 1–3, in calm water and in the
+storm (84 rider races each): calm 2 crashes and 46 misses, storm 4 crashes and 59 misses. Most of
+the storm's extra misses are on Gull Cove Reverse (16 against 8) and Gull Cove Mirror (11
+against 3). The crashes, in both, are the riders' own (issue #66): Dax into Rock1 at 315 m on
+Gull Cove Swell, and riders colliding as they land stunts off a ramp. On Gull Cove Swell the storm
+adds no height (its swell is at the ramps' limit), and with the same seed the race is the same to
+the millimetre with and without it.
+
+**Rain** (`effects/rain.gd`): 10 000 GPU particles at full strength, falling at 9 m/s plus the
+wind, emitted 9 m above the camera over 44 × 44 m, ahead of the camera by its own speed and
+upwind by the drift, so the chase camera stays in the rain at full speed. Each drop is a lit
+streak along its velocity, at least 1.5 pixels wide (fainter when wider than its 1.5 cm), and
+fades out over its last 0.5 m above the water (the same Gerstner waves, as an `Ocean`
+follower), within 2–5 m of the camera and past 14 m. The alpha is clamped: with 4× MSAA an edge
+pixel is shaded outside the quad, and the negative alpha drew black dashes. Measured with four
+craft on Gull Cove (RTX 5080, 1920×1080, 600 frames): GPU median 1.04 ms without weather,
+1.05 ms in the storm, 1.09 ms during a change from clear to the storm; every weather within
+0.04 ms of no weather.
+
 ## How a course works
 
 A course is a scene whose root is a `Course` node (`course/course.gd`), with the water, sun,
@@ -590,8 +645,12 @@ alone.
   on the wrong side (aiming for the wrong side of that buoy ignores the 2.6 m it otherwise
   keeps from buoys, but still keeps clear of rocks). Crashes come from the
   physics, as for the player: running wide into a rock, bumping in a pack.
-  The mistakes are seeded from the rider's seed plus `randi()` at the start of each race, so
-  every race differs but a gdh replay with the same `--seed` repeats.
+  The mistakes are seeded from the rider's seed plus a draw from `Race._mistake_rng`, itself
+  seeded with `randi()` first thing in `Race._ready()`, so every race differs but a gdh replay with
+  the same `--seed` repeats. Its own generator keeps anything else the race makes from changing
+  them: a weather's rain is a `GPUParticles3D`, which takes a seed from the global generator when
+  it is made, and drawn from that generator the riders' mistakes differed with and without rain.
+  Now the same seed rides the same race in any weather whose waves are the same.
 - **Traffic:** a craft within 14 m ahead and 2.5 m to the side moves the rider's target 3.5 m to
   the other side to pass it, shrinking to nothing in turns tighter than about 25 m. A craft
   alongside (within 3 m back to 4 m ahead) moves it 2.4 m away. Alongside a craft that is further
@@ -1128,7 +1187,7 @@ entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_le
 - **Spray** (`effects/spray.gd`): GPU particles in world space: a rooster tail from the jet while
   the intake bites, bow spray growing with the square of the speed, a sheet off the outside of a
   carve or slide (the side the craft slides toward), and a burst at each judged landing and each
-  crash. Lessons, each seen in screenshots: `billboard_keep_scale` must be on or every particle
+  crash. The wind (`Ocean.wind`) pushes it at 0.8 m/s² per m/s of wind. Lessons, each seen in screenshots: `billboard_keep_scale` must be on or every particle
   draws a full meter across; particles must update every frame (`fixed_fps = 0`) and spawn over a
   small box, or a fast craft leaves them in rows; spawn points sit above the waterline, because
   the water writes depth and cuts any particle below it with a hard straight edge; a backlit,
@@ -1147,9 +1206,9 @@ entries with their properties), `lit_buoys`, `water` (shader overrides), `lap_le
 - **Announcer** (`race/announcer.gd`): lines across the top of the screen, one at a time for
   2.4 s, dropped if they waited 3 s, important ones cutting in. It calls the start, lead changes
   (at most every 5 s), the player moving up, the final lap, crashes, stunts, full power,
-  disqualifications, the winner, photo finishes (under 0.3 s apart), the tide, and in the solo
-  modes ring chains, lap records and the last ten seconds. `Announcer.history` keeps every line
-  for tests. The watch-mode label moved to the bottom.
+  disqualifications, the winner, photo finishes (under 0.3 s apart), the tide, a weather
+  change, and in the solo modes ring chains, lap records and the last ten seconds.
+  `Announcer.history` keeps every line for tests. The watch-mode label moved to the bottom.
 - **Options and pause:** `Settings` (autoload) applies and saves master, engine and effects
   volumes (linear 0–1 on the buses), fullscreen, and every rebindable action's events
   (`user://settings.cfg`). `OptionsPanel` works over the main menu and over the pause menu:

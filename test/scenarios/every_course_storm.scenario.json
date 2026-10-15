@@ -1,0 +1,9 @@
+{
+  "description": "Four computer riders race every course in Game.courses in the storm weather (waves 1.3 times as high, rain, 14 m/s wind), all laps, on a fixed seed. Every rider finishes each race with no crash, no disqualification and at most 3 missed buoys, and the game raises no engine error or warning. Each course's lap times, misses and crashes per rider are printed (game: lines on stderr).",
+  "start": {"scene": "res://test/every_course.tscn", "seed": 1, "args": ["--weather", "storm"]},
+  "steps": [
+    {"until": "done", "every": 120, "max": 90000, "name": "every course raced"},
+    {"expect": "courses_raced.size() == Game.courses.size()", "name": "one race per course in Game.courses"},
+    {"expect": "failures", "equals": [], "name": "every rider finished every course cleanly in the storm"}
+  ]
+}

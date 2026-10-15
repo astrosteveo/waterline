@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="Weather" format=3]
+
+[ext_resource type="Script" path="res://weather/weather.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+order = 1
+id = "clear"
+display_name = "Clear"
+announcement = "THE SKY CLEARS AND THE WATER CALMS DOWN!"
+wave_scale = 0.85
+cloud_coverage = 0.68
+wind_direction = 300.0
+wind_speed = 2.0

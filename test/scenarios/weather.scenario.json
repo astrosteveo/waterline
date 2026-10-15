@@ -1,0 +1,9 @@
+{
+  "description": "The weather data and RaceWeather on real course scenes: the weathers in res://weather/, Forecast.pick repeating for a seed, the laps a forecast's weathers cover, waves scaled from the course's own, the light, fog, sky, water, rain and wind a storm sets on a day course and a night course, a change back to the course's own values, fog, and the shared files left unchanged.",
+  "start": {"scene": "res://test/weather_check.tscn", "seed": 1},
+  "steps": [
+    {"until": "done", "max": 600, "name": "every check ran"},
+    {"expect": "checks.size()", "equals": 29, "name": "all 29 checks"},
+    {"expect": "failures", "equals": [], "name": "every check passed"}
+  ]
+}

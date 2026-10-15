@@ -83,8 +83,10 @@ func _ready() -> void:
 	_rebuild_mesh()
 	_on_wave_set_changed()
 	if not Engine.is_editor_hint():
-		# A new scene starts at the rest level; a course may set its own.
+		# A new scene starts at the rest level with no wind; a course or its weather may
+		# set its own.
 		Ocean.level = 0.0
+		Ocean.wind = Vector3.ZERO
 		if wave_set != null:
 			Ocean.wave_set = wave_set
 		Ocean.wave_set_changed.connect(_on_ocean_waves_changed)

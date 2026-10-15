@@ -30,6 +30,10 @@ var wave_set: WaveSet = WaveSet.new():
 ## Rest height of the water in world space. A course can raise or lower it between laps.
 var level: float = 0.0
 
+## The wind over the water, as a horizontal velocity in m/s. Spray and rain drift with it;
+## a race's weather ([RaceWeather]) sets it, and each new scene starts calm.
+var wind: Vector3 = Vector3.ZERO
+
 ## Wave time of the physics state at the start of the current physics step, in seconds.
 var time: float = 0.0
 
