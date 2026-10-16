@@ -55,7 +55,7 @@ const UNTIDY_POINTS := 0.5
 ## The group every jet ski is in, so a camera can find the other craft.
 const GROUP := &"jetskis"
 const DEFAULT_STUNT_PIVOT := Vector3(0.0, 0.65, 0.2)
-const DEFAULT_SEAT := Vector3(0.0, 1.12, 0.38)
+const DEFAULT_SEAT := Vector3(0.0, 0.86, 0.38)
 const DEFAULT_BOARDING_POINTS: Array[Vector3] = [Vector3(-1.0, 0.0, 0.4), Vector3(1.0, 0.0, 0.4), Vector3(0.0, 0.0, 1.7)]
 
 ## The ride's tuning numbers. Shared resources can be swapped per rider or per craft.

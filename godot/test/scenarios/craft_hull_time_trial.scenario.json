@@ -67,7 +67,7 @@
       "expect": "time_trial.ghost.get_child(0).seat",
       "approx": [
         0.0,
-        1.16,
+        0.9,
         0.517
       ],
       "name": "the ghost's rider sits at the craft's Seat marker"

@@ -67,10 +67,10 @@
     {
       "expect": "[get_node('Rider0').rider_joint('hip_l').distance_to(get_node('Rider0').rider_joint('knee_l')), get_node('Rider0').rider_joint('knee_r').distance_to(get_node('Rider0').rider_joint('foot_r')), get_node('Rider0').rider_joint('shoulder_l').distance_to(get_node('Rider0').rider_joint('elbow_l')), get_node('Rider0').rider_joint('elbow_r').distance_to(get_node('Rider0').rider_joint('hand_r'))]",
       "approx": [
-        0.4923,
-        0.3622,
-        0.4311,
-        0.3796
+        0.44,
+        0.47,
+        0.34,
+        0.33
       ],
       "within": 0.002,
       "name": "rider0: the knees and elbows bend so each limb keeps its length"
@@ -78,10 +78,10 @@
     {
       "expect": "[get_node('Turn').rider_joint('hip_l').distance_to(get_node('Turn').rider_joint('knee_l')), get_node('Turn').rider_joint('knee_r').distance_to(get_node('Turn').rider_joint('foot_r')), get_node('Turn').rider_joint('shoulder_l').distance_to(get_node('Turn').rider_joint('elbow_l')), get_node('Turn').rider_joint('elbow_r').distance_to(get_node('Turn').rider_joint('hand_r'))]",
       "approx": [
-        0.4923,
-        0.3622,
-        0.4311,
-        0.3796
+        0.44,
+        0.47,
+        0.34,
+        0.33
       ],
       "within": 0.002,
       "name": "turn: the knees and elbows bend so each limb keeps its length"
@@ -89,10 +89,10 @@
     {
       "expect": "[get_node('Thrown').rider_joint('hip_l').distance_to(get_node('Thrown').rider_joint('knee_l')), get_node('Thrown').rider_joint('knee_r').distance_to(get_node('Thrown').rider_joint('foot_r')), get_node('Thrown').rider_joint('shoulder_l').distance_to(get_node('Thrown').rider_joint('elbow_l')), get_node('Thrown').rider_joint('elbow_r').distance_to(get_node('Thrown').rider_joint('hand_r'))]",
       "approx": [
-        0.4923,
-        0.3622,
-        0.4311,
-        0.3796
+        0.44,
+        0.47,
+        0.34,
+        0.33
       ],
       "within": 0.002,
       "name": "thrown: the knees and elbows bend so each limb keeps its length"
@@ -100,10 +100,10 @@
     {
       "expect": "[get_node('Swimming').rider_joint('hip_l').distance_to(get_node('Swimming').rider_joint('knee_l')), get_node('Swimming').rider_joint('knee_r').distance_to(get_node('Swimming').rider_joint('foot_r')), get_node('Swimming').rider_joint('shoulder_l').distance_to(get_node('Swimming').rider_joint('elbow_l')), get_node('Swimming').rider_joint('elbow_r').distance_to(get_node('Swimming').rider_joint('hand_r'))]",
       "approx": [
-        0.4923,
-        0.3622,
-        0.4311,
-        0.3796
+        0.44,
+        0.47,
+        0.34,
+        0.33
       ],
       "within": 0.002,
       "name": "swimming: the knees and elbows bend so each limb keeps its length"
@@ -111,10 +111,10 @@
     {
       "expect": "[get_node('Handstand').rider_joint('hip_l').distance_to(get_node('Handstand').rider_joint('knee_l')), get_node('Handstand').rider_joint('knee_r').distance_to(get_node('Handstand').rider_joint('foot_r')), get_node('Handstand').rider_joint('shoulder_l').distance_to(get_node('Handstand').rider_joint('elbow_l')), get_node('Handstand').rider_joint('elbow_r').distance_to(get_node('Handstand').rider_joint('hand_r'))]",
       "approx": [
-        0.4923,
-        0.3622,
-        0.4311,
-        0.3796
+        0.44,
+        0.47,
+        0.34,
+        0.33
       ],
       "within": 0.002,
       "name": "handstand: the knees and elbows bend so each limb keeps its length"
@@ -123,10 +123,10 @@
     {
       "expect": "[get_node('Thrown').rider_joint('hip_l').distance_to(get_node('Thrown').rider_joint('knee_l')), get_node('Thrown').rider_joint('knee_r').distance_to(get_node('Thrown').rider_joint('foot_r')), get_node('Thrown').rider_joint('shoulder_l').distance_to(get_node('Thrown').rider_joint('elbow_l')), get_node('Thrown').rider_joint('elbow_r').distance_to(get_node('Thrown').rider_joint('hand_r'))]",
       "approx": [
-        0.4923,
-        0.3622,
-        0.4311,
-        0.3796
+        0.44,
+        0.47,
+        0.34,
+        0.33
       ],
       "within": 0.002,
       "name": "thrown: the knees and elbows bend so each limb keeps its length"
@@ -134,10 +134,10 @@
     {
       "expect": "[get_node('Swimming').rider_joint('hip_l').distance_to(get_node('Swimming').rider_joint('knee_l')), get_node('Swimming').rider_joint('knee_r').distance_to(get_node('Swimming').rider_joint('foot_r')), get_node('Swimming').rider_joint('shoulder_l').distance_to(get_node('Swimming').rider_joint('elbow_l')), get_node('Swimming').rider_joint('elbow_r').distance_to(get_node('Swimming').rider_joint('hand_r'))]",
       "approx": [
-        0.4923,
-        0.3622,
-        0.4311,
-        0.3796
+        0.44,
+        0.47,
+        0.34,
+        0.33
       ],
       "within": 0.002,
       "name": "swimming: the knees and elbows bend so each limb keeps its length"

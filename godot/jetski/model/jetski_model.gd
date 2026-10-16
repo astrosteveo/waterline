@@ -146,7 +146,7 @@ enum PartKind {
 }
 
 ## [member seat] until [JetSki] sets it: the Seat marker of jetski.tscn.
-const DEFAULT_SEAT := Vector3(0.0, 1.12, 0.38)
+const DEFAULT_SEAT := Vector3(0.0, 0.86, 0.38)
 ## The code-built hull's handlebar pivot and footrests (left, right), in model space.
 const HANDLEBAR_PIVOT := Vector3(0.0, 1.03, -0.42)
 const FOOTRESTS: Array[Vector3] = [Vector3(-0.30, 0.56, 0.30), Vector3(0.30, 0.56, 0.30)]
@@ -167,11 +167,11 @@ const RIDER_PARTS: Array[Array] = [
 const JOINT_MARKERS := {
 	"pelvis": [&"Pelvis", Vector3.ZERO],
 	"hip_l": [&"HipLeft", Vector3(-0.11, 0.0, 0.0)], "hip_r": [&"HipRight", Vector3(0.11, 0.0, 0.0)],
-	"knee_l": [&"KneeLeft", Vector3(-0.28, -0.325, -0.328)], "knee_r": [&"KneeRight", Vector3(0.28, -0.325, -0.328)],
-	"foot_l": [&"FootLeft", Vector3(-0.33, -0.65, -0.177)], "foot_r": [&"FootRight", Vector3(0.33, -0.65, -0.177)],
+	"knee_l": [&"KneeLeft", Vector3(-0.3, 0.024, -0.396)], "knee_r": [&"KneeRight", Vector3(0.3, 0.024, -0.396)],
+	"foot_l": [&"FootLeft", Vector3(-0.33, -0.39, -0.177)], "foot_r": [&"FootRight", Vector3(0.33, -0.39, -0.177)],
 	"shoulder_l": [&"ShoulderLeft", Vector3(-0.21, 0.46, -0.24)], "shoulder_r": [&"ShoulderRight", Vector3(0.21, 0.46, -0.24)],
-	"elbow_l": [&"ElbowLeft", Vector3(-0.39, 0.11, -0.416)], "elbow_r": [&"ElbowRight", Vector3(0.39, 0.11, -0.416)],
-	"hand_l": [&"HandLeft", Vector3(-0.33, -0.12, -0.712)], "hand_r": [&"HandRight", Vector3(0.33, -0.12, -0.712)],
+	"elbow_l": [&"ElbowLeft", Vector3(-0.404, 0.235, -0.405)], "elbow_r": [&"ElbowRight", Vector3(0.404, 0.235, -0.405)],
+	"hand_l": [&"HandLeft", Vector3(-0.33, 0.14, -0.712)], "hand_r": [&"HandRight", Vector3(0.33, 0.14, -0.712)],
 }
 ## The arm and leg lengths (shoulder to hand, hip to foot) that the thrown and swimming poses'
 ## hand and foot offsets are measured against. A rider's own limbs scale those offsets, so a
@@ -231,10 +231,10 @@ var _rest: Dictionary[String, Vector3] = {}
 # up straight.
 var _hips: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
 var _shoulders: Array[Vector3] = [Vector3.ZERO, Vector3.ZERO]
-var _thigh := 0.45
-var _shin := 0.4
-var _upper_arm := 0.4
-var _forearm := 0.4
+var _thigh := 0.44
+var _shin := 0.47
+var _upper_arm := 0.34
+var _forearm := 0.33
 var _upright := Basis.IDENTITY
 # The joints of the last pose drawn, in the rider node's space.
 var _joints: Dictionary = {}
@@ -656,19 +656,20 @@ func _apply_pose() -> void:
 	_pose_from(joints)
 
 
-## Joint positions in model space (the rider node's space) for riding: the spine tips with
-## the lean and the turn, hands on the bars, feet in the footwells.
+## Joint positions in model space (the rider node's space) for riding: seated, the spine tips
+## with the lean and the turn, hands on the bars, feet in the footwells.
 func _riding_joints() -> Dictionary:
 	var pitch := deg_to_rad(lean_forward_angle) * maxf(_lean, 0.0) - deg_to_rad(lean_back_angle) * maxf(-_lean, 0.0)
 	var roll := _steer * deg_to_rad(turn_lean_angle)
 	# The spine tips about the pelvis: forward for a forward lean, sideways into the turn.
 	var spine := Basis(Vector3.RIGHT, -pitch) * Basis(Vector3.FORWARD, roll)
-	var crouch := 0.06 * maxf(_lean, 0.0) - 0.08 * _airborne
 	var tuck := 0.0
 	if _stunt != &"" and _stunt != &"handstand":
 		tuck = sin(PI * _stunt_progress)
-		crouch += 0.14 * tuck
-	var pelvis := seat + Vector3(_steer * 0.05, -crouch, 0.06 * maxf(_lean, 0.0))
+	# The pelvis never goes below the seat: it slides forward on it for a forward lean, rises
+	# off it in the air, ready for the landing, and sits back down tucked in for a stunt.
+	var rise := 0.08 * _airborne * (1.0 - tuck)
+	var pelvis := seat + Vector3(_steer * 0.05, rise, 0.06 * maxf(_lean, 0.0))
 	var joints := {"spine": spine, "pelvis": pelvis}
 	var bar := _bar_in_model * Transform3D(_bar_turn(), Vector3.ZERO)
 	joints["hand_basis"] = bar.basis
@@ -681,7 +682,7 @@ func _riding_joints() -> Dictionary:
 		var hand := bar * Vector3(GRIP_SPREAD * side, 0.0, 0.0)
 		joints["hip" + tag] = hip
 		joints["knee" + tag] = _bend(hip, foot, _thigh, _shin,
-				Vector3(0.06 * side, 0.08 * tuck, -0.24 - 0.05 * _airborne - 0.08 * tuck))
+				Vector3(0.12 * side, 0.08 * tuck, -0.24 - 0.05 * _airborne - 0.08 * tuck))
 		joints["foot" + tag] = foot
 		joints["shoulder" + tag] = shoulder
 		joints["elbow" + tag] = _bend(shoulder, hand, _upper_arm, _forearm, Vector3(0.12 * side, -0.06, 0.06))
