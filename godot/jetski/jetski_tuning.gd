@@ -45,6 +45,21 @@ extends Resource
 ## Depth the intake (the rear hull points) needs for full thrust. Out of the water, no thrust.
 @export_range(0.005, 0.5, 0.001, "suffix:m") var intake_depth: float = 0.05
 
+@export_group("Reverse")
+## With the reverse bucket down over the nozzle, the jet is turned forward: this share of the
+## thrust pushes the craft back (and brakes it when it's moving forward).
+@export_range(0.0, 1.0, 0.01) var reverse_share: float = 0.35
+## Steering with the bucket down, as a share of steering forward. The deflected jet steers the
+## stern, so the nose turns against the bars (turn them the way the stern should go).
+@export_range(0.0, 1.0, 0.01) var reverse_steer: float = 0.6
+## How long the bucket takes to drop over the nozzle or lift off it.
+@export_range(0.01, 2.0, 0.01, "suffix:s") var bucket_time: float = 0.35
+## A craft stopped out of the water (its intake dry, resting on sand or rock) can't drive.
+## Holding reverse, the rider shoves it backwards at up to this speed...
+@export_range(0.0, 5.0, 0.01, "suffix:m/s") var push_speed: float = 1.2
+## ...with at most this force (the craft's friction on sand is about 750 N).
+@export_range(0.0, 10000.0, 1.0, "suffix:N") var push_force: float = 1800.0
+
 @export_group("Drag")
 ## Water drag along the hull, per m/s of speed through the water.
 @export_range(0.0, 1000.0, 0.1) var linear_drag: float = 30.0
@@ -53,6 +68,10 @@ extends Resource
 @export_range(0.0, 100.0, 0.01) var quadratic_drag: float = 6.1
 ## Drag multiplier when the hull is fully under water rather than skimming.
 @export_range(1.0, 5.0, 0.01) var deep_drag_multiplier: float = 1.6
+## Drag multiplier backing up under reverse: the flat transom pushes the water and the hull
+## can't plane, so reverse tops out at a jog (2.1 m/s, 7.5 km/h, at full reverse). It scales
+## with the bucket, so a craft drifting backwards without reverse keeps its usual drag.
+@export_range(1.0, 20.0, 0.1) var backward_drag_multiplier: float = 8.0
 ## Air drag, per (m/s)².
 @export_range(0.0, 5.0, 0.01) var air_drag: float = 0.25
 

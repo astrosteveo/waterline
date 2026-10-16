@@ -29,6 +29,7 @@ func _physics_process(delta: float) -> void:
 		controls.clear()
 		return
 	controls.throttle = Input.get_action_strength(&"throttle")
+	controls.reverse = Input.get_action_strength(&"reverse")
 	controls.steer = _ease(controls.steer, Input.get_axis(&"steer_left", &"steer_right"), delta,
 			steer_rise_time, steer_fall_time)
 	controls.lean = _ease(controls.lean, Input.get_axis(&"lean_back", &"lean_forward"), delta,

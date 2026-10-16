@@ -30,6 +30,7 @@ water (`-- --demo` rides itself).
 | Action | Keyboard | Gamepad |
 |---|---|---|
 | Throttle | Space, J | A, right trigger |
+| Reverse (backs up, brakes; on a beach, pushes off) | L | left trigger |
 | Steer | A / D, Left / Right | left stick, D-pad |
 | Lean forward / back | W / S, Up / Down | left stick up / down, D-pad |
 | Stunt (in the air; the direction held picks it) | K, Left Shift | B, X |

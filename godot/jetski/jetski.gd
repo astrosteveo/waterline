@@ -108,8 +108,14 @@ var grip_usage: float = 0.0
 var sliding: bool = false
 ## True while turning hard with a forward lean at speed.
 var carving: bool = false
-## Current jet thrust, 0 to 1. It follows the throttle with a short lag.
+## Current jet thrust, 0 to 1. It follows the throttle (or the reverse lever) with a short lag.
 var thrust: float = 0.0
+## How far the reverse bucket is down over the nozzle, 0 (up: the jet pushes forward) to 1
+## (down: it pushes back).
+var bucket: float = 0.0
+## True while the craft rests on something solid with its intake out of the water and almost
+## stopped: it can't drive, but holding reverse the rider pushes it off.
+var beached: bool = false
 ## Water height under the centre of mass.
 var water_height: float = 0.0
 ## What the rider is doing.
@@ -570,20 +576,41 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		drag_multiplier *= t.carve_drag
 	var speed_ratio := clampf(absf(forward_speed) / t.reference_top_speed, 0.0, 1.5)
 
-	# --- Thrust: the jet pushes along the surface while the intake is under water. ---
+	# --- Thrust: the jet pushes along the surface while the intake is under water. With the
+	# reverse bucket down, the same jet is turned forward and pushes the craft back. ---
 	var throttle := 0.0 if not in_control else clampf(controls.throttle, 0.0, 1.0)
-	thrust = move_toward(thrust, throttle, t.throttle_response * dt)
+	var reverse := 0.0 if not in_control else clampf(controls.reverse, 0.0, 1.0)
+	bucket = move_toward(bucket, 1.0 if reverse > 0.0 else 0.0, dt / t.bucket_time)
+	# The reverse lever sets the engine while it's held, whatever the throttle.
+	thrust = move_toward(thrust, reverse if reverse > 0.0 else throttle, t.throttle_response * dt)
 	var intake_depth := intake_depth_sum / maxf(intake_count, 1)
 	var intake_wet := clampf(intake_depth / t.intake_depth, 0.0, 1.0)
-	var thrust_force := t.max_thrust * thrust * intake_wet * power_multiplier
+	# The jet's direction along the hull: 1 forward, through 0, to -reverse_share with the
+	# bucket down. The power meter only helps forward.
+	var jet := lerpf(1.0, -t.reverse_share, bucket)
+	var thrust_force := t.max_thrust * thrust * intake_wet * jet * (power_multiplier if jet > 0.0 else 1.0)
 	state.apply_central_force(forward * thrust_force)
 	state.apply_torque(b.x * thrust_force * t.thrust_pitch_lever)
+
+	# --- Pushing off: stopped out of the water, the rider shoves the craft back with reverse. ---
+	beached = in_control and intake_wet < 0.5 and speed < t.push_speed + 1.0 \
+			and state.get_contact_count() > 0
+	if beached and reverse > 0.0:
+		var back := Vector3(b.z.x, 0.0, b.z.z)
+		if back.length_squared() > 1e-4:
+			back = back.normalized()
+			var shove := (t.push_speed * reverse - lin.dot(back)) * t.mass * 4.0
+			state.apply_central_force(back * clampf(shove, 0.0, t.push_force))
 
 	if in_water:
 		# Planing lift and drag through the water.
 		var planing := maxf(forward_speed, 0.0)
 		state.apply_central_force(surface_up * t.planing_lift * planing * planing * grip_contact)
 		var deep := lerpf(1.0, t.deep_drag_multiplier, submersion)
+		if forward_speed < 0.0:
+			# Backing up under reverse, the flat transom pushes the water. Only the bucket's
+			# share counts: a craft the waves nudge backwards barely moves through the water.
+			deep *= lerpf(1.0, t.backward_drag_multiplier, bucket)
 		var drag := (t.linear_drag * forward_speed + t.quadratic_drag * forward_speed * absf(forward_speed)) \
 				* drag_multiplier * deep * grip_contact
 		state.apply_central_force(-forward * drag)
@@ -599,7 +626,9 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var turn_rate := lerpf(t.turn_rate_low, t.turn_rate_high,
 				smoothstep(t.turn_rate_peak_speed, t.reference_top_speed, absf(forward_speed)))
 		var authority := lerpf(t.coast_steer, 1.0, thrust)
-		var target_yaw := -steer * turn_rate * turn_multiplier * authority
+		# With the bucket down the deflected jet steers the stern the other way, so the nose
+		# turns against the bars, as when backing up, and less sharply.
+		var target_yaw := -steer * turn_rate * turn_multiplier * authority * lerpf(1.0, -t.reverse_steer, bucket)
 		if absf(forward_speed) > 3.0:
 			# Past the slip limit, stop turning the nose further from the direction of travel.
 			var limit := deg_to_rad(t.slip_limit)
@@ -944,6 +973,7 @@ func _do_respawn(state: PhysicsDirectBodyState3D) -> void:
 	state.linear_velocity = water.velocity - target.basis.z * _respawn_speed
 	state.angular_velocity = Vector3.ZERO
 	thrust = 0.0
+	bucket = 0.0
 	air_time = 0.0
 	airborne = false
 	rider_state = RiderState.ABOARD
