@@ -45,12 +45,12 @@
     {
       "expect": "[scene._bars[0].value, scene._bars[1].value, scene._bars[2].value, scene._bars[3].value]",
       "equals": [
-        2.5,
         3.0,
+        3.5,
         4.5,
         4.5
       ],
-      "name": "the Petrel's stats: less top speed, more handling and grip"
+      "name": "the Petrel's stats: a little less top speed, a little more acceleration, more handling and grip"
     },
     {
       "expect": "scene._craft.get_node('Model').hull_color.is_equal_approx(Game.rider_named('Ines').hull_color) and scene._craft.get_node('Model').suit_color.is_equal_approx(Game.rider_named('Ines').suit_color)",
@@ -203,7 +203,7 @@
       "name": "Ines races the Swordfish"
     },
     {
-      "expect": "abs(scene.player.craft.tuning.turn_rate_low - 1.6 * 0.92) < 0.001 and abs(scene.player.craft.tuning.quadratic_drag - 6.1 * 0.86 / (1.06 * 1.06) * 280.0 / 300.0) < 0.001 and abs(scene.player.craft.mass - 280.0) < 0.01",
+      "expect": "abs(scene.player.craft.tuning.turn_rate_low - 1.6 * 0.92) < 0.001 and abs(scene.player.craft.tuning.quadratic_drag - 6.1 * 0.86 / (1.035 * 1.035) * 280.0 / 300.0) < 0.001 and abs(scene.player.craft.mass - 280.0) < 0.01",
       "name": "with the Swordfish's handling and top speed and Ines's weight"
     },
     {

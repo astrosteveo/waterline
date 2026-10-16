@@ -30,11 +30,11 @@
       "name": "and Koa's weight"
     },
     {
-      "expect": "abs(player.craft.tuning.max_thrust - 2400.0 * 330.0 / 300.0) < 0.01",
-      "name": "which scales the thrust (the Petrel's acceleration is 1.0)"
+      "expect": "abs(player.craft.tuning.max_thrust - 2400.0 * 1.04 * 330.0 / 300.0) < 0.01",
+      "name": "which scales the thrust (the Petrel's acceleration is 1.04)"
     },
     {
-      "expect": "abs(player.craft.tuning.quadratic_drag - 6.1 * 330.0 / 300.0 / (0.96 * 0.96)) < 0.001",
+      "expect": "abs(player.craft.tuning.quadratic_drag - 6.1 * 1.04 * 330.0 / 300.0 / (0.985 * 0.985)) < 0.001",
       "name": "and the drag after the Petrel's lower top speed"
     },
     {
