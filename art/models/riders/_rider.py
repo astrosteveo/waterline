@@ -36,8 +36,15 @@ Vec3 = tuple[float, float, float]
 # The joints JetSkiModel._riding_joints() puts above the pelvis, for a back of length 1.
 CHEST = (0.0, 0.46, -0.24)
 HEAD = (0.0, 0.74, -0.33)
-# How it bends the knees and elbows: out from the middle of the limb by this much.
-KNEE_OUT = (0.06, 0.0, -0.24)
+# The base rider's limbs: hip to knee, knee to the sole, shoulder to elbow, elbow to the middle
+# of the grip.
+THIGH = 0.44
+SHIN = 0.47
+UPPER_ARM = 0.34
+FOREARM = 0.33
+# Which way it bends the knees and elbows (for the left side; x flips for the right): the knees
+# forward and out, the elbows out, down and back.
+KNEE_OUT = (0.12, 0.0, -0.24)
 ELBOW_OUT = (0.12, -0.06, 0.06)
 
 # Gear colours. Painted parts are white or light grey; the game multiplies in the rider's
@@ -68,6 +75,8 @@ class Rider:
     hip_half: float = 0.11
     # The back's length (pelvis to shoulders and head) as a share of the base rider's.
     back: float = 1.0
+    # The arms' and legs' length as a share of the base rider's.
+    limbs: float = 1.0
     # How thick the body and limbs are, as a share of the base rider's.
     girth: float = 1.0
     skin: str = "#c99574"
@@ -97,10 +106,12 @@ class Rider:
             foot = _sub((foot_x * s, foot_y, foot_z), seat)
             hand = _sub((GRIP_SPREAD * s, ski.bar_height, ski.z(ski.bar_at)), seat)
             joints[f"Hip{side}"] = hip
-            joints[f"Knee{side}"] = _add(_mid(hip, foot), _mul(KNEE_OUT, (s, 1, 1)))
+            joints[f"Knee{side}"] = _bend(hip, foot, THIGH * self.limbs, SHIN * self.limbs,
+                                          _mul(KNEE_OUT, (s, 1, 1)))
             joints[f"Foot{side}"] = foot
             joints[f"Shoulder{side}"] = shoulder
-            joints[f"Elbow{side}"] = _add(_mid(shoulder, hand), _mul(ELBOW_OUT, (s, 1, 1)))
+            joints[f"Elbow{side}"] = _bend(shoulder, hand, UPPER_ARM * self.limbs, FOREARM * self.limbs,
+                                           _mul(ELBOW_OUT, (s, 1, 1)))
             joints[f"Hand{side}"] = hand
         return joints
 
@@ -381,6 +392,22 @@ def _profile_radius(profile):
     return radius
 
 
+# --- Joints -----------------------------------------------------------------------------
+
+def _bend(a, b, length_a, length_b, pole):
+    """Where a knee or an elbow goes, as JetSkiModel._bend() puts it: `length_a` from `a` (the
+    hip or shoulder) and `length_b` from `b` (the foot or hand), bent toward `pole`. A limb too
+    short to reach is straight, and stretched evenly along its two parts."""
+    axis = _sub(b, a)
+    reach = _length(axis)
+    along_axis = _scale(axis, 1 / reach)
+    d = min(max(reach, abs(length_a - length_b) + 0.001), length_a + length_b)
+    along = (length_a * length_a - length_b * length_b + d * d) / (2 * d)
+    out = math.sqrt(max(length_a * length_a - along * along, 0.0))
+    side = _sub(pole, _scale(along_axis, _dot(pole, along_axis)))
+    return _add(_add(a, _scale(along_axis, along * reach / d)), _scale(_normalized(side), out))
+
+
 # --- Vectors ----------------------------------------------------------------------------
 
 def _add(a, b):
@@ -401,10 +428,6 @@ def _scale(a, s):
 
 def _mul(a, b):
     return (a[0] * b[0], a[1] * b[1], a[2] * b[2])
-
-
-def _mid(a, b):
-    return _scale(_add(a, b), 0.5)
 
 
 def _dot(a, b):

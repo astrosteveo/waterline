@@ -38,8 +38,9 @@ NOZZLE = "#4a4d52"
 # How far the jet nozzle sticks out behind the transom.
 NOZZLE_OUT = 0.12
 
-# How far the rider's pelvis sits above the top of the seat (the rider's thighs and hips).
-SEAT_CLEARANCE = 0.36
+# How far the rider's pelvis (the hip joints) sits above the top of the seat: the flesh under
+# a seated person's hip joints.
+SEAT_CLEARANCE = 0.1
 # How far either side of the handlebar pivot the hands hold the bar (JetSkiModel.GRIP_SPREAD).
 GRIP_SPREAD = 0.33
 

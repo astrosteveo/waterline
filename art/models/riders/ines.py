@@ -4,7 +4,7 @@ from kiln import model
 
 from models.riders._rider import JOINTS, PARTS, Rider, build as build_rider
 
-INES = Rider(shoulder_half=0.188, hip_half=0.1, back=0.96, girth=0.87, skin="#e8c0a0", helmet="open",
+INES = Rider(shoulder_half=0.188, hip_half=0.1, back=0.96, limbs=0.96, girth=0.87, skin="#e8c0a0", helmet="open",
              vest="slim", ponytail="#3a2418")
 
 

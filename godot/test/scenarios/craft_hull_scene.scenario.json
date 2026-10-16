@@ -24,7 +24,7 @@
       "expect": "player.craft.get_node('Model').seat",
       "approx": [
         0.0,
-        1.16,
+        0.9,
         0.517
       ],
       "name": "the model's seat is the craft's Seat marker"
@@ -33,7 +33,7 @@
       "expect": "player.craft.get_node('Model').to_local(player.craft.get_node('Model').rider_joint('pelvis'))",
       "approx": [
         0.0,
-        1.16,
+        0.9,
         0.517
       ],
       "name": "the seated rider's pelvis is at the seat"
@@ -188,7 +188,7 @@
       "expect": "player.craft.get_node('Model').to_local(player.craft.get_node('Model').rider_joint('pelvis'))",
       "approx": [
         0.0,
-        1.16,
+        0.9,
         0.517
       ],
       "within": 0.1,
