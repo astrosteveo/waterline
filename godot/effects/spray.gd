@@ -1,6 +1,7 @@
 class_name Spray
 extends Node3D
-## Water thrown up by a jet ski, as GPU particles left behind in the world:
+## Water thrown up by a jet ski, as GPU particles in the world, each keeping a share of the
+## craft's velocity, so the spray trails back from where it is thrown:
 ## [br]- a rooster tail from the jet nozzle while the jet bites the water;
 ## [br]- spray off both sides of the bow at speed;
 ## [br]- a sheet of spray off the outside of a carve or a slide;
@@ -22,6 +23,7 @@ var _bow_right: GPUParticles3D
 var _carve_left: GPUParticles3D
 var _carve_right: GPUParticles3D
 var _splash: GPUParticles3D
+var _emitters: Array[GPUParticles3D] = []
 var _draw_mesh: QuadMesh
 var _material: ShaderMaterial
 var _wind := Vector3.ZERO
@@ -31,14 +33,18 @@ func _ready() -> void:
 	if craft == null:
 		craft = get_parent() as JetSki
 	_draw_mesh = _make_draw_mesh()
+	# Each emitter's last number is the share of the craft's velocity its spray keeps: what it
+	# loses, it falls behind by. A share near 1 keeps the spray in a cloud round the craft; near
+	# 0 a fast craft leaves it where it was thrown, in a line of puffs a frame's travel apart.
+	# In between it trails back from where it is thrown in a continuous sheet.
 	# Rooster tail: up and back from the nozzle.
-	_tail = _emitter("RoosterTail", Vector3(0.0, 0.25, 1.45), Vector3(0.0, 0.75, 0.65), 5.0, 3.5, 5.0, 0.5, 90, 0.22, 1.8, 0.95)
-	# Bow spray: out and up from either side of the bow.
-	_bow_left = _emitter("BowLeft", Vector3(-0.5, 0.45, -0.85), Vector3(-0.8, 1.0, 0.2), 15.0, 2.0, 3.0, 0.35, 40, 0.3, 1.4, 0.95)
-	_bow_right = _emitter("BowRight", Vector3(0.5, 0.45, -0.85), Vector3(0.8, 1.0, 0.2), 15.0, 2.0, 3.0, 0.35, 40, 0.3, 1.4, 0.95)
+	_tail = _emitter("RoosterTail", Vector3(0.0, 0.25, 1.45), Vector3(0.0, 0.75, 0.65), 5.0, 3.5, 5.0, 0.5, 90, 0.22, 1.8, 0.7)
+	# Bow spray: out and up from either side of the bow, trailing back past the stern.
+	_bow_left = _emitter("BowLeft", Vector3(-0.5, 0.45, -0.85), Vector3(-0.8, 1.0, 0.2), 15.0, 2.0, 3.0, 0.45, 52, 0.3, 1.4, 0.4)
+	_bow_right = _emitter("BowRight", Vector3(0.5, 0.45, -0.85), Vector3(0.8, 1.0, 0.2), 15.0, 2.0, 3.0, 0.45, 52, 0.3, 1.4, 0.4)
 	# Carving: a sheet off the outside of the turn, from the hull's side.
-	_carve_left = _emitter("CarveLeft", Vector3(-0.6, 0.4, 0.1), Vector3(-0.9, 1.0, 0.3), 15.0, 3.0, 5.5, 0.55, 90, 0.45, 2.0, 0.85)
-	_carve_right = _emitter("CarveRight", Vector3(0.6, 0.4, 0.1), Vector3(0.9, 1.0, 0.3), 15.0, 3.0, 5.5, 0.55, 90, 0.45, 2.0, 0.85)
+	_carve_left = _emitter("CarveLeft", Vector3(-0.6, 0.4, 0.1), Vector3(-0.9, 1.0, 0.3), 15.0, 3.0, 5.5, 0.55, 90, 0.45, 2.0, 0.5)
+	_carve_right = _emitter("CarveRight", Vector3(0.6, 0.4, 0.1), Vector3(0.9, 1.0, 0.3), 15.0, 3.0, 5.5, 0.55, 90, 0.45, 2.0, 0.5)
 	# Landing splash: a burst all round the hull.
 	_splash = _emitter("Splash", Vector3(0.0, 0.35, 0.0), Vector3(0.0, 1.0, 0.0), 55.0, 2.0, 4.5, 0.7, 90, 0.3, 1.8, 0.5)
 	_splash.one_shot = true
@@ -46,6 +52,9 @@ func _ready() -> void:
 	_splash.emitting = false
 	(_splash.process_material as ParticleProcessMaterial).emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
 	(_splash.process_material as ParticleProcessMaterial).emission_box_extents = Vector3(0.5, 0.05, 1.3)
+	_emitters = [_tail, _bow_left, _bow_right, _carve_left, _carve_right, _splash]
+	# After the emitters' own processing, which would undo the velocity _process() gives them.
+	process_priority = 1
 	if craft != null:
 		craft.landed.connect(_on_landed)
 		craft.crashed.connect(func(_reason: StringName) -> void: _burst(1.0))
@@ -54,11 +63,19 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if craft == null:
 		return
+	# Each emitter's particles leave with a share of the craft's velocity (its material's
+	# inherit_velocity_ratio). A GPUParticles3D works its own velocity out twice a frame from
+	# one previous position, after the physics tick and again in process, where it has moved
+	# no further, so the velocity it hands the renderer is zero: the spray stayed where it was
+	# thrown, a string of puffs behind a fast craft. Give the renderer the craft's velocity,
+	# after the emitters' own processing (process_priority).
+	for emitter in _emitters:
+		RenderingServer.particles_set_emitter_velocity(emitter.get_base(), craft.linear_velocity)
 	if not Ocean.wind.is_equal_approx(_wind):
 		_wind = Ocean.wind
 		var gravity := Vector3(_wind.x * wind_push, -9.8, _wind.z * wind_push)
-		for emitter in [_tail, _bow_left, _bow_right, _carve_left, _carve_right, _splash]:
-			((emitter as GPUParticles3D).process_material as ParticleProcessMaterial).gravity = gravity
+		for emitter in _emitters:
+			(emitter.process_material as ParticleProcessMaterial).gravity = gravity
 	var wet := craft.contact > 0.2 and not craft.airborne
 	var pace := clampf(craft.speed / full_speed, 0.0, 1.2)
 	_drive(_tail, wet and craft.thrust > 0.2 and craft.speed > 1.5, clampf(craft.thrust * (0.35 + 0.65 * pace), 0.0, 1.0))

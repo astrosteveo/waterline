@@ -1,0 +1,12 @@
+{
+  "description": "The spray keeps a share of the craft's velocity (issue #75): at full speed on Gull Cove the rooster tail and the bow spray trail back from where they are thrown, rather than being left where they were thrown in a string of puffs. Spray gives each emitter the craft's velocity after the emitters' own processing, which hands the renderer a zero velocity; without it the rooster tail's particles reached 11.2 m behind the nozzle and the bow spray's 8.2 m, with it 6.2 and 6.7 m (RenderingServer.particles_get_current_aabb, along the craft).",
+  "start": {"scene": "res://race/race.tscn", "seed": 1, "args": ["--rider", "marina", "--course", "gull_cove", "--no-opponents"]},
+  "steps": [
+    {"until": "phase == 1", "max": 1200, "name": "the race starts"},
+    "step 420 --hold throttle",
+    {"expect": "player.craft.speed > 15.0", "name": "at full speed"},
+    {"expect": "player.craft.get_node('Spray').process_priority > player.craft.get_node('Spray/BowLeft').process_priority", "name": "the spray sets the emitters' velocity after their own processing"},
+    {"expect": "RenderingServer.particles_get_current_aabb(player.craft.get_node('Spray/RoosterTail').get_base()).size.z < 8.5", "name": "the rooster tail reaches less than 8.5 m behind the nozzle"},
+    {"expect": "RenderingServer.particles_get_current_aabb(player.craft.get_node('Spray/BowLeft').get_base()).size.z < 7.5", "name": "the bow spray reaches less than 7.5 m back"}
+  ]
+}
