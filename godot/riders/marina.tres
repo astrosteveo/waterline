@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="RiderProfile" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="RiderProfile" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://riders/rider_profile.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/riders/marina.glb" id="3"]
 [ext_resource type="Resource" path="res://craft/tradewind.tres" id="2"]
 
 [resource]
@@ -8,6 +9,7 @@ script = ExtResource("1")
 display_name = "Marina"
 tagline = "A middle weight. A safe first pick."
 default_craft = ExtResource("2")
+model = ExtResource("3")
 hull_color = Color(0.98, 0.78, 0.1, 1)
 trim_color = Color(0.1, 0.35, 0.85, 1)
 bottom_color = Color(0.1, 0.2, 0.5, 1)

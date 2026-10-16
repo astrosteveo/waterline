@@ -1,5 +1,5 @@
 {
-  "description": "A craft whose JetSkiModel draws a hull scene (Koa's Swordfish, craft/swordfish.tscn, whose hull is kiln's assets/models/craft/swordfish.glb): the rider sits at the craft's Seat marker, holds the Handlebar marker, which turns with the steering, and stands on the FootLeft and FootRight markers; the hull takes the rider's three hull colours; the handstand holds the bars; and a thrown rider climbs back on to the Seat marker.",
+  "description": "A craft whose JetSkiModel draws a hull scene (Koa's Swordfish, craft/swordfish.tscn, whose hull is kiln's assets/models/craft/swordfish.glb): the rider sits at the craft's Seat marker, holds the Handlebar marker, which turns with the steering, and stands on the FootLeft and FootRight markers, with Koa's kiln-built body (assets/models/riders/koa.glb); the hull takes the rider's three hull colours; the handstand holds the bars; and a thrown rider climbs back on to the Seat marker.",
   "start": {
     "scene": "res://race/race.tscn",
     "seed": 1,
@@ -12,12 +12,13 @@
   "steps": [
     "step 30",
     {
-      "expect": "[player.craft.get_node('Model').hull_scene.resource_path, player.display_name]",
+      "expect": "[player.craft.get_node('Model').hull_scene.resource_path, player.display_name, player.craft.get_node('Model').rider_scene.resource_path]",
       "equals": [
         "res://assets/models/craft/swordfish.glb",
-        "Koa"
+        "Koa",
+        "res://assets/models/riders/koa.glb"
       ],
-      "name": "Koa rides the Swordfish and its hull"
+      "name": "Koa rides the Swordfish and its hull, as Koa"
     },
     {
       "expect": "player.craft.get_node('Model').seat",
@@ -29,7 +30,7 @@
       "name": "the model's seat is the craft's Seat marker"
     },
     {
-      "expect": "player.craft.get_node('Model/Rider/torso').position - player.craft.get_node('Model/Rider/torso').basis.y * 0.5",
+      "expect": "player.craft.get_node('Model').to_local(player.craft.get_node('Model').rider_joint('pelvis'))",
       "approx": [
         0.0,
         1.16,
@@ -38,14 +39,19 @@
       "name": "the seated rider's pelvis is at the seat"
     },
     {
-      "expect": "max(player.craft.get_node('Model/Rider/glove_left').global_position.distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(-0.33, 0, 0)), player.craft.get_node('Model/Rider/glove_right').global_position.distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(0.33, 0, 0)))",
+      "expect": "max(player.craft.get_node('Model').rider_joint('hand_l').distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(-0.33, 0, 0)), player.craft.get_node('Model').rider_joint('hand_r').distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(0.33, 0, 0)))",
       "approx": 0.0,
       "name": "the hands hold the bar either side of the Handlebar marker"
     },
     {
-      "expect": "max(player.craft.get_node('Model/Rider/boot_left').global_position.distance_to(player.craft.get_node('Model/Hull/FootLeft').global_transform * Vector3(0, -0.02, -0.05)), player.craft.get_node('Model/Rider/boot_right').global_position.distance_to(player.craft.get_node('Model/Hull/FootRight').global_transform * Vector3(0, -0.02, -0.05)))",
+      "expect": "max(player.craft.get_node('Model').rider_joint('foot_l').distance_to(player.craft.get_node('Model/Hull/FootLeft').global_position), player.craft.get_node('Model').rider_joint('foot_r').distance_to(player.craft.get_node('Model/Hull/FootRight').global_position))",
       "approx": 0.0,
       "name": "the feet are on the FootLeft and FootRight markers"
+    },
+    {
+      "expect": "max(player.craft.get_node('Model/Rider/GloveLeft').global_position.distance_to(player.craft.get_node('Model').rider_joint('hand_l')), player.craft.get_node('Model/Rider/BootRight').global_position.distance_to(player.craft.get_node('Model').rider_joint('foot_r')))",
+      "approx": 0.0,
+      "name": "the gloves and boots are drawn at the hands and feet"
     },
     {
       "expect": "[player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).shader.resource_path, player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('hull_color') == Game.rider_named('koa').hull_color, player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('trim_color') == Game.rider_named('koa').trim_color, player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('bottom_color') == Game.rider_named('koa').bottom_color]",
@@ -90,7 +96,7 @@
       "name": "the handlebar turns right with full right steer (24 degrees at full lock)"
     },
     {
-      "expect": "max(player.craft.get_node('Model/Rider/glove_left').global_position.distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(-0.33, 0, 0)), player.craft.get_node('Model/Rider/glove_right').global_position.distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(0.33, 0, 0)))",
+      "expect": "max(player.craft.get_node('Model').rider_joint('hand_l').distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(-0.33, 0, 0)), player.craft.get_node('Model').rider_joint('hand_r').distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(0.33, 0, 0)))",
       "approx": 0.0,
       "name": "the hands turn with the bar"
     },
@@ -130,11 +136,11 @@
       "name": "stunt + forward starts a handstand"
     },
     {
-      "expect": "max(player.craft.get_node('Model/Rider/glove_left').global_position.distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(-0.33, 0, 0)), player.craft.get_node('Model/Rider/glove_right').global_position.distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(0.33, 0, 0))) < 0.01",
+      "expect": "max(player.craft.get_node('Model').rider_joint('hand_l').distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(-0.33, 0, 0)), player.craft.get_node('Model').rider_joint('hand_r').distance_to(player.craft.get_node('Model/Hull/Handlebar').global_transform * Vector3(0.33, 0, 0))) < 0.01",
       "name": "in the handstand the hands hold the bar"
     },
     {
-      "expect": "player.craft.get_node('Model/Rider/boot_left').position.y - player.craft.get_node('Model/Hull/Handlebar').position.y > 1.8",
+      "expect": "player.craft.get_node('Model').to_local(player.craft.get_node('Model').rider_joint('foot_l')).y - player.craft.get_node('Model/Hull/Handlebar').position.y > 1.8",
       "name": "and the feet point straight up above it"
     },
     {
@@ -163,7 +169,7 @@
       "name": "two ticks before the climb ends"
     },
     {
-      "expect": "player.craft.get_node('Model/Rider').global_transform * (player.craft.get_node('Model/Rider/torso').position - player.craft.get_node('Model/Rider/torso').basis.y * 0.5) - player.craft.get_node('Model').get_global_transform_interpolated() * player.craft.get_node('Model').seat",
+      "expect": "player.craft.get_node('Model').rider_joint('pelvis') - player.craft.get_node('Model').get_global_transform_interpolated() * player.craft.get_node('Model').seat",
       "approx": [
         0.0,
         0.0,
@@ -179,7 +185,7 @@
     },
     "step 1",
     {
-      "expect": "player.craft.get_node('Model/Rider/torso').position - player.craft.get_node('Model/Rider/torso').basis.y * 0.5",
+      "expect": "player.craft.get_node('Model').to_local(player.craft.get_node('Model').rider_joint('pelvis'))",
       "approx": [
         0.0,
         1.16,

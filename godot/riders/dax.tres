@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="RiderProfile" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="RiderProfile" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://riders/rider_profile.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/riders/dax.glb" id="3"]
 [ext_resource type="Resource" path="res://craft/skipjack.tres" id="2"]
 
 [resource]
@@ -8,6 +9,7 @@ script = ExtResource("1")
 display_name = "Dax"
 tagline = "Lighter than most, and never short of nerve."
 default_craft = ExtResource("2")
+model = ExtResource("3")
 hull_color = Color(1, 0.45, 0.1, 1)
 trim_color = Color(0.96, 0.96, 0.96, 1)
 bottom_color = Color(0.18, 0.18, 0.2, 1)

@@ -334,11 +334,11 @@ func _make_craft(profile: CraftProfile) -> JetSki:
 	return craft_scene.instantiate() as JetSki
 
 
-## Paints [param craft] (not yet in the tree) in [param rider]'s colours and gives it the
+## Puts [param rider] on [param craft] (not yet in the tree) in the rider's colours and gives it the
 ## tuning the rider gets on [param profile]: the craft's stats, then the rider's weight.
 func _fit(craft: JetSki, rider: RiderProfile, profile: CraftProfile) -> void:
 	if rider != null:
-		rider.apply_colors(craft.get_node_or_null(^"Model"))
+		rider.dress(craft.get_node_or_null(^"Model"))
 	if profile != null:
 		craft.tuning = profile.tuning_for(rider, craft.tuning)
 	elif rider != null:
