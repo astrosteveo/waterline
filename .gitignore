@@ -8,3 +8,5 @@ captures/
 # Python bytecode and environments
 __pycache__/
 .venv/
+# The wiki's own repository, checked out here
+/.wiki/

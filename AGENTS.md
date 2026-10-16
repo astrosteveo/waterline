@@ -1,9 +1,10 @@
 # Waterline: notes for agents
 
 A jet ski racer in Godot 4.7 (typed GDScript, Jolt physics). The [README](README.md) says how to run
-it; the [wiki](https://github.com/astrosteveo/waterline/wiki) explains how each part works and why;
-the issues are the backlog. The Godot project is in `godot/` (where `res://` points); the README
-lists the other top-level folders. Read the wiki page for the part you're changing first.
+it; the [wiki](https://github.com/astrosteveo/waterline/wiki), checked out in `.wiki/`, explains
+how each part works and why; the issues are the backlog. The Godot project is in `godot/` (where
+`res://` points); the README lists the other top-level folders. Read the wiki page for the part
+you're changing first.
 
 The game aims for a sim feel, though a 1996 arcade racer inspired it: design mechanics, controls
 and tuning from how a real jet ski behaves, and say so when realism would cost fun or clarity.
@@ -38,7 +39,8 @@ Check the thing you're changing while you change it, not with long batches of sc
   the every-course race on a few seeds (the wiki's Testing page; about 3 minutes a seed): no
   crashes, at most 3 misses a rider. Skip the full `gdh test` otherwise, and runs whose result is
   already known; if a check's worth is doubtful, ask.
-- CI only checks that everything loads; the scenarios need the GPU and run locally.
+- CI checks that everything loads and runs kiln's tests, skipping those that need Blender; the
+  scenarios need the GPU and run locally.
 - Builds need `godot-mono` (only the `.mono` export templates are installed):
   `GODOT=/usr/bin/godot-mono gdh export --project godot --preset Linux --smoke 10`, or `Windows`.
 
@@ -55,7 +57,8 @@ resources (`JetSkiTuning`, `RaceRules`, the `.tres` files), not in code.
   passes. GitHub deletes the merged branch; delete the local one with `git branch -D`.
 - Ask before merging, closing issues or milestones, or deleting branches. Commit and push only
   when asked or as part of agreed work. No AI attribution lines in commits or pull requests.
-- When a change alters how something works, update its wiki page
-  (`git clone https://github.com/astrosteveo/waterline.wiki.git` outside the repo, edit, push).
+- `git -C .wiki pull` before reading the wiki (if it's missing,
+  `git clone https://github.com/astrosteveo/waterline.wiki.git .wiki`). When a change alters how
+  something works, update its page there, then commit and push inside `.wiki/`.
 - A bug you won't fix now: say so and offer to file an issue, labelled bug or enhancement plus
   priority:high, medium or low.
