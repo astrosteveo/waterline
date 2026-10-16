@@ -5,6 +5,9 @@ extends RefCounted
 
 ## 0 to 1.
 var throttle: float = 0.0
+## 0 to 1: the reverse lever. It drops the reverse bucket over the nozzle and sets the
+## engine itself, whatever the throttle; on a beach the rider pushes the craft off instead.
+var reverse: float = 0.0
 ## -1 (full left) to 1 (full right).
 var steer: float = 0.0
 ## -1 (full lean back, nose up) to 1 (full lean forward, nose down).
@@ -18,6 +21,7 @@ var stunt_direction: Vector2 = Vector2.ZERO
 
 func clear() -> void:
 	throttle = 0.0
+	reverse = 0.0
 	steer = 0.0
 	lean = 0.0
 	stunt = false

@@ -1,0 +1,9 @@
+{
+  "description": "A settings file saved before an action existed (here, before reverse): it loads without engine errors, keeps what it saved (the master volume, throttle on J and A only), and the new action keeps its default bindings (L and the left trigger).",
+  "start": {"scene": "res://menus/main_menu.tscn", "seed": 1, "user_data_from": "../fixtures/settings_before_reverse"},
+  "steps": [
+    "step 5",
+    {"expect": "[Settings.volumes['master'], InputMap.action_get_events('throttle').size(), InputMap.action_get_events('throttle')[0].physical_keycode]", "equals": [0.5, 2, 74], "name": "the saved settings load"},
+    {"expect": "[InputMap.action_get_events('reverse').size(), InputMap.action_get_events('reverse')[0].physical_keycode, InputMap.action_get_events('reverse')[1].axis]", "equals": [2, 76, 4], "name": "reverse keeps its defaults: L and the left trigger"}
+  ]
+}

@@ -11,6 +11,7 @@ const VOLUMES: Dictionary[String, StringName] = {"master": &"Master", "engine": 
 ## The actions the options screen lets the player rebind, with their names on screen.
 const REBINDABLE: Dictionary[StringName, String] = {
 	&"throttle": "THROTTLE",
+	&"reverse": "REVERSE",
 	&"steer_left": "STEER LEFT",
 	&"steer_right": "STEER RIGHT",
 	&"lean_forward": "LEAN FORWARD",
@@ -153,7 +154,10 @@ func load_from_disk() -> void:
 		volumes[key] = float(config.get_value("audio", key, volumes[key]))
 	fullscreen = bool(config.get_value("display", "fullscreen", false))
 	for action in REBINDABLE:
-		var events: Variant = config.get_value("controls", action, null)
+		# A file saved before an action existed keeps that action's default bindings.
+		if not config.has_section_key("controls", action):
+			continue
+		var events: Variant = config.get_value("controls", action)
 		if events is Array and not (events as Array).is_empty():
 			InputMap.action_erase_events(action)
 			for event: Variant in events:

@@ -1,0 +1,19 @@
+{
+  "description": "Reverse (issue #72): holding reverse drops the bucket over the nozzle and the jet pushes the craft back, up to a jog (about 2.1 m/s; the transom drags 8 times as hard backwards); it brakes a craft moving forward; the bars steer the stern, so the nose turns against them; and letting go lifts the bucket so throttle drives forward again.",
+  "start": {"scene": "res://race/race.tscn", "seed": 1, "args": ["--no-opponents"]},
+  "steps": [
+    {"until": "phase == 1", "max": 400},
+    {"eval": "[rules.set('misses_to_disqualify', 0), place_racer(player, 40, 0, 0)]"},
+    {"step": 240, "hold": "reverse"},
+    {"expect": "[player.craft.bucket, player.craft.thrust]", "approx": [1.0, 1.0], "name": "reverse drops the bucket and runs the jet"},
+    {"expect": "player.craft.forward_speed", "approx": -2.1, "within": 0.25, "name": "the craft backs up at a jog"},
+    {"eval": "place_racer(player, 40, 0, 0)"},
+    {"step": 60, "hold": "reverse"},
+    {"step": 60, "hold": ["reverse", "steer_right"]},
+    {"expect": "player.craft.angular_velocity.y > 0.5", "name": "in reverse, steering right swings the stern right: the nose turns left"},
+    {"eval": "place_racer(player, 40, 0, 15)", "name": "at 54 km/h"},
+    {"until": "player.craft.forward_speed < 2.0", "hold": "reverse", "max": 240, "name": "reverse brakes to a crawl within 4 s"},
+    {"step": 60, "hold": "throttle"},
+    {"expect": "[player.craft.bucket, player.craft.forward_speed > 1.0]", "equals": [0.0, true], "name": "letting go lifts the bucket, and the throttle drives forward again"}
+  ]
+}

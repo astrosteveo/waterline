@@ -1,0 +1,18 @@
+{
+  "description": "A beached craft (issue #72): driven up the sand of the free ride's big island, it stops out of the water with its intake dry, where the throttle can't move it; holding reverse, the rider shoves it back down to the water, where it floats and reverses away. The hull's friction is raised to 0.5 here, so it stays on this 15-degree beach (at 0.25 it slides back into the water by itself).",
+  "start": {"scene": "res://levels/open_water.tscn", "seed": 1},
+  "steps": [
+    "step 30",
+    {"eval": "[get_node('JetSki').physics_material_override.set('friction', 0.5), get_node('JetSki').respawn(Transform3D().rotated(Vector3(0, 1, 0), -0.437).translated(Vector3(45, 0, -97)), 6.0)]", "name": "heading for the island's beach at 22 km/h"},
+    {"step": 200, "hold": "throttle"},
+    "step 180",
+    {"expect": "[get_node('JetSki').beached, get_node('JetSki').contact, get_node('JetSki').global_position.y > 1.0]", "equals": [true, 0.0, true], "name": "beached: up the sand, no hull point in the water"},
+    {"eval": "set_meta('beached_at', get_node('JetSki').global_position)"},
+    {"step": 120, "hold": "throttle"},
+    {"expect": "get_node('JetSki').global_position.distance_to(get_meta('beached_at')) < 0.05", "name": "the throttle can't move it: the intake is dry"},
+    {"shot": "beached"},
+    {"until": "get_node('JetSki').contact > 0.8", "hold": "reverse", "max": 1500, "name": "holding reverse, the rider pushes it back into the water"},
+    {"step": 120, "hold": "reverse"},
+    {"expect": "[get_node('JetSki').beached, get_node('JetSki').forward_speed < -1.0]", "equals": [false, true], "name": "afloat and backing away under reverse thrust"}
+  ]
+}
