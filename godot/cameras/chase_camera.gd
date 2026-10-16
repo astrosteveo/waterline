@@ -6,7 +6,11 @@ extends Camera3D
 ## so it doesn't bob with every wave. After smoothing, two hard limits apply: the camera
 ## stays [member water_clearance] above the water under it, and it rises if a swell would
 ## block the line of sight to the craft. A ray toward the craft keeps islands and rocks
-## from coming between them.
+## from coming between them. Another craft that comes between them fades out instead
+## ([member JetSkiModel.fade]), so the camera doesn't jump.
+
+## How much nearer the camera than the followed craft another craft must be to fade.
+const CLEAR_OF_FOCUS := 1.0
 
 ## The craft to follow.
 @export var target_path: NodePath
@@ -40,6 +44,16 @@ extends Camera3D
 @export_flags_3d_physics var collision_mask: int = 1
 ## Gap kept between the camera and anything that blocks it.
 @export_range(0.0, 3.0, 0.01, "suffix:m") var collision_margin: float = 0.4
+
+@export_group("Craft in the way")
+## Another craft whose middle is closer than this to the line of sight fades fully...
+@export_range(0.0, 5.0, 0.01, "suffix:m") var occluder_near: float = 1.2
+## ...and one this far or further doesn't fade.
+@export_range(0.0, 8.0, 0.01, "suffix:m") var occluder_far: float = 2.0
+## How much of a craft in the way is hidden, from 0 to 1.
+@export_range(0.0, 1.0, 0.01) var occluder_fade: float = 0.75
+## How quickly a craft fades out and back in, in fade per second.
+@export_range(0.1, 20.0, 0.1) var fade_speed: float = 5.0
 
 ## Lowest height of the camera above the water seen so far, for tests. Reset by snap().
 var min_water_gap: float = INF
@@ -131,6 +145,7 @@ func _process(delta: float) -> void:
 	_fov_speed = lerpf(_fov_speed, clampf(speed / reference_speed, 0.0, 1.2), 1.0 - exp(-3.0 * delta))
 	fov = base_fov + speed_fov * _fov_speed
 	min_water_gap = minf(min_water_gap, at.y - _water_height(at))
+	_fade_craft_in_the_way(at, focus, delta)
 
 
 ## The lowest the camera may be at [param at]: above the water under it, and high enough
@@ -144,6 +159,39 @@ func _lowest_height(at: Vector3, look_target: Vector3) -> float:
 		# Height the camera needs so the line from it to the look target passes `needed` here.
 		lowest = maxf(lowest, (needed - look_target.y * fraction) / (1.0 - fraction))
 	return lowest
+
+
+## Fades each other craft by how close its middle is to the line from the camera at
+## [param at] to [param focus], and brings it back once it's clear. While this camera isn't
+## the one drawing, nothing is faded.
+func _fade_craft_in_the_way(at: Vector3, focus: Vector3, delta: float) -> void:
+	var step := fade_speed * delta
+	for node in get_tree().get_nodes_in_group(JetSki.GROUP):
+		var craft := node as Node3D
+		var model := craft.get_node_or_null(^"Model") as Node3D
+		if model == null or not &"fade" in model:
+			continue
+		var wanted := 0.0
+		if current and craft != _target:
+			wanted = occluder_fade * (1.0 - smoothstep(occluder_near, occluder_far,
+					_distance_to_sight(at, focus, craft.get_global_transform_interpolated().origin + Vector3.UP * 0.6)))
+		var now: float = model.get(&"fade")
+		# A camera placed at once (delta 0) fades at once too.
+		model.set(&"fade", wanted if delta == 0.0 else move_toward(now, wanted, step))
+
+
+## How far [param point] is from the line of sight from [param from] to [param to]: infinite
+## unless it is between them and at least [constant CLEAR_OF_FOCUS] nearer the camera, so a
+## craft alongside the one followed doesn't fade.
+static func _distance_to_sight(from: Vector3, to: Vector3, point: Vector3) -> float:
+	var line := to - from
+	var length := line.length()
+	if length < 1e-3:
+		return INF
+	var along := (point - from).dot(line / length)
+	if along <= 0.0 or along >= length - CLEAR_OF_FOCUS:
+		return INF
+	return point.distance_to(from + line / length * along)
 
 
 func _water_height(at: Vector3) -> float:

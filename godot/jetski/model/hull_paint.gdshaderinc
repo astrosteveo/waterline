@@ -39,6 +39,12 @@ uniform float trim_line = -1000.0;
 // Linear albedo at least this bright counts as white: painted at full strength.
 uniform float white_level = 0.7;
 
+#ifndef GHOST
+// How much of the surface to hide, 0 to 1 (JetSkiModel.fade): a dither in the opaque pass,
+// so a faded craft can't sort behind the water.
+uniform float fade : hint_range(0.0, 1.0) = 0.0;
+#endif
+
 #ifdef GHOST
 uniform float ghost_alpha = 0.38;
 uniform vec4 ghost_glow : source_color = vec4(0.55, 0.8, 1.0, 1.0);
@@ -78,5 +84,8 @@ void fragment() {
 #ifdef GHOST
 	ALPHA = ghost_alpha;
 	EMISSION = ghost_glow.rgb * ghost_glow_energy;
+#else
+	ALPHA = 1.0 - fade;
+	ALPHA_HASH_SCALE = 1.0;
 #endif
 }

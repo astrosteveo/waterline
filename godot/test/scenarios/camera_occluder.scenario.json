@@ -1,0 +1,17 @@
+{
+  "description": "A computer rider riding between the chase camera and the player's craft fades out (JetSkiModel.fade, a dither), and fades back in once it is clear; the craft the camera follows never fades. In watch mode the camera follows another racer, and the player's craft in the way fades instead (issue #71).",
+  "start": {"scene": "res://race/race.tscn", "seed": 1},
+  "steps": [
+    {"until": "phase == 1", "max": 400},
+    {"eval": "[place_racer(player, 60, 0, 14), place_racer(racers[1], 56.5, 0, 14), place_racer(racers[2], 20, -6, 14), place_racer(racers[3], 20, 6, 14)]", "name": "Koa rides 3.5 m behind Marina, in her camera's line of sight"},
+    {"step": 20, "hold": "throttle"},
+    {"expect": "[racers[1].craft.get_node('Model').fade, player.craft.get_node('Model').fade, racers[2].craft.get_node('Model').fade]", "approx": [0.75, 0.0, 0.0], "name": "Koa is faded; Marina and the riders far behind aren't"},
+    {"shot": "koa-faded"},
+    {"eval": "place_racer(racers[1], 60, 8, 14)", "name": "Koa moves alongside, out of the way"},
+    {"step": 20, "hold": "throttle"},
+    {"expect": "racers[1].craft.get_node('Model').fade", "approx": 0.0, "name": "Koa fades back in"},
+    {"eval": "[place_racer(racers[1], 70, 0, 14), place_racer(player, 66.5, 0, 14), watch(racers[1])]", "name": "watching Koa, with Marina behind him"},
+    {"step": 20, "hold": "throttle"},
+    {"expect": "[racers[1].craft.get_node('Model').fade, player.craft.get_node('Model').fade]", "approx": [0.0, 0.75], "name": "the followed craft doesn't fade; the one in the way does"}
+  ]
+}
