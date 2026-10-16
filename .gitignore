@@ -8,5 +8,3 @@ captures/
 # Python bytecode and environments
 __pycache__/
 .venv/
-# assetgen working files (raw generations, seam passes, previews, earlier model versions)
-godot/assets/generated/.assetgen/
