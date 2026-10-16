@@ -1,0 +1,69 @@
+{
+  "description": "The racing line takes every ramp (issue #74): on every course it runs straight up each ramp (moving less than 0.5 m sideways from the leading edge to the lip), at least 1.2 m inside its sides, and from 15 m before the leading edge to the lip a rider's moves round other craft and its wander are kept on the ramp, 1.2 m inside its sides (ramp_line_check.gd).",
+  "start": {
+    "scene": "res://test/scenery_preview.tscn",
+    "seed": 1
+  },
+  "steps": [
+    "step 3",
+    {
+      "expect": "ResourceLoader.load('res://test/ramp_line_check.gd').new().failures(course)",
+      "equals": [],
+      "name": "Gull Cove: the line runs straight up each ramp, and riders keep to the ramp from 15 m before it"
+    },
+    {
+      "eval": "show_course('gull_cove_reverse')"
+    },
+    "step 3",
+    {
+      "expect": "ResourceLoader.load('res://test/ramp_line_check.gd').new().failures(course)",
+      "equals": [],
+      "name": "Gull Cove Reverse: the line runs straight up each ramp, and riders keep to the ramp from 15 m before it"
+    },
+    {
+      "eval": "show_course('gull_cove_mirror')"
+    },
+    "step 3",
+    {
+      "expect": "ResourceLoader.load('res://test/ramp_line_check.gd').new().failures(course)",
+      "equals": [],
+      "name": "Gull Cove Mirror: the line runs straight up each ramp, and riders keep to the ramp from 15 m before it"
+    },
+    {
+      "eval": "show_course('gull_cove_swell')"
+    },
+    "step 3",
+    {
+      "expect": "ResourceLoader.load('res://test/ramp_line_check.gd').new().failures(course)",
+      "equals": [],
+      "name": "Gull Cove Swell: the line runs straight up each ramp, and riders keep to the ramp from 15 m before it"
+    },
+    {
+      "eval": "show_course('whitecap_point')"
+    },
+    "step 3",
+    {
+      "expect": "ResourceLoader.load('res://test/ramp_line_check.gd').new().failures(course)",
+      "equals": [],
+      "name": "Whitecap Point: the line runs straight up each ramp, and riders keep to the ramp from 15 m before it"
+    },
+    {
+      "eval": "show_course('lantern_harbor')"
+    },
+    "step 3",
+    {
+      "expect": "ResourceLoader.load('res://test/ramp_line_check.gd').new().failures(course)",
+      "equals": [],
+      "name": "Lantern Harbor: the line runs straight up each ramp, and riders keep to the ramp from 15 m before it"
+    },
+    {
+      "eval": "show_course('ebb_reef')"
+    },
+    "step 3",
+    {
+      "expect": "ResourceLoader.load('res://test/ramp_line_check.gd').new().failures(course)",
+      "equals": [],
+      "name": "Ebb Reef: the line runs straight up each ramp, and riders keep to the ramp from 15 m before it"
+    }
+  ]
+}
