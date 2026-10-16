@@ -2,7 +2,8 @@
 render the preview sheet. It runs in the command line's own Python, not in Blender.
 
 A recipe returns one sound, written as `<stem>.wav`, or a dict of named sounds, written as
-`<stem>_<name>.wav`. Every sound is checked:
+`<stem>_<name>.wav` (`.ogg` for a recipe whose spec says `format="ogg"`). Every sound is
+checked:
 
 - every sample is a number, and the sound isn't silent;
 - its length is within the spec's `seconds`;
@@ -26,7 +27,7 @@ import traceback
 
 import numpy as np
 
-from kiln.audio import preview, wav
+from kiln.audio import ogg, preview, wav
 from kiln.audio.kit import SoundKit
 from kiln.recipe import SoundSpec, find_recipe
 
@@ -39,9 +40,9 @@ MAX_END_SHARE = 0.12
 
 
 def tools() -> str:
-    """The libraries a sound is built with, part of its fingerprint: another version may
-    build different samples."""
-    return ", ".join(f"{name} {importlib.metadata.version(name)}" for name in ("numpy", "scipy"))
+    """The libraries a sound is built with, and the encoder for Ogg files, part of its
+    fingerprint: another version may build different samples."""
+    return ", ".join([f"{name} {importlib.metadata.version(name)}" for name in ("numpy", "scipy")] + [ogg.version()])
 
 
 def build_sound(recipe, stem: str, export: bool, report_dir: str | None) -> dict:
@@ -81,11 +82,14 @@ def build_sound(recipe, stem: str, export: bool, report_dir: str | None) -> dict
     report["sounds"] = {name: measure(samples, spec.rate, spec.loop) for name, samples in sounds.items()}
     for name, m in report["sounds"].items():
         problems.extend(f"{_label(name)}: {problem}" for problem in judge(m, spec))
-    report["outputs"] = [_output(stem, name) for name in sounds]
+    report["outputs"] = [_output(stem, name, spec.format) for name in sounds]
     if export and not problems:
         os.makedirs(os.path.dirname(stem) or ".", exist_ok=True)
         for name, samples in sounds.items():
-            wav.write(_output(stem, name), samples, spec.rate, spec.loop)
+            if spec.format == "ogg":
+                ogg.write(_output(stem, name, "ogg"), samples, spec.rate)
+            else:
+                wav.write(_output(stem, name, "wav"), samples, spec.rate, spec.loop)
     if report_dir is not None:
         os.makedirs(report_dir, exist_ok=True)
         sheet = os.path.join(report_dir, "preview.png")
@@ -184,8 +188,8 @@ def _describe_error(error: Exception, recipe: str, project_root: str) -> str:
         "".join("\n  " + line for line in lines)
 
 
-def _output(stem: str, name: str) -> str:
-    return f"{stem}_{name}.wav" if name else f"{stem}.wav"
+def _output(stem: str, name: str, extension: str) -> str:
+    return f"{stem}_{name}.{extension}" if name else f"{stem}.{extension}"
 
 
 def _label(name: str) -> str:

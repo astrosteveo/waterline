@@ -1,12 +1,13 @@
 """Sound recipes: the kit, the WAV files, the checks, and builds from the command line. None
 of it needs Blender."""
 import json
+import shutil
 
 import numpy as np
 import pytest
 
 from kiln import cli
-from kiln.audio import wav
+from kiln.audio import ogg, wav
 from kiln.audio.build import build_sound
 from kiln.audio.kit import SoundKit
 from kiln.recipe import Recipe, SoundSpec
@@ -130,6 +131,35 @@ def test_wav_round_trip_with_loop_points(tmp_path):
     rate, back, loop = wav.read(str(tmp_path / "b.wav"))
     assert rate == 22050 and loop is None and back.shape == (2, 1000)
     assert np.allclose(back[1], -mono, atol=1 / 32767)
+
+
+def test_the_compressor_turns_down_what_is_over_its_threshold():
+    s = SoundKit()
+    quiet, loud = s.sine(200.0, 1.0) * 0.05, s.sine(200.0, 1.0) * 0.8
+    level = lambda x: 20 * np.log10(np.sqrt(np.mean(x[s.samples(0.5):] ** 2)))
+    # Far under the threshold, the quiet one is left alone; the loud one, about 1 dB over,
+    # comes out half as far over with a ratio of 2.
+    assert level(s.compress(quiet, -6.0, 2.0)) == pytest.approx(level(quiet), abs=0.05)
+    assert level(s.compress(loud, -6.0, 2.0)) == pytest.approx(-6.0 + (level(loud) + 6.0) / 2.0, abs=0.05)
+
+
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg isn't installed")
+def test_ogg_files_are_the_same_every_build_and_decode_close(tmp_path):
+    s = SoundKit()
+    music = s.pan(s.fade(s.saw(220.0, 1.0) * 0.3, 0.01, 0.01), 0.3)
+    ogg.write(str(tmp_path / "a.ogg"), music, RATE)
+    ogg.write(str(tmp_path / "b.ogg"), music, RATE)
+    assert (tmp_path / "a.ogg").read_bytes() == (tmp_path / "b.ogg").read_bytes()
+    rate, back = ogg.read(str(tmp_path / "a.ogg"))
+    assert rate == RATE and back.shape == music.shape
+    # Lossy, but close: the difference is far below the sound.
+    assert np.sqrt(np.mean((back - music) ** 2)) < 0.05 * np.sqrt(np.mean(music ** 2))
+
+
+def test_a_sound_is_written_as_wav_or_ogg():
+    assert SoundSpec(format="ogg").format == "ogg"
+    with pytest.raises(ValueError, match="wav or ogg"):
+        SoundSpec(format="mp3")
 
 
 def build(spec: SoundSpec, make, tmp_path):

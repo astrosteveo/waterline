@@ -261,6 +261,16 @@ class SoundKit:
         tanh(drive * x). The more `drive`, the louder and rougher."""
         return np.tanh(x * drive)
 
+    def compress(self, x: Signal, threshold_db: float = -18.0, ratio: float = 3.0, time: float = 0.05,
+                 makeup_db: float = 0.0) -> Signal:
+        """Turns down what is louder than `threshold_db`: with a ratio of 3, a level 6 dB over
+        comes out 2 dB over. It follows the level (the RMS of both channels) over about `time`
+        seconds; `makeup_db` turns the whole back up. Evens out a mix or a part."""
+        power = x * x if x.ndim == 1 else np.mean(x * x, axis=0)
+        level = np.maximum(self.smooth(power, 1.0 / (2.0 * np.pi * time)), 1e-12)
+        over = np.maximum(10.0 * np.log10(level) - threshold_db, 0.0)
+        return x * 10.0 ** ((makeup_db - over * (1.0 - 1.0 / ratio)) / 20.0)
+
     def fade(self, x: Signal, fade_in: float = 0.0, fade_out: float = 0.0) -> Signal:
         """`x` faded in over its first `fade_in` seconds and out over its last `fade_out`, on
         a smooth curve."""
@@ -369,8 +379,12 @@ class SoundKit:
         for at, sound in events:
             start = self.samples(at)
             if self.loop:
-                where = (start + np.arange(sound.shape[-1])) % n
-                np.add.at(out, (slice(None), where) if stereo else where, sound)
+                # Lay it down a loop's length at a time, from where it starts round the loop.
+                done, start = 0, start % n
+                while done < sound.shape[-1]:
+                    take = min(n - start, sound.shape[-1] - done)
+                    out[..., start:start + take] += sound[..., done:done + take]
+                    done, start = done + take, 0
             elif start < n:
                 end = min(start + sound.shape[-1], n)
                 out[..., start:end] += sound[..., :end - start]

@@ -7,7 +7,8 @@ renders a preview sheet. Recipes live in the game's repository, so assets are re
 reviewed and changed like code.
 
 It needs [uv](https://docs.astral.sh/uv/), and Blender (5.2 is what it's developed with) for
-models and textures; sounds are made in plain Python with numpy and scipy.
+models and textures; sounds are made in plain Python with numpy and scipy, and ffmpeg writes
+the ones kept as Ogg Vorbis.
 
 ## Use
 
@@ -140,7 +141,10 @@ A sound recipe returns its samples as a numpy array, about -1 to 1 (shape `(n,)`
 sounds by one factor so the loudest peak is at `peak` dB (-1 by default), so their levels stay
 as the recipe set them against each other: an engine's loops at different revs, a small splash
 and a big one. With `loop=True` every sound loops, and its WAV file carries the loop (a `smpl`
-chunk), which Godot's importer reads.
+chunk), which Godot's importer reads. With `format="ogg"` the sounds are written as Ogg Vorbis
+instead (quality 6, by ffmpeg, the same bytes every build), about a tenth the size, for music;
+an Ogg file has no loop points, so a looping one is marked to loop in the game (in Godot,
+`loop=true` in its `.import` file).
 
 `s` (`kiln.audio.SoundKit`) makes and shapes signals. A setting that changes over time (a
 cutoff, a frequency) can be a number or an array with a value for each sample.
@@ -155,6 +159,7 @@ cutoff, a frequency) can be a number or an array with a value for each sample.
 | `s.lowpass`, `s.highpass(x, cutoff, q, order)`, `s.bandpass`, `s.notch(x, centre, q)`, `s.eq(x, freq, gain_db, q)`, `s.lowshelf`, `s.highshelf(x, freq, gain_db)`, `s.smooth(x, cutoff)` | filters (from the Audio EQ Cookbook) |
 | `s.resonator(x, freq, decay, gain)`, `s.formants(x, bands)` | a mode that rings like a struck bar or a bubble; band-passes side by side, as a pipe or a body colours a sound |
 | `s.gain(x, db)`, `s.db(value)`, `s.saturate(x, drive)`, `s.fade(x, fade_in, fade_out)` | levels, soft clipping, fades |
+| `s.compress(x, threshold_db, ratio, time, makeup_db)` | evens out a part or a mix: what is louder than the threshold is turned down by the ratio |
 | `s.delay(x, seconds, feedback)`, `s.reverb(x, seconds, damping, mix, predelay, seed, stereo)`, `s.convolve(x, response)` | echoes and combs, a room's or the open air's tail, any impulse response |
 | `s.varispeed(x, speed)` | a sound played faster or slower, as a tape is |
 | `s.pad`, `s.mix(*sounds)`, `s.arrange(seconds, events)`, `s.pan(x, position)` | putting sounds together and in time, and in stereo |
