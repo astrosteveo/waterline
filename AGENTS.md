@@ -5,44 +5,42 @@ it; the [wiki](https://github.com/astrosteveo/waterline/wiki) explains how each 
 the issues are the backlog. The Godot project is in `godot/` (where `res://` points); the README
 lists the other top-level folders. Read the wiki page for the part you're changing first.
 
+The game aims for a sim feel, though a 1996 arcade racer inspired it: design mechanics, controls
+and tuning from how a real jet ski behaves, and say so when realism would cost fun or clarity.
+
 ## Things that are easy to break
 
 - **The waves exist twice:** `water/gerstner.gdshaderinc` (GPU) and `WaveSet.surface_point()` /
-  `sample()` (CPU). Change both or the craft floats off the drawn water. `res://test/water_match.tscn`
-  checks they agree.
-- **Wave time is `Ocean.time` / `Ocean.render_time()`, never the shader's `TIME`**, which runs on
-  while the game is paused or held by gdh.
+  `sample()` (CPU). Change both or the craft floats off the drawn water; `res://test/water_match.tscn`
+  checks they agree. Wave time is `Ocean.time` / `Ocean.render_time()`, never the shader's `TIME`,
+  which runs on while the game is paused or held by gdh.
 - **Races must replay exactly from a seed.** Don't draw from the global random generator in race
   code (a `GPUParticles3D` does when it's made); use a seeded `RandomNumberGenerator`, as
   `Race._mistake_rng` does.
-- **Courses come from `tools/courses/*.json`.** Edit the spec and rerun
-  `python3 tools/courses/course_tool.py SPEC --scene --thumb`; the tool overwrites the course scene
-  and its `.course.tres`.
+- **Courses, models and textures are built, not edited.** Courses come from `tools/courses/*.json`
+  (`python3 tools/courses/course_tool.py SPEC --scene --thumb`); models and textures from the
+  recipes in `art/` (`uv run --project pipeline kiln build`; `art/README.md` says what to commit).
+  Look at kiln's preview sheet in `build/kiln/<id>/preview.png`, then at the model in the game.
+  `pipeline/` must stay free of anything Waterline-specific, so it can become its own repository.
 - **Write `.tres`/`.tscn` by hand** rather than resaving through the headless editor, which adds
   `shader_parameter/x = null` lines to materials.
-- **Models and textures built by kiln come from `art/`.** Edit the recipe and run
-  `uv run --project pipeline kiln build`, never the `.glb` or `.png` in `godot/assets/`; commit
-  the recipe, the built files, their `.import` files and `art/kiln.lock.json` together. Look at
-  the preview sheet in `build/kiln/<id>/preview.png`, then at the model in the game. `pipeline/`
-  must stay free of anything Waterline-specific, so it can become its own repository.
-- New courses, cups and weathers are found by file name (`*.course.tres`, `*.cup.tres`,
-  `*.weather.tres`); no list to update.
 
 ## Checking your work
 
-- CI (`godot/test/check_project.sh`) only checks that everything loads. Gameplay is checked by the gdh
-  scenarios in `godot/test/scenarios/`, which need the GPU and run locally: `gdh test --project godot`
-  (or `gdh scenario run --project godot FILES`). Run the ones for what you changed before calling it
-  done, and add a scenario for new behaviour.
-- After a change to physics, computer riders, courses or waves, run the every-course race on a few
-  seeds (`gdh live start --project godot --scene res://test/every_course.tscn --seed N`, optionally
-  `-- --courses id,id`; about 3 minutes a seed): no crashes, at most 3 misses a rider.
-- Look at what you changed: `gdh capture` for a scene or shader, `gdh live` to drive it.
-- gdh quirks: `eval` takes no lambdas, ternaries or class names (call statics through an
-  instance); gdh holds the game with `SceneTree.paused`, so it can't show that pausing stops a
-  race; `gdh live reload` doesn't hook up a newly added `_input`, so restart instead.
+Check the thing you're changing while you change it, not with long batches of scenarios at the end.
+
+- While working, run the narrowest check of it often: `gdh capture` for a scene or shader, a short
+  `gdh live` session, or the scenario that covers it.
+- Before calling it done, run the scenarios in `godot/test/scenarios/` that reach the changed code
+  (grep them for the scene, node or feature; `gdh scenario run --project godot FILES`), add one for
+  new behaviour, and say which ran and why.
+- Only a change that could break racing (physics, collision, computer riders, courses, waves) needs
+  the every-course race on a few seeds (the wiki's Testing page; about 3 minutes a seed): no
+  crashes, at most 3 misses a rider. Skip the full `gdh test` otherwise, and runs whose result is
+  already known; if a check's worth is doubtful, ask.
+- CI only checks that everything loads; the scenarios need the GPU and run locally.
 - Builds need `godot-mono` (only the `.mono` export templates are installed):
-  `GODOT=/usr/bin/godot-mono gdh export --project godot --preset Linux --smoke 10`, and `--preset Windows`.
+  `GODOT=/usr/bin/godot-mono gdh export --project godot --preset Linux --smoke 10`, or `Windows`.
 
 ## Style
 
@@ -53,7 +51,8 @@ resources (`JetSkiTuning`, `RaceRules`, the `.tres` files), not in code.
 ## Working with GitHub
 
 - Small or docs-only changes go straight to `main`. Anything that changes how the game runs gets
-  an issue, a branch `<number>-<slug>` and a pull request with "Closes #N", merged after CI passes.
+  an issue, a branch `<number>-<slug>` and a pull request with "Closes #N", squash-merged after CI
+  passes. GitHub deletes the merged branch; delete the local one with `git branch -D`.
 - Ask before merging, closing issues or milestones, or deleting branches. Commit and push only
   when asked or as part of agreed work. No AI attribution lines in commits or pull requests.
 - When a change alters how something works, update its wiki page
