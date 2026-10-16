@@ -42,6 +42,25 @@ func _init(course: Course, p_clearance: float = 4.0) -> void:
 	# keep further from the rocks.
 	obstacle_margin += maxf(Ocean.wave_set.max_height() - 1.0, 0.0) * high_wave_margin
 	_build()
+	for ramp in course.find_children("*", "Ramp", true, false):
+		var progress := CourseProgress.new()
+		course.relocate(progress, (ramp as Node3D).global_position)
+		ramp_offsets.append(progress.offset)
+
+
+## Where each ramp is along the course (offsets), for riders to keep their lane and their
+## distance over a jump.
+var ramp_offsets := PackedFloat32Array()
+
+
+## True from [param before] meters before a ramp to [param after] meters past it, where a
+## craft launches and lands.
+func near_ramp(offset: float, before: float = 30.0, after: float = 35.0) -> bool:
+	for ramp in ramp_offsets:
+		var ahead := wrapf(ramp - offset, -_course.length * 0.5, _course.length * 0.5)
+		if ahead <= before and ahead >= -after:
+			return true
+	return false
 
 
 ## Sideways offset of the line at course [param offset].

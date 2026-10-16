@@ -38,6 +38,9 @@ extends Node
 ## No stunt with another craft this close: a rolling craft can't steer clear of it and
 ## lands in it.
 @export_range(0.0, 30.0, 0.1, "suffix:m") var stunt_room: float = 10.0
+## Near a ramp, a craft less than this far ahead in the same lane makes the rider ease off:
+## jumping close behind a craft, a rider lands on it when it lands and slows.
+@export_range(0.0, 50.0, 0.1, "suffix:m") var ramp_gap: float = 18.0
 ## Seed for this rider's mistakes, so a race replays the same way.
 @export var mistake_seed: int = 1
 
@@ -56,6 +59,7 @@ var _confidence := 1.0
 var _avoid := 0.0
 var _blocked_ahead := false
 var _yielding := false
+var _queuing := false
 var _jump_judged := false
 
 
@@ -158,7 +162,7 @@ func _physics_process(delta: float) -> void:
 	# craft that is ahead, coming to a buoy or a turn: drop in behind it.
 	if _blocked_ahead:
 		throttle = minf(throttle, 0.3)
-	elif _yielding:
+	elif _yielding or _queuing:
 		throttle = minf(throttle, 0.6)
 	# Less skilled riders ride a little slower on the straights.
 	throttle *= 0.7 if cruise else lerpf(0.8, 1.0, skill)
@@ -203,10 +207,15 @@ func _update_avoidance(position: Vector3, nose: Vector3, speed: float, offset: f
 	var target := 0.0
 	_blocked_ahead = false
 	_yielding = false
+	_queuing = false
 	var right := nose.cross(Vector3.UP)
 	var nearest := INF
-	# Overtaking moves shrink to nothing in turns tighter than about 25 m.
+	# Overtaking moves shrink to nothing in turns tighter than about 25 m, and near a ramp,
+	# where riders keep their lane: a craft that launches off line can fly into the rocks.
 	var turn_room := clampf(1.0 - absf(race.racing_line.curvature_at(offset)) * 25.0, 0.0, 1.0)
+	var at_ramp := race.racing_line.near_ramp(offset)
+	if at_ramp:
+		turn_room = 0.0
 	var gates := race.course.gates
 	var near_buoy := false
 	if racer.next_gate < gates.size():
@@ -232,6 +241,10 @@ func _update_avoidance(position: Vector3, nose: Vector3, speed: float, offset: f
 			target = away * overtake_offset * turn_room
 			if ahead < 8.0 and absf(aside) < 1.6 and speed - other.craft.forward_speed > 2.0:
 				_blocked_ahead = true
+		# Near a ramp, fall back from a craft ahead in the same lane, so as not to jump
+		# right behind it and land on it.
+		if at_ramp and ahead >= 3.0 and ahead < ramp_gap and absf(aside) < 2.5:
+			_queuing = true
 	_avoid = move_toward(_avoid, target, delta * 4.0)
 
 
