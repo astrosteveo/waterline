@@ -1,7 +1,8 @@
 # Waterline
 
-A jet ski racer in Godot 4.7 (Forward+, typed GDScript, Jolt physics), a spiritual successor to a
-1996 jet ski racer. All names, art, sound and courses are original.
+A jet ski racer in Godot 4.7 (Forward+, typed GDScript, Jolt physics). A 1996 jet ski racer
+inspired it, but it aims for a sim feel, with craft that handle like real jet skis. All names, art,
+sound and courses are original.
 
 Race four riders on four craft over seven courses, in a championship, a quick race, a time trial
 against your best run's ghost, or stunt mode. The weather can change during a race.
