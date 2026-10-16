@@ -8,6 +8,7 @@
 An ID is an asset id (`models/props/crate`) or a folder of them (`models/props`). Kiln finds
 the project's `kiln.toml` in the current folder, an `art` folder in it, or a folder above;
 `--project DIR` names it. Reports and preview sheets go to the project's `reports` folder.
+Models and textures are built in Blender, sounds here; Blender is only needed for the first.
 """
 from __future__ import annotations
 
@@ -63,13 +64,13 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def status(project: Project, blender: str) -> int:
-    version = blender_version(blender)
+    tools = Tools(blender)
     lock = project.read_lock()
     for asset in project.assets():
         entry = lock.get(asset.id)
         if entry is None or not all(path.is_file() for path in project.built_files(entry)):
             state = "not built"
-        elif not project.up_to_date(asset, lock, project.fingerprint(asset, version)):
+        elif not project.up_to_date(asset, lock, project.fingerprint(asset, tools.version(project.kind(asset)))):
             state = "out of date"
         else:
             state = "up to date"
@@ -78,9 +79,10 @@ def status(project: Project, blender: str) -> int:
 
 
 def build_assets(project: Project, blender: str, assets: list[Asset], force: bool, preview: bool) -> int:
-    version = blender_version(blender)
+    tools = Tools(blender)
     lock = project.read_lock()
-    fingerprints = {a.id: project.fingerprint(a, version) for a in assets}
+    kinds = {a.id: project.kind(a) for a in assets}
+    fingerprints = {a.id: project.fingerprint(a, tools.version(kinds[a.id])) for a in assets}
     todo = [a for a in assets if force or not project.up_to_date(a, lock, fingerprints[a.id])]
     for asset in assets:
         if asset not in todo:
@@ -91,23 +93,99 @@ def build_assets(project: Project, blender: str, assets: list[Asset], force: boo
     for asset in todo:
         report = results.get(asset.id)
         if report and report["ok"]:
-            lock[asset.id] = {
+            entry = {
                 "fingerprint": fingerprints[asset.id],
                 "outputs": [os.path.relpath(path, project.root) for path in report["outputs"]],
-                "size": report["size"],
-                "blender": version,
             }
-            if report["kind"] == "model":
-                lock[asset.id]["triangles"] = report["triangles"]
+            if report["kind"] == "sound":
+                entry["seconds"] = {name: m["length"] for name, m in report["sounds"].items()}
+                entry["tools"] = tools.version("sound")
             else:
-                lock[asset.id]["maps"] = report["maps"]
+                entry["size"] = report["size"]
+                entry["blender"] = tools.version(report["kind"])
+                if report["kind"] == "model":
+                    entry["triangles"] = report["triangles"]
+                else:
+                    entry["maps"] = report["maps"]
+            lock[asset.id] = entry
     project.write_lock(lock)
     return code
 
 
+class Tools:
+    """The versions of what builds each kind of asset, found when first needed: Blender's
+    only when a model or texture is built."""
+
+    def __init__(self, blender: str):
+        self.blender = blender
+        self._versions: dict[str, str] = {}
+
+    def version(self, kind: str) -> str:
+        key = "sound" if kind == "sound" else "blender"
+        if key not in self._versions:
+            if key == "sound":
+                from kiln.audio.build import tools
+                self._versions[key] = tools()
+            else:
+                self._versions[key] = blender_version(self.blender)
+        return self._versions[key]
+
+
 def run(project: Project, blender: str, assets: list[Asset], export: bool, preview: bool) -> tuple[int, dict]:
-    """Runs the worker in Blender on `assets` and prints a line per asset. Returns 0 when
-    every asset passed, 1 otherwise, and the reports."""
+    """Builds `assets`, the models and textures in Blender and the sounds here, and prints a
+    line per asset. Returns 0 when every asset passed, 1 otherwise, and the reports."""
+    sounds = [a for a in assets if project.kind(a) == "sound"]
+    in_blender = [a for a in assets if a not in sounds]
+    results: dict = {}
+    if in_blender:
+        results.update(run_blender(project, blender, in_blender, export, preview))
+    if sounds:
+        from kiln.audio.build import build_asset
+        for asset in sounds:
+            results[asset.id] = build_asset(asset, str(project.root), export, preview)
+    failed = 0
+    for asset in assets:
+        report = results.get(asset.id)
+        if report is None:
+            failed += 1
+            print(f"FAILED       {asset.id}")
+            print("    Blender didn't build it")
+            continue
+        if report["ok"]:
+            where = ""
+            if export:
+                where = f" -> {os.path.relpath(report['outputs'][0])}"
+                if len(report["outputs"]) > 1:
+                    where += f" and {len(report['outputs']) - 1} more"
+            print(f"ok           {asset.id}  {describe(report)}{where}")
+        else:
+            failed += 1
+            print(f"FAILED       {asset.id}")
+            for problem in report["problems"]:
+                print("    " + problem.replace("\n", "\n    ").rstrip())
+        if report.get("preview"):
+            print(f"             preview: {os.path.relpath(report['preview'])}")
+    return (1 if failed else 0), results
+
+
+def describe(report: dict) -> str:
+    """What an asset's build made, in a few words."""
+    if report["kind"] == "texture":
+        size = " x ".join(str(v) for v in report["size"])
+        return f"{size} px: {', '.join(report['maps'])}"
+    if report["kind"] == "sound":
+        lengths = [m["length"] for m in report["sounds"].values()]
+        span = f"{min(lengths):.2f}" + (f"-{max(lengths):.2f}" if max(lengths) > min(lengths) else "")
+        count = f"{len(lengths)} sounds" if len(lengths) > 1 else "1 sound"
+        peak = max(m["peak_db"] for m in report["sounds"].values())
+        return f"{count}, {span} s, peak {peak:.1f} dBFS{', loops' if report['loop'] else ''}"
+    size = " x ".join(f"{v:.2f}" for v in report["size"])
+    return f"{report['triangles']} triangles, {size} m"
+
+
+def run_blender(project: Project, blender: str, assets: list[Asset], export: bool, preview: bool) -> dict:
+    """Runs the worker in Blender on `assets` and returns their reports (none if Blender
+    failed)."""
     with tempfile.TemporaryDirectory(prefix="kiln-") as folder:
         job = {
             "project_root": str(project.root),
@@ -126,32 +204,9 @@ def run(project: Project, blender: str, assets: list[Asset], export: bool, previ
         if done.returncode != 0 or not os.path.isfile(job["result"]):
             print(done.stdout[-4000:] + done.stderr[-4000:], file=sys.stderr)
             print(f"kiln: Blender failed (exit code {done.returncode})", file=sys.stderr)
-            return 1, {}
+            return {}
         with open(job["result"]) as f:
-            results = json.load(f)
-    failed = 0
-    for asset in assets:
-        report = results[asset.id]
-        if report["ok"]:
-            where = ""
-            if export:
-                where = f" -> {os.path.relpath(report['outputs'][0])}"
-                if len(report["outputs"]) > 1:
-                    where += f" and {len(report['outputs']) - 1} more"
-            if report["kind"] == "texture":
-                size = " x ".join(str(v) for v in report["size"])
-                print(f"ok           {asset.id}  {size} px: {', '.join(report['maps'])}{where}")
-            else:
-                size = " x ".join(f"{v:.2f}" for v in report["size"])
-                print(f"ok           {asset.id}  {report['triangles']} triangles, {size} m{where}")
-        else:
-            failed += 1
-            print(f"FAILED       {asset.id}")
-            for problem in report["problems"]:
-                print("    " + problem.replace("\n", "\n    ").rstrip())
-        if report.get("preview"):
-            print(f"             preview: {os.path.relpath(report['preview'])}")
-    return (1 if failed else 0), results
+            return json.load(f)
 
 
 def blender_version(blender: str) -> str:

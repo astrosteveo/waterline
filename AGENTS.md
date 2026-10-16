@@ -18,10 +18,12 @@ and tuning from how a real jet ski behaves, and say so when realism would cost f
 - **Races must replay exactly from a seed.** Don't draw from the global random generator in race
   code (a `GPUParticles3D` does when it's made); use a seeded `RandomNumberGenerator`, as
   `Race._mistake_rng` does.
-- **Courses, models and textures are built, not edited.** Courses come from `tools/courses/*.json`
-  (`python3 tools/courses/course_tool.py SPEC --scene --thumb`); models and textures from the
-  recipes in `art/` (`uv run --project pipeline kiln build`; `art/README.md` says what to commit).
-  Look at kiln's preview sheet in `build/kiln/<id>/preview.png`, then at the model in the game.
+- **Courses, models, textures and sounds are built, not edited.** Courses come from
+  `tools/courses/*.json` (`python3 tools/courses/course_tool.py SPEC --scene --thumb`); models,
+  textures and sounds from the recipes in `art/` (`uv run --project pipeline kiln build`;
+  `art/README.md` says what to commit). Look at kiln's preview sheet in
+  `build/kiln/<id>/preview.png`, then at the model in the game; for a sound, a `gdh movie`'s
+  `audio.png`. You can't hear the sounds, so ask the user to listen.
   `pipeline/` must stay free of anything Waterline-specific, so it can become its own repository.
 - **Write `.tres`/`.tscn` by hand** rather than resaving through the headless editor, which adds
   `shader_parameter/x = null` lines to materials.

@@ -102,6 +102,12 @@ var airborne: bool = false
 var air_time: float = 0.0
 ## Height of the lowest hull point above the water; negative when it is under.
 var clearance: float = 0.0
+## How deep the jet's intake is under the water, 0 (out of it: the pump draws air and the
+## engine runs free) to 1 (deep enough for full thrust).
+var intake_wet: float = 0.0
+## The fastest any hull point is moving into the water this tick, m/s: a hull slapping down
+## on a wave.
+var slam_speed: float = 0.0
 ## Sideways force the hull needs to hold its line, divided by what it can make.
 var grip_usage: float = 0.0
 ## True while the hull needs clearly more sideways force (over 10% more) than it has.
@@ -503,6 +509,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var intake_depth_sum := 0.0
 	var intake_count := 0
 	var lowest := INF
+	var slam := 0.0
 	for i in count:
 		var p := xform * _hull_points[i]
 		var sample := Ocean.sample(p, _samples[i])
@@ -521,6 +528,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var force := push * (t.buoyancy_stiffness * minf(depth, t.max_point_depth))
 		var damping := 0.0
 		if normal_speed < 0.0:
+			slam = maxf(slam, -normal_speed)
 			damping = (-normal_speed * t.water_damping + normal_speed * normal_speed * t.slam_damping) * wet
 		else:
 			damping = -normal_speed * t.water_damping * t.release_share * wet
@@ -535,6 +543,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 
 	contact = wet_sum / maxf(count, 1)
 	clearance = lowest
+	slam_speed = slam
 	water_height = Ocean.height_at(com)
 	var in_water := wet_sum > 0.0
 	var submersion := depth_share_sum / maxf(count, 1)
@@ -584,7 +593,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	# The reverse lever sets the engine while it's held, whatever the throttle.
 	thrust = move_toward(thrust, reverse if reverse > 0.0 else throttle, t.throttle_response * dt)
 	var intake_depth := intake_depth_sum / maxf(intake_count, 1)
-	var intake_wet := clampf(intake_depth / t.intake_depth, 0.0, 1.0)
+	intake_wet = clampf(intake_depth / t.intake_depth, 0.0, 1.0)
 	# The jet's direction along the hull: 1 forward, through 0, to -reverse_share with the
 	# bucket down. The power meter only helps forward.
 	var jet := lerpf(1.0, -t.reverse_share, bucket)
@@ -993,6 +1002,8 @@ func _do_respawn(state: PhysicsDirectBodyState3D) -> void:
 	carving = false
 	contact = 1.0
 	clearance = -0.08
+	intake_wet = 1.0
+	slam_speed = 0.0
 	water_height = water.height
 	reset_physics_interpolation.call_deferred()
 	respawned.emit.call_deferred()

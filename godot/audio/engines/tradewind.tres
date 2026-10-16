@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="EngineVoice" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://audio/engine_voice.gd" id="1"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_on_1750.wav" id="2"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_on_2700.wav" id="3"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_on_4000.wav" id="4"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_on_5700.wav" id="5"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_on_8100.wav" id="6"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_off_1750.wav" id="7"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_off_2700.wav" id="8"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_off_4000.wav" id="9"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_off_5700.wav" id="10"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/tradewind_off_8100.wav" id="11"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/starts_tradewind.wav" id="12"]
+
+[resource]
+script = ExtResource("1")
+idle_rpm = 1750.0
+rated_rpm = 7800.0
+limiter_rpm = 8100.0
+layer_rpm = PackedFloat32Array(1750.0, 2700.0, 4000.0, 5700.0, 8100.0)
+on_load = Array[AudioStream]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+off_load = Array[AudioStream]([ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11")])
+start = ExtResource("12")
+start_catch = 0.55
+spool_up = 0.3
+spool_up_free = 0.12
+spool_down = 0.35
+spool_down_free = 0.7

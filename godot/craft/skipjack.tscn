@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://jetski/jetski.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://assets/models/craft/skipjack.glb" id="2"]
+[ext_resource type="Resource" path="res://audio/engines/skipjack.tres" id="3"]
 
 [node name="Skipjack" instance=ExtResource("1")]
 
@@ -13,3 +14,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0.33)
 
 [node name="Stern" parent="BoardingPoints"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.61)
+
+[node name="EngineSound" parent="."]
+voice = ExtResource("3")

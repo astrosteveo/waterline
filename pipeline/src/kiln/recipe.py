@@ -1,4 +1,4 @@
-"""The recipe side of kiln: the `model` and `texture` decorators and what each promises.
+"""The recipe side of kiln: the `model`, `texture` and `sound` decorators and what each promises.
 
 A model recipe looks like this:
 
@@ -23,6 +23,16 @@ image maps that tile:
         t.output(albedo=t.ramp(grains, [(0, "#c9b07a"), (1, "#e8d6a8")]), roughness=0.9, height=grains)
 
 `t` is a `kiln.blender.shading.TextureKit`.
+
+A sound recipe returns samples, which kiln checks and writes as WAV files:
+
+    from kiln import sound
+
+    @sound(seconds=(0.2, 1.0))
+    def build(s):
+        return s.sine(880, 0.5) * s.decay(0.5, 0.12)
+
+`s` is a `kiln.audio.SoundKit`. Sound recipes run in plain Python, without Blender.
 """
 from __future__ import annotations
 
@@ -82,11 +92,38 @@ class TextureSpec:
 
 
 @dataclass(frozen=True)
+class SoundSpec:
+    """What a sound recipe makes, checked after every build. A recipe returns one sound or a
+    dict of named sounds; kiln scales them all by one factor, so their levels stay as the
+    recipe set them against each other."""
+
+    # Samples per second.
+    rate: int = 44100
+    # 1 for mono (a sound placed in the world), 2 for stereo.
+    channels: int = 1
+    # True: every sound loops, its end running on into its start without a seam.
+    loop: bool = False
+    # Where the loudest peak of the recipe's sounds ends up, in dB below full scale. None: the
+    # samples are written as they are, and none may go past full scale.
+    peak: float | None = -1.0
+    # The shortest and longest each sound may be, in seconds. None: any length.
+    seconds: Sequence[float] | None = None
+
+    def __post_init__(self) -> None:
+        if self.channels not in (1, 2):
+            raise ValueError(f"a sound has 1 or 2 channels, not {self.channels}")
+        if self.rate < 8000:
+            raise ValueError(f"a rate of {self.rate} samples a second is too low")
+        if self.seconds is not None and len(self.seconds) != 2:
+            raise ValueError("seconds is (shortest, longest)")
+
+
+@dataclass(frozen=True)
 class Recipe:
     """A recipe's build function and the spec it was declared with."""
 
     kind: str
-    spec: ModelSpec | TextureSpec
+    spec: ModelSpec | TextureSpec | SoundSpec
     build: Callable
 
 
@@ -112,9 +149,24 @@ def texture(**spec_fields) -> Callable[[Callable], Callable]:
     return mark
 
 
+def sound(**spec_fields) -> Callable[[Callable], Callable]:
+    """Marks a function as a sound recipe. The keyword arguments are `SoundSpec` fields."""
+    spec = SoundSpec(**spec_fields)
+
+    def mark(build: Callable) -> Callable:
+        build.kiln_recipe = Recipe("sound", spec, build)
+        return build
+
+    return mark
+
+
+# The decorators that make a recipe, by the kind of recipe they make.
+KINDS = ("model", "texture", "sound")
+
+
 def find_recipe(module) -> Recipe:
     """The one recipe in a recipe module. Raises ValueError if there is none or more than one."""
     found = [value.kiln_recipe for value in vars(module).values() if hasattr(value, "kiln_recipe")]
     if len(found) != 1:
-        raise ValueError(f"{module.__file__}: expected one @model or @texture function, found {len(found)}")
+        raise ValueError(f"{module.__file__}: expected one @model, @texture or @sound function, found {len(found)}")
     return found[0]

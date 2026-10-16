@@ -1,12 +1,13 @@
 # kiln
 
-Kiln builds game assets from Python recipes in headless Blender. A recipe says how to make one
-model or texture; kiln runs it, checks the result against what the recipe promises, exports
-it (a model as a binary glTF, `.glb`; a texture as PNG maps that tile) and renders a preview
-sheet. Recipes live in the game's repository, so assets are rebuilt, reviewed and changed like
-code.
+Kiln builds game assets from Python recipes. A recipe says how to make one model, texture or
+set of sounds; kiln runs it, checks the result against what the recipe promises, exports it (a
+model as a binary glTF, `.glb`; a texture as PNG maps that tile; sounds as WAV files) and
+renders a preview sheet. Recipes live in the game's repository, so assets are rebuilt,
+reviewed and changed like code.
 
-It needs Blender (5.2 is what it's developed with) and [uv](https://docs.astral.sh/uv/).
+It needs [uv](https://docs.astral.sh/uv/), and Blender (5.2 is what it's developed with) for
+models and textures; sounds are made in plain Python with numpy and scipy.
 
 ## Use
 
@@ -21,7 +22,7 @@ uv run --project pipeline kiln status                # what is up to date
 
 Kiln finds the project's `kiln.toml` in the current folder, an `art` folder in it, or a
 folder above it; `--project DIR` names it. `--blender PATH` (or `KILN_BLENDER`) picks the
-Blender binary. A failed check or a recipe error fails the build (exit code 1) and nothing is
+Blender binary, which only a build with a model or texture in it starts. A failed check or a recipe error fails the build (exit code 1) and nothing is
 written for that asset.
 
 ## A project
@@ -35,13 +36,17 @@ art/
     craft/_hull.py     shared code: names starting with _ aren't assets
   textures/
     sand.py            the asset textures/sand -> <output>/textures/sand_albedo.png, ...
+  audio/
+    bell.py            the asset audio/bell -> <output>/audio/bell.wav (or bell_<name>.wav, ...)
 ```
 
 Recipes import shared code by its path from the project folder
-(`from models.craft._hull import hull_sections`). An asset is rebuilt when its recipe, any
-shared `_` file, kiln's build code or the Blender version changes; `kiln.lock.json` keeps the
-fingerprint of each build and the files it made. Builds are deterministic: the same inputs
-give the same files.
+(`from models.craft._hull import hull_sections`). An asset is rebuilt when anything it is
+built from changes: its recipe, the shared code it imports (and what that imports), the parts
+of kiln that build its kind, and the Blender version (for a sound, numpy's and scipy's).
+Kiln finds the imports by reading the code, so import shared code with `import` or `from`,
+not `importlib`. `kiln.lock.json` keeps the fingerprint of each build and the files it made.
+Builds are deterministic: the same inputs give the same files.
 
 ## A model recipe
 
@@ -116,6 +121,49 @@ and each other through `+ - * / **`:
 | `t.color(colour)`, `t.ramp(value, stops)`, `t.mix(a, b, factor)` | flat colours, colour ramps, and mixes of colours or values |
 | `t.output(albedo, roughness, height)` | which colour and values become the maps |
 
+## A sound recipe
+
+```python
+from kiln import sound
+
+
+@sound(seconds=(0.5, 2.0))
+def build(s):
+    strike = s.impulses(1.5, [0.002])
+    bell = sum(s.resonator(strike, 660.0 * ratio, 0.6 / ratio) for ratio in (1.0, 1.18, 1.5, 2.0))
+    return s.fade(bell, 0.0, 0.3)
+```
+
+A sound recipe returns its samples as a numpy array, about -1 to 1 (shape `(n,)` for mono,
+`(2, n)` for stereo), or a dict of them by name, and kiln writes `<stem>.wav` or one
+`<stem>_<name>.wav` for each: 16-bit PCM at the spec's `rate`. Kiln scales all of a recipe's
+sounds by one factor so the loudest peak is at `peak` dB (-1 by default), so their levels stay
+as the recipe set them against each other: an engine's loops at different revs, a small splash
+and a big one. With `loop=True` every sound loops, and its WAV file carries the loop (a `smpl`
+chunk), which Godot's importer reads.
+
+`s` (`kiln.audio.SoundKit`) makes and shapes signals. A setting that changes over time (a
+cutoff, a frequency) can be a number or an array with a value for each sample.
+
+| Call | Gives |
+|---|---|
+| `s.samples(seconds)`, `s.time(seconds)`, `s.silence(seconds)`, `s.length(x)` | sample counts, each sample's time, silence, a sound's length |
+| `s.line(seconds, points)`, `s.decay(seconds, time, attack)`, `s.adsr(seconds, attack, decay, sustain, release)` | envelopes: straight lines through (time, value) points, an exponential decay, a held note's |
+| `s.phase(freq)`, `s.sine(freq, seconds, phase)`, `s.saw`, `s.square(freq, seconds, width)`, `s.triangle` | oscillators that don't alias; `phase` (in cycles) also frequency-modulates |
+| `s.noise(seconds, seed, color)` | white, pink or brown noise, the same for the same seed |
+| `s.impulses(seconds, times, amps)`, `s.dust(seconds, density, seed)` | clicks at exact times (between samples too) or at random ones, to ring resonators and filters with |
+| `s.lowpass`, `s.highpass(x, cutoff, q, order)`, `s.bandpass`, `s.notch(x, centre, q)`, `s.eq(x, freq, gain_db, q)`, `s.lowshelf`, `s.highshelf(x, freq, gain_db)`, `s.smooth(x, cutoff)` | filters (from the Audio EQ Cookbook) |
+| `s.resonator(x, freq, decay, gain)`, `s.formants(x, bands)` | a mode that rings like a struck bar or a bubble; band-passes side by side, as a pipe or a body colours a sound |
+| `s.gain(x, db)`, `s.db(value)`, `s.saturate(x, drive)`, `s.fade(x, fade_in, fade_out)` | levels, soft clipping, fades |
+| `s.delay(x, seconds, feedback)`, `s.reverb(x, seconds, damping, mix, predelay, seed, stereo)`, `s.convolve(x, response)` | echoes and combs, a room's or the open air's tail, any impulse response |
+| `s.varispeed(x, speed)` | a sound played faster or slower, as a tape is |
+| `s.pad`, `s.mix(*sounds)`, `s.arrange(seconds, events)`, `s.pan(x, position)` | putting sounds together and in time, and in stereo |
+| `s.rng(seed)` | a numpy random generator for the recipe's own choices |
+
+In a looping recipe the kit makes everything wrap round: oscillators hold whole cycles, noise
+is made over its own length, filters, resonators, delays and reverbs run on from the end into
+the start, and what `arrange` places past the end comes in again at the start.
+
 ## Checks
 
 `@model(...)` takes what the build must meet. Every check runs on every build:
@@ -133,9 +181,22 @@ Faces with no area always fail.
 A texture always gets two checks: every map tiles (its wrap-round edges differ no more than
 neighbouring pixels do inside it, within 1.5 times), and every value lies between 0 and 1.
 
+Every sound is checked too:
+
+| Check | Fails when |
+|---|---|
+| numbers | a sample isn't a number, or every sound is silent |
+| `seconds` | a sound is shorter or longer than `(shortest, longest)` |
+| offset | a sound's mean is more than 0.01 off zero (a high-pass takes a DC offset out) |
+| seam (loops) | the step from the last sample to the first is over 1.5 times the biggest steps inside (the 99.9th percentile) |
+| ends (others) | the first or last sample is more than 0.02 from zero, or the last millisecond peaks above 0.12 of the sound's peak: it would click on or stop short |
+| clipping | with `peak=None`, a sample goes past full scale |
+
 ## Preview sheets
 
-Each build renders `<reports>/<id>/preview.png`. A model's shows the front, side, top and
+Each build renders `<reports>/<id>/preview.png`. A sound recipe's has a row for each sound:
+its name, length, peak and RMS, its waveform, its spectrogram (log frequency from 30 Hz) and,
+for a loop, its last and first few milliseconds joined at the seam. A model's shows the front, side, top and
 three-quarter views in the materials' colours, with markers as small magenta diamonds; a
 texture's shows each map tiled two by two, so a seam would show as a cross. `report.json`
 beside it holds the measurements and problems.
@@ -146,5 +207,5 @@ beside it holds the measurements and problems.
 uv run --project pipeline pytest pipeline/tests
 ```
 
-Tests that need Blender are skipped when it isn't installed. `examples/basics` is a small
+Tests that need Blender are skipped when it isn't installed; the sound tests don't need it. `examples/basics` is a small
 project the tests build.

@@ -8,24 +8,35 @@ A project is a folder with a `kiln.toml`:
 Every `*.py` file under the folder is a recipe, except files and folders whose names start
 with `_`, which hold code that recipes share. A recipe at `models/props/crate.py` is the asset
 `models/props/crate` and builds `<output>/models/props/crate.glb`; a texture recipe at
-`textures/sand.py` builds `<output>/textures/sand_albedo.png` and its other maps.
-`kiln.lock.json` beside `kiln.toml` records what each asset was built from and the files it
-made, so unchanged assets are skipped.
+`textures/sand.py` builds `<output>/textures/sand_albedo.png` and its other maps; a sound
+recipe at `audio/bell.py` builds `<output>/audio/bell.wav` (or `bell_<name>.wav` for each of
+the sounds it names). `kiln.lock.json` beside `kiln.toml` records what each asset was built
+from and the files it made, so unchanged assets are skipped.
+
+An asset is built from its recipe, the project's files and kiln's own that the recipe and the
+code building its kind import, followed through their imports. Kiln reads the imports from
+the code without running it, so a module imported some other way (`importlib`) isn't seen.
 """
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from kiln.recipe import KINDS
+
 CONFIG = "kiln.toml"
 LOCK = "kiln.lock.json"
-# The kiln package itself: a change to it rebuilds every asset, except a change to these
-# files, which only run outside Blender.
 PACKAGE = Path(__file__).resolve().parent
-HOST_ONLY = {"cli.py", "project.py"}
+# The code that builds each kind of recipe, whose imports are part of what an asset is built from.
+BUILDERS = {
+    "model": PACKAGE / "blender" / "worker.py",
+    "texture": PACKAGE / "blender" / "worker.py",
+    "sound": PACKAGE / "audio" / "build.py",
+}
 
 
 @dataclass(frozen=True)
@@ -90,19 +101,45 @@ class Project:
             chosen.extend(a for a in matches if a not in chosen)
         return chosen
 
-    def shared_files(self) -> list[Path]:
-        """The code every recipe may use: the project's `_` files and the parts of kiln that
-        shape what a build makes (not the command line or this file)."""
-        shared = [p for p in sorted(self.root.rglob("*.py"))
-                  if any(part.startswith("_") for part in p.relative_to(self.root).parts)]
-        return shared + sorted(p for p in PACKAGE.rglob("*.py") if p.name not in HOST_ONLY)
+    def kind(self, asset: Asset) -> str:
+        """Which kind of recipe the asset is (`model`, `texture` or `sound`), read from its
+        decorator without running it. A recipe kiln can't read counts as a model, so Blender
+        reports what is wrong with it."""
+        try:
+            tree = ast.parse(asset.recipe.read_text(), str(asset.recipe))
+        except (SyntaxError, ValueError):
+            return "model"
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                for decorator in node.decorator_list:
+                    target = decorator.func if isinstance(decorator, ast.Call) else decorator
+                    name = target.attr if isinstance(target, ast.Attribute) else getattr(target, "id", None)
+                    if name in KINDS:
+                        return name
+        return "model"
 
-    def fingerprint(self, asset: Asset, blender_version: str) -> str:
-        """A hash of everything the asset is built from. The same hash means the same build."""
+    def dependencies(self, asset: Asset) -> list[Path]:
+        """The files the asset is built from: its recipe, and the project's and kiln's files
+        that it and the code building its kind import, followed through their imports."""
+        roots = [self.root, PACKAGE.parent]
+        found: set[Path] = set()
+        todo = [asset.recipe.resolve(), BUILDERS[self.kind(asset)]]
+        while todo:
+            path = todo.pop()
+            if path in found:
+                continue
+            found.add(path)
+            todo.extend(_imported_files(path, roots))
+        return sorted(found)
+
+    def fingerprint(self, asset: Asset, tools: str) -> str:
+        """A hash of everything the asset is built from, and of `tools` (the Blender version,
+        or the libraries a sound is made with). The same hash means the same build."""
         digest = hashlib.sha256()
-        digest.update(blender_version.encode())
-        for path in [asset.recipe, *self.shared_files()]:
-            digest.update(path.name.encode())
+        digest.update(tools.encode())
+        for path in self.dependencies(asset):
+            root = self.root if path.is_relative_to(self.root) else PACKAGE.parent
+            digest.update(path.relative_to(root).as_posix().encode())
             digest.update(path.read_bytes())
         return digest.hexdigest()
 
@@ -126,3 +163,39 @@ class Project:
     def write_lock(self, lock: dict) -> None:
         text = json.dumps(dict(sorted(lock.items())), indent=2, sort_keys=True) + "\n"
         (self.root / LOCK).write_text(text)
+
+
+def _imported_files(path: Path, roots: list[Path]) -> list[Path]:
+    """The files under `roots` that the code in `path` imports, with the `__init__.py` of each
+    package on the way, read from the code without running it."""
+    try:
+        tree = ast.parse(path.read_text(), str(path))
+    except (SyntaxError, ValueError, OSError):
+        return []
+    names: list[tuple[Path | None, list[str]]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            names.extend((None, alias.name.split(".")) for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            base = None
+            if node.level:
+                base = path.parent
+                for _ in range(node.level - 1):
+                    base = base.parent
+            parts = node.module.split(".") if node.module else []
+            names.append((base, parts))
+            # `from package import name` may name a module in the package.
+            names.extend((base, parts + [alias.name]) for alias in node.names if alias.name != "*")
+    files = []
+    for base, parts in names:
+        for root in ([base] if base is not None else roots):
+            for depth in range(1, len(parts) + 1):
+                folder = root.joinpath(*parts[:depth])
+                for candidate in (folder / "__init__.py", folder.with_suffix(".py")):
+                    if candidate.is_file():
+                        files.append(candidate.resolve())
+            if base is not None and not parts:
+                init = base / "__init__.py"
+                if init.is_file():
+                    files.append(init.resolve())
+    return files
