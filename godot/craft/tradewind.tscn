@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://jetski/jetski.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://assets/models/craft/tradewind.glb" id="2"]
+[ext_resource type="Resource" path="res://audio/engines/tradewind.tres" id="3"]
 
 [node name="Tradewind" instance=ExtResource("1")]
 
@@ -10,3 +11,6 @@ hull_scene = ExtResource("2")
 
 [node name="Seat" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0.417)
+
+[node name="EngineSound" parent="."]
+voice = ExtResource("3")

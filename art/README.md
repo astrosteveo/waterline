@@ -1,8 +1,9 @@
 # Waterline's art
 
-The recipes for the game's models and textures, built by [kiln](../pipeline/README.md) into
-`godot/assets/`: the craft, the riders, the course scenery (`models/course`, `harbor`, `rocks`,
-`plants`, `props`) and the textures the terrain, rocks and wood are drawn in (`textures/`).
+The recipes for the game's models, textures and sounds, built by [kiln](../pipeline/README.md)
+into `godot/assets/`: the craft, the riders, the course scenery (`models/course`, `harbor`,
+`rocks`, `plants`, `props`), the textures the terrain, rocks and wood are drawn in
+(`textures/`), and every sound (`audio/`): each craft's engine, the water and the race's own.
 Edit a recipe here, never the built file, then from the repository root:
 
 ```sh

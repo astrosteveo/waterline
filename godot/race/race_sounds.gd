@@ -1,8 +1,8 @@
 class_name RaceSounds
 extends Node
-## The race's own sounds, heard by the player wherever the camera is: countdown beeps, a
-## bell or a buzz at each buoy, a chime for a stunt ring, and a fanfare at the finish. The
-## craft make their own engine and splash sounds ([EngineSound]).
+## The race's own sounds, heard by the player wherever the camera is: the start clock's beeps
+## and the starter's horn, a buoy's bell (or a buzz for a miss), a chime for a stunt ring, and
+## a fanfare at the finish. The craft make their own engine and water sounds ([EngineSound]).
 
 @export var race: Race
 
@@ -22,14 +22,14 @@ func _ready() -> void:
 		return
 	race.countdown_changed.connect(func(left: int) -> void:
 		if left > 0:
-			_play(SoundBank.beep(false), -4.0))
-	race.started.connect(func() -> void: _play(SoundBank.beep(true), -2.0))
+			_play(SoundBank.BEEP, -6.0))
+	race.started.connect(func() -> void: _play(SoundBank.HORN, -3.0))
 	race.gate_judged.connect(func(racer: RacerState, _gate: CourseGate, correct: bool) -> void:
 		if racer == race.watched and racer.is_racing():
-			_play(SoundBank.ding() if correct else SoundBank.buzz(), -6.0 if correct else -4.0))
+			_play(SoundBank.BELL if correct else SoundBank.MISS, -7.0 if correct else -8.0))
 	race.racer_finished.connect(func(racer: RacerState) -> void:
 		if racer == race.watched:
-			_play(SoundBank.fanfare(), -3.0))
+			_play(SoundBank.FANFARE, -4.0))
 
 
 func _process(_delta: float) -> void:
@@ -37,7 +37,7 @@ func _process(_delta: float) -> void:
 	if not _modes_connected and race != null and race.stunt_mode != null:
 		_modes_connected = true
 		race.stunt_mode.ring_taken.connect(func(_ring: StuntRing, _points: int, _multiplier: float) -> void:
-			_play(SoundBank.chime(), -5.0))
+			_play(SoundBank.RING, -6.0))
 
 
 func _play(stream: AudioStream, volume_db: float) -> void:

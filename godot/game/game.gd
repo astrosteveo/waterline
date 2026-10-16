@@ -106,7 +106,6 @@ func _exit_tree() -> void:
 	# Static variables outlive the scene tree; drop what they hold so nothing is reported as
 	# leaked when the game quits.
 	MenuStyle.release()
-	SoundBank.release()
 
 
 ## Every [CourseInfo] in [param dir] (its `*.course.tres` files), sorted by

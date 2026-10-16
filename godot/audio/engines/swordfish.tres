@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="EngineVoice" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://audio/engine_voice.gd" id="1"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_on_1600.wav" id="2"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_on_2500.wav" id="3"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_on_3700.wav" id="4"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_on_5300.wav" id="5"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_on_7600.wav" id="6"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_off_1600.wav" id="7"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_off_2500.wav" id="8"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_off_3700.wav" id="9"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_off_5300.wav" id="10"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/swordfish_off_7600.wav" id="11"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/starts_swordfish.wav" id="12"]
+
+[resource]
+script = ExtResource("1")
+idle_rpm = 1600.0
+rated_rpm = 7300.0
+limiter_rpm = 7600.0
+layer_rpm = PackedFloat32Array(1600.0, 2500.0, 3700.0, 5300.0, 7600.0)
+on_load = Array[AudioStream]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+off_load = Array[AudioStream]([ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11")])
+start = ExtResource("12")
+start_catch = 0.55
+spool_up = 0.4
+spool_up_free = 0.16
+spool_down = 0.42
+spool_down_free = 0.85

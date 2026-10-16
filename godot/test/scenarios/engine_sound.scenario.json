@@ -1,0 +1,127 @@
+{
+ "description": "The engine sound follows the craft as a jet ski's does: the throttle takes the revs up within a second or two, they fall back to idle when it is let go while the craft coasts on, in the air the engine flies to its limiter and the limiter cuts it, a landing splashes, and the engine stops when the rider is thrown off and cranks back into life as they climb on. Every craft's engine has its loops at the revs it lists, and they loop.",
+ "start": {
+  "scene": "res://race/race.tscn",
+  "seed": 1,
+  "args": [
+   "--no-opponents"
+  ]
+ },
+ "steps": [
+  {
+   "until": "phase == 1",
+   "max": 400
+  },
+  {
+   "eval": "rules.set('misses_to_disqualify', 0)",
+   "name": "no disqualification: this test skips buoys"
+  },
+  {
+   "expect": "(ResourceLoader.load('res://audio/engines/petrel.tres').problems() + ResourceLoader.load('res://audio/engines/skipjack.tres').problems() + ResourceLoader.load('res://audio/engines/swordfish.tres').problems() + ResourceLoader.load('res://audio/engines/tradewind.tres').problems()).size() == 0",
+   "name": "every engine's loops are at the revs it lists, and loop"
+  },
+  {
+   "eval": "place_racer(player, 100, 0, 0)"
+  },
+  "step 30",
+  {
+   "expect": "abs(player.craft.get_node('EngineSound').rpm - player.craft.get_node('EngineSound').voice.idle_rpm) < 50",
+   "name": "standing, the engine idles"
+  },
+  {
+   "step": 90,
+   "hold": "throttle"
+  },
+  {
+   "expect": "player.craft.get_node('EngineSound').rpm > player.craft.get_node('EngineSound').voice.rated_rpm * 0.93",
+   "name": "full throttle takes the revs near full within 1.5 s"
+  },
+  {
+   "step": 120,
+   "hold": "throttle"
+  },
+  {
+   "step": 75
+  },
+  {
+   "expect": "player.craft.get_node('EngineSound').rpm < player.craft.get_node('EngineSound').voice.idle_rpm * 1.25",
+   "name": "let go, the revs fall back near idle"
+  },
+  {
+   "expect": "player.craft.speed > 6",
+   "name": "while the craft coasts on"
+  },
+  {
+   "eval": "place_racer(player, 394, -1, 15)"
+  },
+  "step 3",
+  {
+   "until": "player.craft.airborne",
+   "hold": "throttle",
+   "max": 200
+  },
+  {
+   "until": "player.craft.get_node('EngineSound').rpm >= player.craft.get_node('EngineSound').voice.limiter_rpm",
+   "hold": "throttle",
+   "max": 40,
+   "name": "in the air the engine flies up to its limiter"
+  },
+  {
+   "until": "player.craft.get_node('EngineSound').load < 0.5",
+   "hold": "throttle",
+   "max": 20,
+   "name": "which cuts the ignition"
+  },
+  {
+   "until": "not player.craft.airborne",
+   "hold": "throttle",
+   "max": 200
+  },
+  "step 2",
+  {
+   "expect": "player.craft.get_node('EngineSound/Splash').stream.resource_path.begins_with('res://assets/audio/water/splashes_land')",
+   "name": "the landing splashes"
+  },
+  {
+   "eval": "place_racer(player, 100, 0, 15)"
+  },
+  "step 3",
+  {
+   "eval": "player.craft.throw_rider()"
+  },
+  {
+   "until": "player.craft.get_node('EngineSound').engine_state == 1",
+   "max": 2,
+   "name": "thrown off, the lanyard stops the engine"
+  },
+  {
+   "until": "player.craft.get_node('EngineSound').rpm < player.craft.get_node('EngineSound').voice.idle_rpm * 0.3",
+   "max": 40,
+   "name": "and its revs die within 2/3 s"
+  },
+  {
+   "until": "player.craft.rider_state == 3",
+   "max": 600,
+   "name": "the rider swims back and climbs on"
+  },
+  {
+   "until": "player.craft.get_node('EngineSound').engine_state == 2",
+   "max": 5,
+   "name": "pressing the starter"
+  },
+  {
+   "until": "player.craft.get_node('EngineSound/Start').playing",
+   "max": 10,
+   "name": "the starter cranks it over"
+  },
+  {
+   "until": "player.craft.get_node('EngineSound').engine_state == 0",
+   "max": 60,
+   "name": "and it catches"
+  },
+  {
+   "expect": "player.craft.get_node('EngineSound').rpm > player.craft.get_node('EngineSound').voice.idle_rpm * 1.2",
+   "name": "its revs flaring above idle"
+  }
+ ]
+}

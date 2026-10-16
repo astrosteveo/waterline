@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="EngineVoice" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://audio/engine_voice.gd" id="1"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_on_1350.wav" id="2"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_on_2150.wav" id="3"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_on_3250.wav" id="4"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_on_4900.wav" id="5"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_on_7400.wav" id="6"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_off_1350.wav" id="7"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_off_2150.wav" id="8"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_off_3250.wav" id="9"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_off_4900.wav" id="10"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/petrel_off_7400.wav" id="11"]
+[ext_resource type="AudioStream" path="res://assets/audio/engines/starts_petrel.wav" id="12"]
+
+[resource]
+script = ExtResource("1")
+idle_rpm = 1350.0
+rated_rpm = 7100.0
+limiter_rpm = 7400.0
+layer_rpm = PackedFloat32Array(1350.0, 2150.0, 3250.0, 4900.0, 7400.0)
+on_load = Array[AudioStream]([ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")])
+off_load = Array[AudioStream]([ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11")])
+start = ExtResource("12")
+start_catch = 0.55
+spool_up = 0.26
+spool_up_free = 0.1
+spool_down = 0.32
+spool_down_free = 0.6
