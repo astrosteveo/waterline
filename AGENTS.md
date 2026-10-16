@@ -20,11 +20,11 @@ lists the other top-level folders. Read the wiki page for the part you're changi
   and its `.course.tres`.
 - **Write `.tres`/`.tscn` by hand** rather than resaving through the headless editor, which adds
   `shader_parameter/x = null` lines to materials.
-- **Models built by kiln come from `art/`.** Edit the recipe and run
-  `uv run --project pipeline kiln build`, never the `.glb` in `godot/assets/`; commit the recipe,
-  the built files, their `.import` files and `art/kiln.lock.json` together. Look at the preview
-  sheet in `build/kiln/<id>/preview.png`, then at the model in the game. `pipeline/` must stay
-  free of anything Waterline-specific, so it can become its own repository.
+- **Models and textures built by kiln come from `art/`.** Edit the recipe and run
+  `uv run --project pipeline kiln build`, never the `.glb` or `.png` in `godot/assets/`; commit
+  the recipe, the built files, their `.import` files and `art/kiln.lock.json` together. Look at
+  the preview sheet in `build/kiln/<id>/preview.png`, then at the model in the game. `pipeline/`
+  must stay free of anything Waterline-specific, so it can become its own repository.
 - New courses, cups and weathers are found by file name (`*.course.tres`, `*.cup.tres`,
   `*.weather.tres`); no list to update.
 

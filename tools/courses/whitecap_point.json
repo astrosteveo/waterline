@@ -62,6 +62,7 @@
   "cells": 200,
   "coast_noise": 0.2
  },
+ "palm_spacing": 15,
  "islands": [
   [ -85, -10, 74, 22],
   [ -100, 95, 45, 6],

@@ -1,4 +1,5 @@
 """Runs inside Blender: builds each asset of a job, checks it, exports it and previews it.
+A model is exported as `<stem>.glb`; a texture is baked into `<stem>_<map>.png` files.
 
 The command line starts Blender with this script and a job file:
 
@@ -21,7 +22,7 @@ import bpy
 # Blender ignores PYTHONPATH, so find the kiln package from this file (src/kiln/blender/).
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from kiln.blender import checks, preview  # noqa: E402
+from kiln.blender import bake, checks, preview  # noqa: E402
 from kiln.blender.kit import Kit  # noqa: E402
 from kiln.recipe import find_recipe  # noqa: E402
 
@@ -47,25 +48,18 @@ def main() -> None:
 
 def build_asset(asset: dict, export: bool, with_preview: bool) -> dict:
     """Builds one asset and returns its report. Without `export` nothing is written to the
-    asset's output; the preview sheet is still made when asked for."""
+    asset's outputs; the preview sheet is still made when asked for."""
     started = time.monotonic()
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    report = {"id": asset["id"], "recipe": asset["recipe"], "output": asset["output"]}
+    report = {"id": asset["id"], "recipe": asset["recipe"]}
     try:
         module = _load_module(asset["recipe"], asset["id"])
         recipe = find_recipe(module)
-        recipe.build(Kit())
-        measured = checks.measure()
-        report.update(measured)
-        report["problems"] = checks.problems(recipe.spec, measured)
-        if not report["problems"]:
-            if export:
-                os.makedirs(os.path.dirname(asset["output"]), exist_ok=True)
-                _export(asset["output"])
-            if with_preview:
-                sheet = os.path.join(asset["report_dir"], "preview.png")
-                preview.render_sheet(sheet, measured["bounds"])
-                report["preview"] = sheet
+        if recipe.kind == "texture":
+            report.update(bake.build_texture(recipe, asset["stem"], export,
+                                             asset["report_dir"] if with_preview else None))
+        else:
+            report.update(_build_model(recipe, asset, export, with_preview))
     except Exception as error:
         report["problems"] = [_describe_error(error, asset["recipe"])]
     report["seconds"] = round(time.monotonic() - started, 2)
@@ -73,6 +67,24 @@ def build_asset(asset: dict, export: bool, with_preview: bool) -> dict:
     os.makedirs(asset["report_dir"], exist_ok=True)
     with open(os.path.join(asset["report_dir"], "report.json"), "w") as f:
         json.dump(report, f, indent=2)
+    return report
+
+
+def _build_model(recipe, asset: dict, export: bool, with_preview: bool) -> dict:
+    recipe.build(Kit())
+    report = {"kind": "model", **checks.measure()}
+    report["problems"] = checks.problems(recipe.spec, report)
+    if report["problems"]:
+        return report
+    output = asset["stem"] + ".glb"
+    report["outputs"] = [output]
+    if export:
+        os.makedirs(os.path.dirname(output), exist_ok=True)
+        _export(output)
+    if with_preview:
+        sheet = os.path.join(asset["report_dir"], "preview.png")
+        preview.render_sheet(sheet, report["bounds"])
+        report["preview"] = sheet
     return report
 
 

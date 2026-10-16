@@ -596,11 +596,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    12,
-    7,
-    9
-   ],
+   "model": "boathouse",
    "wall_color": [
     0.85,
     0.8,
@@ -610,8 +606,7 @@
     0.55,
     0.2,
     0.15
-   ],
-   "building_seed": 1
+   ]
   },
   {
    "type": "building",
@@ -620,11 +615,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    9,
-    10,
-    8
-   ],
+   "model": "house_tall",
    "wall_color": [
     0.7,
     0.75,
@@ -634,8 +625,7 @@
     0.25,
     0.3,
     0.4
-   ],
-   "building_seed": 2
+   ]
   },
   {
    "type": "building",
@@ -644,11 +634,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    14,
-    6,
-    10
-   ],
+   "model": "warehouse",
    "wall_color": [
     0.88,
     0.7,
@@ -658,8 +644,7 @@
     0.5,
     0.35,
     0.2
-   ],
-   "building_seed": 3
+   ]
   },
   {
    "type": "building",
@@ -668,11 +653,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    8,
-    8,
-    8
-   ],
+   "model": "house_square",
    "wall_color": [
     0.75,
     0.82,
@@ -682,8 +663,7 @@
     0.55,
     0.2,
     0.15
-   ],
-   "building_seed": 4
+   ]
   },
   {
    "type": "building",
@@ -692,11 +672,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    11,
-    12,
-    9
-   ],
+   "model": "office",
    "wall_color": [
     0.85,
     0.8,
@@ -706,8 +682,7 @@
     0.25,
     0.3,
     0.4
-   ],
-   "building_seed": 5
+   ]
   },
   {
    "type": "building",
@@ -716,11 +691,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    10,
-    7,
-    8
-   ],
+   "model": "shed",
    "wall_color": [
     0.7,
     0.75,
@@ -730,8 +701,7 @@
     0.5,
     0.35,
     0.2
-   ],
-   "building_seed": 6
+   ]
   },
   {
    "type": "building",
@@ -740,11 +710,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    12,
-    7,
-    9
-   ],
+   "model": "boathouse",
    "wall_color": [
     0.88,
     0.7,
@@ -754,8 +720,7 @@
     0.55,
     0.2,
     0.15
-   ],
-   "building_seed": 7
+   ]
   },
   {
    "type": "building",
@@ -764,11 +729,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    9,
-    10,
-    8
-   ],
+   "model": "house_tall",
    "wall_color": [
     0.75,
     0.82,
@@ -778,8 +739,7 @@
     0.25,
     0.3,
     0.4
-   ],
-   "building_seed": 8
+   ]
   },
   {
    "type": "building",
@@ -788,11 +748,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    14,
-    6,
-    10
-   ],
+   "model": "warehouse",
    "wall_color": [
     0.85,
     0.8,
@@ -802,8 +758,7 @@
     0.5,
     0.35,
     0.2
-   ],
-   "building_seed": 9
+   ]
   },
   {
    "type": "building",
@@ -812,11 +767,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    8,
-    8,
-    8
-   ],
+   "model": "house_square",
    "wall_color": [
     0.7,
     0.75,
@@ -826,8 +777,7 @@
     0.55,
     0.2,
     0.15
-   ],
-   "building_seed": 10
+   ]
   },
   {
    "type": "building",
@@ -836,11 +786,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    11,
-    12,
-    9
-   ],
+   "model": "office",
    "wall_color": [
     0.88,
     0.7,
@@ -850,8 +796,7 @@
     0.25,
     0.3,
     0.4
-   ],
-   "building_seed": 11
+   ]
   },
   {
    "type": "building",
@@ -860,11 +805,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    10,
-    7,
-    8
-   ],
+   "model": "shed",
    "wall_color": [
     0.75,
     0.82,
@@ -874,8 +815,7 @@
     0.5,
     0.35,
     0.2
-   ],
-   "building_seed": 12
+   ]
   },
   {
    "type": "building",
@@ -884,11 +824,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    12,
-    7,
-    9
-   ],
+   "model": "boathouse",
    "wall_color": [
     0.85,
     0.8,
@@ -898,8 +834,7 @@
     0.55,
     0.2,
     0.15
-   ],
-   "building_seed": 13
+   ]
   },
   {
    "type": "building",
@@ -908,11 +843,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    9,
-    10,
-    8
-   ],
+   "model": "house_tall",
    "wall_color": [
     0.7,
     0.75,
@@ -922,8 +853,7 @@
     0.25,
     0.3,
     0.4
-   ],
-   "building_seed": 14
+   ]
   },
   {
    "type": "building",
@@ -932,11 +862,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    14,
-    6,
-    10
-   ],
+   "model": "warehouse",
    "wall_color": [
     0.88,
     0.7,
@@ -946,8 +872,7 @@
     0.5,
     0.35,
     0.2
-   ],
-   "building_seed": 15
+   ]
   },
   {
    "type": "building",
@@ -956,11 +881,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    8,
-    8,
-    8
-   ],
+   "model": "house_square",
    "wall_color": [
     0.75,
     0.82,
@@ -970,8 +891,7 @@
     0.55,
     0.2,
     0.15
-   ],
-   "building_seed": 16
+   ]
   },
   {
    "type": "building",
@@ -980,11 +900,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    11,
-    12,
-    9
-   ],
+   "model": "office",
    "wall_color": [
     0.85,
     0.8,
@@ -994,8 +910,7 @@
     0.25,
     0.3,
     0.4
-   ],
-   "building_seed": 17
+   ]
   },
   {
    "type": "building",
@@ -1004,11 +919,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    10,
-    7,
-    8
-   ],
+   "model": "shed",
    "wall_color": [
     0.7,
     0.75,
@@ -1018,8 +929,7 @@
     0.5,
     0.35,
     0.2
-   ],
-   "building_seed": 18
+   ]
   },
   {
    "type": "building",
@@ -1028,11 +938,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    12,
-    7,
-    9
-   ],
+   "model": "boathouse",
    "wall_color": [
     0.88,
     0.7,
@@ -1042,8 +948,7 @@
     0.55,
     0.2,
     0.15
-   ],
-   "building_seed": 19
+   ]
   },
   {
    "type": "building",
@@ -1052,11 +957,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    9,
-    10,
-    8
-   ],
+   "model": "house_tall",
    "wall_color": [
     0.75,
     0.82,
@@ -1066,8 +967,7 @@
     0.25,
     0.3,
     0.4
-   ],
-   "building_seed": 20
+   ]
   },
   {
    "type": "building",
@@ -1076,11 +976,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    14,
-    6,
-    10
-   ],
+   "model": "warehouse",
    "wall_color": [
     0.85,
     0.8,
@@ -1090,8 +986,7 @@
     0.5,
     0.35,
     0.2
-   ],
-   "building_seed": 21
+   ]
   },
   {
    "type": "building",
@@ -1100,11 +995,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    8,
-    8,
-    8
-   ],
+   "model": "house_square",
    "wall_color": [
     0.7,
     0.75,
@@ -1114,8 +1005,7 @@
     0.55,
     0.2,
     0.15
-   ],
-   "building_seed": 22
+   ]
   },
   {
    "type": "building",
@@ -1124,11 +1014,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    11,
-    12,
-    9
-   ],
+   "model": "office",
    "wall_color": [
     0.88,
     0.7,
@@ -1138,8 +1024,7 @@
     0.25,
     0.3,
     0.4
-   ],
-   "building_seed": 23
+   ]
   },
   {
    "type": "building",
@@ -1148,11 +1033,7 @@
     -196
    ],
    "y": 1.0,
-   "size": [
-    10,
-    7,
-    8
-   ],
+   "model": "shed",
    "wall_color": [
     0.75,
     0.82,
@@ -1162,8 +1043,7 @@
     0.5,
     0.35,
     0.2
-   ],
-   "building_seed": 24
+   ]
   },
   {
    "type": "building",
@@ -1172,11 +1052,7 @@
     -190
    ],
    "y": 1.0,
-   "size": [
-    12,
-    7,
-    9
-   ],
+   "model": "boathouse",
    "wall_color": [
     0.85,
     0.8,
@@ -1186,8 +1062,7 @@
     0.55,
     0.2,
     0.15
-   ],
-   "building_seed": 25
+   ]
   },
   {
    "type": "lamp",

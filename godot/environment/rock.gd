@@ -1,8 +1,9 @@
 @tool
 class_name Rock
 extends StaticBody3D
-## A low-poly rock built from code: a subdivided icosahedron pushed in and out by noise,
-## flat shaded, with a convex collision shape. Different seeds give different rocks.
+## A rock: [member model] fitted to [member radius] across and [member height_scale] times
+## that up, around the node's origin, and turned by [member rock_seed], with a convex
+## collision shape round what is drawn.
 
 @export_range(0.2, 50.0, 0.1, "suffix:m") var radius: float = 3.0:
 	set(value):
@@ -13,27 +14,33 @@ extends StaticBody3D
 	set(value):
 		height_scale = value
 		_queue_build()
-## How lumpy the rock is, as a share of its radius.
-@export_range(0.0, 0.6, 0.01) var roughness: float = 0.22:
-	set(value):
-		roughness = value
-		_queue_build()
+## Turns the rock about its vertical axis, so rocks of the same model differ.
 @export var rock_seed: int = 1:
 	set(value):
 		rock_seed = value
 		_queue_build()
-@export var color: Color = Color(0.5, 0.46, 0.41):
+## The rock's model: one of kiln's (art/models/rocks/), drawn in kiln's rock texture. Pick one
+## shaped like the rock (a slab for a flat rock, a pillar for a tall one) so the fit stretches
+## it little.
+@export var model: PackedScene = preload("res://assets/models/rocks/boulder_a.glb"):
 	set(value):
-		color = value
+		model = value
 		_queue_build()
 
-var _mesh_instance: MeshInstance3D
-var _collision: CollisionShape3D
+## How far computer riders keep from a rock's centre, as a share of its radius: room for
+## its lumps and to spare.
+const AVOID_SCALE := 1.44
+
 var _build_queued := false
 
 
 func _ready() -> void:
 	_build()
+
+
+## How far computer riders keep from the rock's centre (see [method Course.obstacles]).
+func avoid_radius() -> float:
+	return radius * AVOID_SCALE
 
 
 func _queue_build() -> void:
@@ -45,97 +52,32 @@ func _queue_build() -> void:
 
 func _build() -> void:
 	_build_queued = false
-	if _mesh_instance == null:
-		_mesh_instance = MeshInstance3D.new()
-		_mesh_instance.name = "Mesh"
-		add_child(_mesh_instance, false, Node.INTERNAL_MODE_FRONT)
-	if _collision == null:
-		_collision = CollisionShape3D.new()
-		_collision.name = "Shape"
-		add_child(_collision, false, Node.INTERNAL_MODE_FRONT)
-
-	var noise := FastNoiseLite.new()
-	noise.seed = rock_seed
-	noise.frequency = 0.9 / maxf(radius, 0.1)
-	noise.fractal_octaves = 2
-	var points := _icosphere(2)
+	for child in get_children(true):
+		if child.has_meta(&"rock_part"):
+			child.free()
+	if model == null:
+		return
+	var drawn := SceneryModel.add(self, model, &"rock_part")
+	drawn.rotation.y = rock_seed * 2.39996
+	# Fit the turned model's box to the rock's: radius across, radius * height_scale up.
+	var unique := {}
+	for point in SceneryModel.points(drawn):
+		unique[point] = true
+	var points := PackedVector3Array(unique.keys())
+	var low := points[0]
+	var high := points[0]
+	for point in points:
+		low = low.min(point)
+		high = high.max(point)
+	var centre := (low + high) * 0.5
+	var stretch := Vector3(radius, radius * height_scale, radius) / ((high - low) * 0.5)
+	drawn.transform = Transform3D(Basis.from_scale(stretch) * drawn.basis, -centre * stretch)
 	for i in points.size():
-		var p := points[i]
-		var lump := 1.0 + noise.get_noise_3dv(p * radius) * roughness * 2.0
-		points[i] = Vector3(p.x * radius * lump, p.y * radius * height_scale * lump, p.z * radius * lump)
-
-	var vertices := PackedVector3Array()
-	var normals := PackedVector3Array()
-	var colors := PackedColorArray()
-	var faces := _ico_faces
-	for f in range(0, faces.size(), 3):
-		# The face list winds counter-clockwise seen from outside; Godot's front faces
-		# wind clockwise, so emit each triangle as a, c, b.
-		var a := points[faces[f]]
-		var b := points[faces[f + 1]]
-		var c := points[faces[f + 2]]
-		var normal := (b - a).cross(c - a).normalized()
-		var shade := color.darkened(0.12 * absf(noise.get_noise_3dv((a + b + c) * 3.0)))
-		for p in [a, c, b]:
-			vertices.append(p)
-			normals.append(normal)
-			colors.append(shade)
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = vertices
-	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_COLOR] = colors
-	var built := ArrayMesh.new()
-	built.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	var material := StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.roughness = 0.9
-	built.surface_set_material(0, material)
-	_mesh_instance.mesh = built
+		points[i] = (points[i] - centre) * stretch
+	var shape := CollisionShape3D.new()
+	shape.name = "Shape"
 	var hull := ConvexPolygonShape3D.new()
 	hull.points = points
-	_collision.shape = hull
-
-
-static var _ico_faces := PackedInt32Array()
-
-
-## Unit icosphere vertices, subdivided [param levels] times. Fills the shared face list.
-static func _icosphere(levels: int) -> PackedVector3Array:
-	var t := (1.0 + sqrt(5.0)) / 2.0
-	var verts: Array[Vector3] = [
-		Vector3(-1, t, 0), Vector3(1, t, 0), Vector3(-1, -t, 0), Vector3(1, -t, 0),
-		Vector3(0, -1, t), Vector3(0, 1, t), Vector3(0, -1, -t), Vector3(0, 1, -t),
-		Vector3(t, 0, -1), Vector3(t, 0, 1), Vector3(-t, 0, -1), Vector3(-t, 0, 1),
-	]
-	for i in verts.size():
-		verts[i] = verts[i].normalized()
-	var faces: Array[int] = [
-		0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11,
-		1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
-		3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9,
-		4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1,
-	]
-	for level in levels:
-		var midpoints := {}
-		var next: Array[int] = []
-		for f in range(0, faces.size(), 3):
-			var a := faces[f]
-			var b := faces[f + 1]
-			var c := faces[f + 2]
-			var ab := _midpoint(verts, midpoints, a, b)
-			var bc := _midpoint(verts, midpoints, b, c)
-			var ca := _midpoint(verts, midpoints, c, a)
-			next.append_array([a, ab, ca, b, bc, ab, c, ca, bc, ab, bc, ca])
-		faces = next
-	_ico_faces = PackedInt32Array(faces)
-	return PackedVector3Array(verts)
-
-
-static func _midpoint(verts: Array[Vector3], cache: Dictionary, a: int, b: int) -> int:
-	var key := Vector2i(mini(a, b), maxi(a, b))
-	if cache.has(key):
-		return cache[key]
-	verts.append(((verts[a] + verts[b]) * 0.5).normalized())
-	cache[key] = verts.size() - 1
-	return verts.size() - 1
+	shape.shape = hull
+	shape.set_meta(&"rock_part", true)
+	add_child(shape, false, Node.INTERNAL_MODE_FRONT)

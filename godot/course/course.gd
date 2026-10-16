@@ -265,12 +265,12 @@ func grid_transform(slot: int, count: int) -> Transform3D:
 
 
 ## Rocks and pillars a rider must steer round, as Vector3(x, z, radius): every [Rock] in
-## the course, with its radius grown to cover its lumps.
+## the course, with its radius grown to cover its lumps ([method Rock.avoid_radius]).
 func obstacles() -> Array[Vector3]:
 	var found: Array[Vector3] = []
 	for node in find_children("*", "Rock", true, false):
 		var rock := node as Rock
-		found.append(Vector3(rock.global_position.x, rock.global_position.z, rock.radius * (1.0 + 2.0 * rock.roughness)))
+		found.append(Vector3(rock.global_position.x, rock.global_position.z, rock.avoid_radius()))
 	return found
 
 
