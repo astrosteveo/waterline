@@ -2,9 +2,10 @@ class_name RacingLine
 extends RefCounted
 ## The line computer riders follow round a [Course]: a sideways offset from the centre line
 ## at every centre-line sample. It passes each buoy on its marked side, [member clearance]
-## meters from it, cuts to the inside of turns that have no buoy, eases smoothly between
-## those points and stays clear of the walls. It also stores the line's curvature, from
-## which a rider works out how fast it can take what is ahead.
+## meters from it, runs straight up each ramp, cuts to the inside of turns that have no buoy,
+## eases smoothly between those points and stays clear of the walls. It also
+## stores the line's curvature, from which a rider works out how fast it can take what is
+## ahead.
 
 ## Distance kept from a buoy's centre when passing it.
 var clearance: float = 4.0
@@ -16,6 +17,12 @@ var obstacle_margin: float = 2.2
 var high_wave_margin: float = 5.0
 ## Least distance from a buoy's centre on its passing side, near the buoy.
 var buoy_margin: float = 2.6
+## Least distance from a ramp's sides, on the approach and up the ramp: a rider's moves round
+## another craft and its wander keep it this far inside the ramp's width.
+var ramp_margin: float = 1.2
+## How far before a ramp's leading edge the line and a rider's moves keep to the ramp, so a
+## rider meets it straight and on it.
+var ramp_approach: float = 15.0
 
 var _course: Course
 ## Sideways offset from the centre line at each centre-line sample.
@@ -30,7 +37,7 @@ var _keep_high := PackedFloat32Array()
 var _curvature := PackedFloat32Array()
 ## The line's points, at the water's rest level.
 var _points := PackedVector3Array()
-## Course offsets of the buoy passing points, and their sideways offsets.
+## Course offsets of the key points (buoys, ramps, turns), and their sideways offsets.
 var _key_offsets := PackedFloat32Array()
 var _key_laterals := PackedFloat32Array()
 
@@ -41,16 +48,23 @@ func _init(course: Course, p_clearance: float = 4.0) -> void:
 	# High waves throw a craft off the crests, where it can't turn and flies wide in a bend:
 	# keep further from the rocks.
 	obstacle_margin += maxf(Ocean.wave_set.max_height() - 1.0, 0.0) * high_wave_margin
-	_build()
-	for ramp in course.find_children("*", "Ramp", true, false):
+	for ramp: Ramp in course.find_children("*", "Ramp", true, false):
 		var progress := CourseProgress.new()
-		course.relocate(progress, (ramp as Node3D).global_position)
+		course.relocate(progress, ramp.global_position)
 		ramp_offsets.append(progress.offset)
+		ramp_laterals.append(progress.lateral)
+		ramp_half_widths.append(ramp.width * 0.5)
+		_ramp_lengths.append(ramp.length)
+	_build()
 
 
-## Where each ramp is along the course (offsets), for riders to keep their lane and their
-## distance over a jump.
+## Where each ramp's middle is along the course (offsets), for riders to keep their lane and
+## their distance over a jump.
 var ramp_offsets := PackedFloat32Array()
+## Each ramp's middle as a sideways offset from the centre line, and half its width.
+var ramp_laterals := PackedFloat32Array()
+var ramp_half_widths := PackedFloat32Array()
+var _ramp_lengths := PackedFloat32Array()
 
 
 ## True from [param before] meters before a ramp to [param after] meters past it, where a
@@ -116,7 +130,8 @@ func table(spacing: float = 2.0) -> Array:
 	return rows
 
 
-## The buoy passing points as [offset, lateral] pairs, for tools.
+## The key points (buoys' passing points, ramps' leading edges and lips, the insides of
+## turns) as [offset, lateral] pairs, for tools.
 func key_points() -> Array:
 	var out := []
 	for i in _key_offsets.size():
@@ -179,6 +194,18 @@ func _build() -> void:
 		var inside := limits.y if k > 0.0 else limits.x
 		turn_keys.append(Vector2(offset, inside * 0.5))
 	keys.append_array(turn_keys)
+	# Each ramp's leading edge and lip, where the line would cross the ramp's middle anyway,
+	# moved only as far as it takes to keep [member ramp_margin] inside the ramp's sides. The
+	# line holds a key from 12 m before it, so it runs straight from there up the ramp and off
+	# the lip. Held to the ramp's middle instead, the line swerved at the foot of a ramp with a
+	# buoy just before it, and riders in high waves launched turning and nose-dived.
+	var ramp_keys: Array[Vector2] = []
+	for r in ramp_offsets.size():
+		var half := maxf(ramp_half_widths[r] - ramp_margin, 0.0)
+		var lateral := clampf(_lateral_from_keys(ramp_offsets[r], keys), ramp_laterals[r] - half, ramp_laterals[r] + half)
+		ramp_keys.append(Vector2(fposmod(ramp_offsets[r] - _ramp_lengths[r] * 0.5, _course.length), lateral))
+		ramp_keys.append(Vector2(fposmod(ramp_offsets[r] + _ramp_lengths[r] * 0.5, _course.length), lateral))
+	keys.append_array(ramp_keys)
 	keys.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x < b.x)
 	_key_offsets.clear()
 	_key_laterals.clear()
@@ -207,6 +234,15 @@ func _build() -> void:
 				_keep_low[i] = minf(maxf(_keep_low[i], buoy_lateral + buoy_margin), _keep_high[i])
 			elif gate.required_side < 0:
 				_keep_high[i] = maxf(minf(_keep_high[i], buoy_lateral - buoy_margin), _keep_low[i])
+	# From the approach to the lip, keep to the ramp, inside its width.
+	for r in ramp_offsets.size():
+		var half := maxf(ramp_half_widths[r] - ramp_margin, 0.0)
+		var first := int(floor((ramp_offsets[r] - _ramp_lengths[r] * 0.5 - ramp_approach) / step))
+		var last := int(ceil((ramp_offsets[r] + _ramp_lengths[r] * 0.5) / step))
+		for j in range(first, last + 1):
+			var i := posmod(j, n)
+			_keep_low[i] = minf(maxf(_keep_low[i], ramp_laterals[r] - half), _keep_high[i])
+			_keep_high[i] = maxf(minf(_keep_high[i], ramp_laterals[r] + half), _keep_low[i])
 	# Blur and clamp in turns, like an elastic band pulled round the rocks, so the line moves
 	# over gradually before a rock instead of jumping at its edge.
 	var reach := maxi(int(6.0 / step), 1)
