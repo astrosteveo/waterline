@@ -70,6 +70,17 @@ extends Node3D
 		skin_color = value
 		_queue_build()
 
+## How much of the model to hide, from 0 (all of it drawn) to 1: [ChaseCamera] fades a craft
+## that comes between it and the craft it follows. Drawn as a dither (alpha hash) in the
+## opaque pass, so a faded craft still sorts correctly against the water. A ghost doesn't fade.
+@export_range(0.0, 1.0, 0.01) var fade: float = 0.0:
+	set(value):
+		value = clampf(value, 0.0, 1.0)
+		if value == fade:
+			return
+		fade = value
+		_apply_fade()
+
 ## Draw see-through and without shadows, for a time-trial ghost.
 @export var ghost: bool = false:
 	set(value):
@@ -149,6 +160,8 @@ var _feet: Array[Vector3] = FOOTRESTS.duplicate()
 # meshes before their materials: freed the other way round, the renderer reports errors for
 # the meshes' missing materials.
 var _hull_materials: Array[Material] = []
+# Every material [member fade] changes.
+var _fading: Array[Material] = []
 var _rider_root: Node3D
 var _rider_mode: RiderMode = RiderMode.ABOARD
 var _rider_pelvis := Transform3D.IDENTITY
@@ -233,6 +246,7 @@ func _build() -> void:
 		if child.has_meta(&"model_part"):
 			child.free()
 	_hull_materials.clear()
+	_fading.clear()
 	_parts.clear()
 	_handlebar = null
 	_bar_rest = Transform3D(Basis.IDENTITY, HANDLEBAR_PIVOT)
@@ -355,7 +369,7 @@ func _hull_material(source: Material, height_row: Vector4, bottom_line: float, t
 		return _material(Color.WHITE) if ghost else source
 	var paint := ShaderMaterial.new()
 	paint.shader = HULL_PAINT_GHOST if ghost else HULL_PAINT
-	# A ghost draws after the water, as the code-built ghost does (see _make_ghostly).
+	# A ghost draws after the water, as the code-built ghost does (see _dress_material).
 	paint.render_priority = 1 if ghost else base.render_priority
 	var values := {
 		&"albedo": base.albedo_color,
@@ -399,6 +413,9 @@ func _hull_material(source: Material, height_row: Vector4, bottom_line: float, t
 	for key: StringName in values:
 		paint.set_shader_parameter(key, values[key])
 	_hull_materials.append(paint)
+	if not ghost:
+		paint.set_shader_parameter(&"fade", fade)
+		_fading.append(paint)
 	return paint
 
 
@@ -679,13 +696,18 @@ func _material(color: Color) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
 	material.roughness = 0.55
-	_make_ghostly(material)
+	_dress_material(material)
 	return material
 
 
-## A ghost is see-through and glows faintly, so it reads as not really there.
-func _make_ghostly(material: StandardMaterial3D) -> void:
+## A ghost's material is see-through and glows faintly, so it reads as not really there.
+## Any other material is dithered by [member fade]: alpha hash, opaque while the model isn't
+## faded.
+func _dress_material(material: StandardMaterial3D) -> void:
 	if not ghost:
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_HASH
+		material.albedo_color.a = 1.0 - fade
+		_fading.append(material)
 		return
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.albedo_color.a = GHOST_ALPHA
@@ -695,6 +717,14 @@ func _make_ghostly(material: StandardMaterial3D) -> void:
 	# Drawn after the water: both are see-through, and the water's mesh follows the camera,
 	# so by distance it would sort nearer and draw over the ghost.
 	material.render_priority = 1
+
+
+func _apply_fade() -> void:
+	for material in _fading:
+		if material is StandardMaterial3D:
+			(material as StandardMaterial3D).albedo_color.a = 1.0 - fade
+		elif material is ShaderMaterial:
+			(material as ShaderMaterial).set_shader_parameter(&"fade", fade)
 
 
 ## Builds the hull from its cross-sections, flat shaded, coloured by band.
@@ -746,7 +776,7 @@ func _build_hull_mesh() -> ArrayMesh:
 	var material := StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
 	material.roughness = 0.6
-	_make_ghostly(material)
+	_dress_material(material)
 	mesh.surface_set_material(0, material)
 	return mesh
 
