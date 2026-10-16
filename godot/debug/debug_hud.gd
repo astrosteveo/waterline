@@ -27,7 +27,7 @@ func _ready() -> void:
 	_hint.add_theme_color_override(&"font_shadow_color", Color(0.0, 0.0, 0.0, 0.85))
 	_hint.add_theme_constant_override(&"shadow_offset_x", 2)
 	_hint.add_theme_constant_override(&"shadow_offset_y", 2)
-	_hint.text = "Space throttle   A/D steer   W/S lean   R reset   C camera   F3 readout"
+	_hint.text = "Space throttle   L reverse   A/D steer   W/S lean   R reset   C camera   F3 readout"
 	_hint.anchor_top = 1.0
 	_hint.anchor_bottom = 1.0
 	_hint.offset_left = 24.0
