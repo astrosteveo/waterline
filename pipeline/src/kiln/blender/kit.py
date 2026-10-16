@@ -43,13 +43,15 @@ class Kit:
 
     # --- Materials ---------------------------------------------------------------------
 
-    def material(self, name: str, color, roughness: float = 0.5, metallic: float = 0.0) -> bpy.types.Material:
+    def material(self, name: str, color, roughness: float = 0.5, metallic: float = 0.0,
+                 double_sided: bool = False) -> bpy.types.Material:
         """A material with a flat colour, made once per name. In the game it imports as a
-        StandardMaterial3D with that colour, roughness and metallic."""
+        StandardMaterial3D with that colour, roughness and metallic. Only its front faces are
+        drawn, as kiln's meshes are closed; `double_sided` draws both, for an open mesh."""
         if name in self._materials:
             return self._materials[name]
         material = bpy.data.materials.new(name)
-        material.use_nodes = True
+        material.use_backface_culling = not double_sided
         bsdf = material.node_tree.nodes["Principled BSDF"]
         rgba = parse_color(color)
         bsdf.inputs["Base Color"].default_value = rgba

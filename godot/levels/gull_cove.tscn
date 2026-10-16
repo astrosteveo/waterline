@@ -12,6 +12,10 @@
 [ext_resource type="PackedScene" path="res://course/buoy.tscn" id="buoy"]
 [ext_resource type="PackedScene" path="res://course/ramp.tscn" id="ramp"]
 [ext_resource type="PackedScene" path="res://course/start_gate.tscn" id="gate"]
+[ext_resource type="PackedScene" path="res://assets/models/rocks/boulder_a.glb" id="rock_boulder_a"]
+[ext_resource type="PackedScene" path="res://assets/models/rocks/boulder_b.glb" id="rock_boulder_b"]
+[ext_resource type="PackedScene" path="res://assets/models/rocks/pillar_a.glb" id="rock_pillar_a"]
+[ext_resource type="PackedScene" path="res://assets/models/rocks/pillar_b.glb" id="rock_pillar_b"]
 
 [node name="GullCove" type="Node3D"]
 script = ExtResource("course")
@@ -46,6 +50,7 @@ size = 700
 cells = 175
 islands = Array[Vector4]([Vector4(52, -24, 44, 9), Vector4(50, 24, 32, 4), Vector4(112, -76, 20, -3), Vector4(150, -77, 16, -3), Vector4(160, 15, 55, 6), Vector4(255, -10, 60, 12), Vector4(-85, -40, 70, 10), Vector4(120, 180, 60, 7), Vector4(-40, 130, 40, 5)])
 coast_noise = 0.2
+palm_spacing = 11
 
 [node name="StartLine" type="Marker3D" parent="."]
 transform = Transform3D(0.99980, 0, -0.02006, 0, 1, 0, 0.02006, 0, 0.99980, -0.568, 0.000, -0.037)
@@ -104,6 +109,7 @@ script = ExtResource("rock")
 radius = 2.4
 height_scale = 2.6
 rock_seed = 11
+model = ExtResource("rock_pillar_a")
 
 [node name="Rock2" type="StaticBody3D" parent="Rocks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 142.50, -1.5, -57.61)
@@ -111,6 +117,7 @@ script = ExtResource("rock")
 radius = 2
 height_scale = 2.6
 rock_seed = 5
+model = ExtResource("rock_pillar_b")
 
 [node name="Rock3" type="StaticBody3D" parent="Rocks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90.35, -1.5, 36.47)
@@ -118,6 +125,7 @@ script = ExtResource("rock")
 radius = 3
 height_scale = 2.6
 rock_seed = 17
+model = ExtResource("rock_pillar_a")
 
 [node name="Rock4" type="StaticBody3D" parent="Rocks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 104.00, -1.5, -75.00)
@@ -125,6 +133,7 @@ script = ExtResource("rock")
 radius = 3.5
 height_scale = 1.3
 rock_seed = 23
+model = ExtResource("rock_boulder_b")
 
 [node name="Rock5" type="StaticBody3D" parent="Rocks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 126.00, -1.5, -76.00)
@@ -132,6 +141,7 @@ script = ExtResource("rock")
 radius = 3
 height_scale = 1.8
 rock_seed = 29
+model = ExtResource("rock_boulder_a")
 
 [node name="Rock6" type="StaticBody3D" parent="Rocks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 146.00, -1.5, -76.00)
@@ -139,6 +149,7 @@ script = ExtResource("rock")
 radius = 3.2
 height_scale = 1.5
 rock_seed = 31
+model = ExtResource("rock_boulder_b")
 
 [node name="Rock7" type="StaticBody3D" parent="Rocks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 164.00, -1.5, -75.00)
@@ -146,6 +157,7 @@ script = ExtResource("rock")
 radius = 2.6
 height_scale = 2.2
 rock_seed = 37
+model = ExtResource("rock_pillar_a")
 
 [node name="Rock8" type="StaticBody3D" parent="Rocks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.00, -1.5, -100.00)
@@ -153,6 +165,7 @@ script = ExtResource("rock")
 radius = 5
 height_scale = 1.2
 rock_seed = 41
+model = ExtResource("rock_boulder_b")
 
 [node name="Rock9" type="StaticBody3D" parent="Rocks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 230.00, -1.5, -120.00)
@@ -160,6 +173,7 @@ script = ExtResource("rock")
 radius = 6
 height_scale = 1.1
 rock_seed = 43
+model = ExtResource("rock_boulder_a")
 
 [node name="Rock10" type="StaticBody3D" parent="Rocks"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 225.00, -1.5, 85.00)
@@ -167,3 +181,4 @@ script = ExtResource("rock")
 radius = 4
 height_scale = 1.6
 rock_seed = 47
+model = ExtResource("rock_boulder_b")

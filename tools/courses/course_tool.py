@@ -7,7 +7,9 @@
 The spec gives the course's id, name, conditions line and menu order (for the menus), the
 centre line's control points [x, z, half width] (clockwise or not, in order of travel), buoys,
 ramps and rocks by [offset along the course from the start line, meters right of the centre
-line, ...], and terrain islands [x, z, radius, peak height]. The
+line, ...], terrain islands [x, z, radius, peak height] and "palm_spacing" (how far apart palm
+trees grow on the islands; none without it). Each rock is drawn with one of kiln's rock models
+(godot/assets/models/rocks/), a slab, boulder or pillar by its height, taking turns. The
 centre line is the same centripetal Catmull-Rom curve the game builds (course/course.gd), so
 offsets here match offsets in the game. The map shows the walls (with the loops on the
 inside of tight turns cut out), the buoys and their passing sides, ramps, rocks and the
@@ -184,10 +186,7 @@ def draw_map(course, path, scale=3.0):
                 d.rectangle([px, py, px + 2, py + 2], fill=(80, 170, 180))
             elif h > -5:
                 d.rectangle([px, py, px + 2, py + 2], fill=(50, 120, 170))
-    rocks = [list(r) for r in spec.get("rocks", [])]
-    for s, lat, r, hs in spec.get("course_rocks", []):
-        p, _ = course.at(s, lat)
-        rocks.append([p[0], p[1], r, hs])
+    rocks = [rock[:4] for rock in course_rocks(spec, course)]
     for x, z, r, hs in rocks:
         c = P((x, z))
         d.ellipse([c[0] - r * scale, c[1] - r * scale, c[0] + r * scale, c[1] + r * scale], fill=(130, 120, 110))
@@ -287,8 +286,34 @@ def transform(pos, fwd, y=0.0):
     return "Transform3D(%.5f, 0, %.5f, 0, 1, 0, %.5f, 0, %.5f, %.3f, %.3f, %.3f)" % (xx, zx, xz, zz, pos[0], y, pos[1])
 
 
+# Kiln's rock models by shape, and the height scales up to which each shape is used.
+ROCK_MODELS = [(0.8, ["slab_a", "slab_b"]), (1.9, ["boulder_a", "boulder_b"]), (99.0, ["pillar_a", "pillar_b"])]
+ROCK_SEEDS = [3, 11, 5, 17, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61]
+
+
+def rock_model(height_scale, index):
+    """The model for rock number `index`, this many times as high as its radius: the rocks of
+    each shape take turns."""
+    shapes = next(names for limit, names in ROCK_MODELS if height_scale < limit)
+    return shapes[index % len(shapes)]
+
+
+def course_rocks(spec, course):
+    """Every rock as [x, z, radius, height scale, seed, model]."""
+    rocks = []
+    for s, lat, r, hs in spec.get("course_rocks", []):
+        p, _ = course.at(s, lat)
+        rocks.append([p[0], p[1], r, hs])
+    rocks += [list(r) for r in spec.get("rocks", [])]
+    for k, rock in enumerate(rocks):
+        seed = ROCK_SEEDS[(k + 1) % len(ROCK_SEEDS)]
+        rock += [seed, rock_model(rock[3], k)]
+    return rocks
+
+
 def write_scene(course, path):
     spec = course.spec
+    rocks = course_rocks(spec, course)
     out = ['[gd_scene format=3]', '']
     for t, p, i in [
         ('Script', 'res://course/course.gd', 'course'),
@@ -310,6 +335,11 @@ def write_scene(course, path):
         if i in ("pier", "lamp", "building") and not any(prop["type"] == i for prop in spec.get("props", [])):
             continue
         out.append('[ext_resource type="%s" path="%s" id="%s"]' % (t, p, i))
+    for name in sorted({rock[5] for rock in rocks}):
+        out.append('[ext_resource type="PackedScene" path="res://assets/models/rocks/%s.glb" id="rock_%s"]' % (name, name))
+    for name in sorted({prop["model"] for prop in spec.get("props", []) if prop["type"] == "building"}):
+        out.append('[ext_resource type="PackedScene" path="res://assets/models/harbor/%s.glb" id="building_%s"]'
+                   % (name, name))
     out.append('')
     cps = spec["control_points"]
     out += ['[node name="%s" type="Node3D"]' % spec["root"],
@@ -338,7 +368,10 @@ def write_scene(course, path):
     out += ['[node name="Terrain" type="MeshInstance3D" parent="."]', 'script = ExtResource("terrain")',
             'size = %g' % ter.get("size", 700), 'cells = %d' % ter.get("cells", 175),
             'islands = Array[Vector4]([%s])' % ", ".join("Vector4(%g, %g, %g, %g)" % tuple(i) for i in spec["islands"]),
-            'coast_noise = %g' % ter.get("coast_noise", 0.3), '']
+            'coast_noise = %g' % ter.get("coast_noise", 0.3)]
+    if spec.get("palm_spacing"):
+        out.append('palm_spacing = %g' % spec["palm_spacing"])
+    out.append('')
     sp, st = course.at(0)
     out += ['[node name="StartLine" type="Marker3D" parent="."]', 'transform = ' + transform(sp, st), '',
             '[node name="StartGate" parent="." instance=ExtResource("gate")]', 'transform = ' + transform(sp, st),
@@ -363,17 +396,11 @@ def write_scene(course, path):
             out += ['bottom = %g' % spec["ramp_bottom"], 'length = %.2f' % (12.0 * (1.8 - spec["ramp_bottom"]) / 3.8)]
         out.append('')
     out += ['[node name="Rocks" type="Node3D" parent="."]', '']
-    rocks = []
-    for s, lat, r, hs in spec.get("course_rocks", []):
-        p, _ = course.at(s, lat)
-        rocks.append([p[0], p[1], r, hs])
-    rocks += [list(r) for r in spec.get("rocks", [])]
-    seeds = [3, 11, 5, 17, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61]
-    for k, (x, z, r, hs) in enumerate(rocks):
+    for k, (x, z, r, hs, seed, model) in enumerate(rocks):
         out += ['[node name="Rock%d" type="StaticBody3D" parent="Rocks"]' % (k + 1),
                 'transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, %.2f, -1.5, %.2f)' % (x, z),
                 'script = ExtResource("rock")', 'radius = %g' % r, 'height_scale = %g' % hs,
-                'rock_seed = %d' % seeds[(k + 1) % len(seeds)], '']
+                'rock_seed = %d' % seed, 'model = ExtResource("rock_%s")' % model, '']
     out += write_props(spec, course)
     with open(path, "w") as f:
         f.write("\n".join(out))
@@ -578,7 +605,8 @@ def write_variant_info(variant, path):
 
 
 def write_props(spec, course):
-    """Piers, lamps and buildings: {"type", "at": [x, z] or "offset": [s, lateral], "yaw" (degrees), ...}."""
+    """Piers, lamps and buildings: {"type", "at": [x, z] or "offset": [s, lateral], "yaw" (degrees), ...}.
+    A building's "model" names one of kiln's harbour buildings (godot/assets/models/harbor/)."""
     if not spec.get("props"):
         return []
     out = ['[node name="Props" type="Node3D" parent="."]', '']
@@ -599,8 +627,8 @@ def write_props(spec, course):
         for key, value in prop.items():
             if key in ("type", "at", "offset", "yaw", "y"):
                 continue
-            if isinstance(value, list) and len(value) == 3 and key == "size":
-                out.append('%s = Vector3(%g, %g, %g)' % (key, *value))
+            if key == "model":
+                out.append('model = ExtResource("building_%s")' % value)
             elif isinstance(value, list):
                 out.append('%s = Color(%g, %g, %g, 1)' % (key, *value[:3]))
             else:

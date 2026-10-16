@@ -7,8 +7,10 @@ A project is a folder with a `kiln.toml`:
 
 Every `*.py` file under the folder is a recipe, except files and folders whose names start
 with `_`, which hold code that recipes share. A recipe at `models/props/crate.py` is the asset
-`models/props/crate` and builds `<output>/models/props/crate.glb`. `kiln.lock.json` beside
-`kiln.toml` records what each asset was built from, so unchanged assets are skipped.
+`models/props/crate` and builds `<output>/models/props/crate.glb`; a texture recipe at
+`textures/sand.py` builds `<output>/textures/sand_albedo.png` and its other maps.
+`kiln.lock.json` beside `kiln.toml` records what each asset was built from and the files it
+made, so unchanged assets are skipped.
 """
 from __future__ import annotations
 
@@ -32,7 +34,8 @@ class Asset:
 
     id: str
     recipe: Path
-    output: Path
+    # Where its outputs go, less the ending: `<output>/models/props/crate` for crate.glb.
+    stem: Path
     report_dir: Path
 
 
@@ -68,7 +71,7 @@ class Project:
             if any(part.startswith(("_", ".")) for part in relative.parts):
                 continue
             asset_id = relative.with_suffix("").as_posix()
-            found.append(Asset(asset_id, path, self.output / relative.with_suffix(".glb"),
+            found.append(Asset(asset_id, path, self.output / relative.with_suffix(""),
                                self.reports / relative.with_suffix("")))
         return found
 
@@ -102,6 +105,19 @@ class Project:
             digest.update(path.name.encode())
             digest.update(path.read_bytes())
         return digest.hexdigest()
+
+    def built_files(self, entry: dict) -> list[Path]:
+        """The files a lock entry says its build made."""
+        outputs = entry.get("outputs", [entry["output"]] if "output" in entry else [])
+        return [self.root / output for output in outputs]
+
+    def up_to_date(self, asset: Asset, lock: dict, fingerprint: str) -> bool:
+        """True when the asset was last built from the same inputs and its files are there."""
+        entry = lock.get(asset.id)
+        if entry is None or entry.get("fingerprint") != fingerprint:
+            return False
+        files = self.built_files(entry)
+        return bool(files) and all(path.is_file() for path in files)
 
     def read_lock(self) -> dict:
         path = self.root / LOCK

@@ -1,8 +1,49 @@
 {
+  "models/course/buoy": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "c6f824ab73df31d0a7d6cb2fc37f5f530bde85f84cac10a607b193e9b587d080",
+    "outputs": [
+      "../godot/assets/models/course/buoy.glb"
+    ],
+    "size": [
+      1.62,
+      3.16,
+      1.62
+    ],
+    "triangles": 736
+  },
+  "models/course/ramp": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "b96be4ae77900e117fe4ab8027f752ddcd523c27be07047d11c0f83cb8b30635",
+    "outputs": [
+      "../godot/assets/models/course/ramp.glb"
+    ],
+    "size": [
+      7.16,
+      8.23813,
+      12.09359
+    ],
+    "triangles": 300
+  },
+  "models/course/start_gate": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "2cf74f2a73345aa4c36c6922d5661fafd5a39c14dbb71894731ec07db42167de",
+    "outputs": [
+      "../godot/assets/models/course/start_gate.glb"
+    ],
+    "size": [
+      48.2,
+      17.4,
+      2.2
+    ],
+    "triangles": 628
+  },
   "models/craft/petrel": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "47172705ee0ad7ccef3d2468241e82c2da56a8fe68a44c2dfbf51468041b64bc",
-    "output": "../godot/assets/models/craft/petrel.glb",
+    "fingerprint": "0712ce3b37ded6968a53e8d60c72da297bf0efbece3ebc25a5ee0a208e9a37ea",
+    "outputs": [
+      "../godot/assets/models/craft/petrel.glb"
+    ],
     "size": [
       1.11975,
       1.064,
@@ -12,8 +53,10 @@
   },
   "models/craft/skipjack": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "24f9b2830eb362b657357d9a27b4486f8012bf1ae71eb6ed286cbe6aba7357a6",
-    "output": "../godot/assets/models/craft/skipjack.glb",
+    "fingerprint": "87eb7cee4edc7a1b90789de05c74cc9043347086f0a4453492553b7ee3539be6",
+    "outputs": [
+      "../godot/assets/models/craft/skipjack.glb"
+    ],
     "size": [
       1.19998,
       1.064,
@@ -23,8 +66,10 @@
   },
   "models/craft/swordfish": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "e33669b082206c4d2a154924c97881f05926aa9780bbd85b054f5cbf237c9444",
-    "output": "../godot/assets/models/craft/swordfish.glb",
+    "fingerprint": "a274b1480ced628d54479bbb22bb042fa5a8efa58406e7ebf40d77bce735a252",
+    "outputs": [
+      "../godot/assets/models/craft/swordfish.glb"
+    ],
     "size": [
       1.03988,
       1.064,
@@ -34,8 +79,10 @@
   },
   "models/craft/tradewind": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "5b7fac3fa252740bee3c383b14d443487aaf4ab1b9249a454af3c906fd394fa8",
-    "output": "../godot/assets/models/craft/tradewind.glb",
+    "fingerprint": "5c88a6a2d03c379cc8015a0f632a1b25daa9dc36f3c029b583386e22292ec2c5",
+    "outputs": [
+      "../godot/assets/models/craft/tradewind.glb"
+    ],
     "size": [
       1.13988,
       1.064,
@@ -43,10 +90,168 @@
     ],
     "triangles": 1808
   },
+  "models/harbor/boathouse": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "279b006a20c28e9b2c0c48a0ad02219e8d15cd7f6857b19b0ec77f952836e201",
+    "outputs": [
+      "../godot/assets/models/harbor/boathouse.glb"
+    ],
+    "size": [
+      12.8,
+      9.66,
+      10.07214
+    ],
+    "triangles": 552
+  },
+  "models/harbor/house_square": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "56fca28900866a4474df2c022cb50d9eec711621195542e8f7c50d23d10b867c",
+    "outputs": [
+      "../godot/assets/models/harbor/house_square.glb"
+    ],
+    "size": [
+      8.8,
+      11.01,
+      9.10645
+    ],
+    "triangles": 624
+  },
+  "models/harbor/house_tall": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "4747c9eaa174729a364870cd70d098d9329d203c0d87b93b5e379eb2133c16ef",
+    "outputs": [
+      "../godot/assets/models/harbor/house_tall.glb"
+    ],
+    "size": [
+      9.8,
+      13.71,
+      9.13706
+    ],
+    "triangles": 648
+  },
+  "models/harbor/lamp_post": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "9ab039139b56d8afccaef95ffe76e89cfc28a553389343ec2e06751237161aa3",
+    "outputs": [
+      "../godot/assets/models/harbor/lamp_post.glb"
+    ],
+    "size": [
+      0.54,
+      5.1,
+      0.48
+    ],
+    "triangles": 228
+  },
+  "models/harbor/office": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "0003e90a5c237065b7dadaaf5f1bfd97b67ec9c4a8e83dec142f436749da6149",
+    "outputs": [
+      "../godot/assets/models/harbor/office.glb"
+    ],
+    "size": [
+      11.25,
+      14.2,
+      9.26
+    ],
+    "triangles": 1008
+  },
+  "models/harbor/pier": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "0bf4d44de8c36d8670368bec8aae135d66a89adc585609d538adcd63ba4085ae",
+    "outputs": [
+      "../godot/assets/models/harbor/pier.glb"
+    ],
+    "size": [
+      4.2,
+      8.11,
+      30.05
+    ],
+    "triangles": 2880
+  },
+  "models/harbor/shed": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "0ae8c01adfd3473b0abcd2fc43a1c5c619167e24334746ff08aa639892204382",
+    "outputs": [
+      "../godot/assets/models/harbor/shed.glb"
+    ],
+    "size": [
+      10.8,
+      9.66,
+      9.08803
+    ],
+    "triangles": 552
+  },
+  "models/harbor/warehouse": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "6e4521593fb9e97bb90090aa9aecebfb23bcf39b3060867c8c262d45aa029c74",
+    "outputs": [
+      "../godot/assets/models/harbor/warehouse.glb"
+    ],
+    "size": [
+      14.8,
+      8.31,
+      11.0394
+    ],
+    "triangles": 336
+  },
+  "models/plants/palm_a": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "b6f181a35e7e24872896b04d3c5fc4088e2039af7ba2d91c739b8bf10e42fdb5",
+    "outputs": [
+      "../godot/assets/models/plants/palm_a.glb"
+    ],
+    "size": [
+      5.99728,
+      7.86531,
+      5.61845
+    ],
+    "triangles": 970
+  },
+  "models/plants/palm_b": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "14afa7e363a003a17d55ef72bf5823772dbd633f6aa3c7e11af6958983222642",
+    "outputs": [
+      "../godot/assets/models/plants/palm_b.glb"
+    ],
+    "size": [
+      5.76919,
+      6.22141,
+      5.21453
+    ],
+    "triangles": 928
+  },
+  "models/plants/palm_c": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "599975051bd3f1110184cd3e66122db70360aee5b519abe455e6873535be6f36",
+    "outputs": [
+      "../godot/assets/models/plants/palm_c.glb"
+    ],
+    "size": [
+      6.06201,
+      9.27175,
+      6.39093
+    ],
+    "triangles": 1012
+  },
+  "models/props/crate": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "379ac70fe6890fa3ead62b892496a18efddaf9262bf8f43bccaf5fb979019825",
+    "outputs": [
+      "../godot/assets/models/props/crate.glb"
+    ],
+    "size": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "triangles": 228
+  },
   "models/riders/dax": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "310b68ab2fc2b4678cec4496aca77418ae382dd35c17e82528aca7c31465b71d",
-    "output": "../godot/assets/models/riders/dax.glb",
+    "fingerprint": "f73c99de4c1a8ccca564a3be06fe39dd047a647b57050197733952364b7d5331",
+    "outputs": [
+      "../godot/assets/models/riders/dax.glb"
+    ],
     "size": [
       0.86483,
       1.584,
@@ -56,8 +261,10 @@
   },
   "models/riders/ines": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "f341816f24c7e6332e6f66cf642094a45e92e57d2ea7e99c143fc8692f7c2862",
-    "output": "../godot/assets/models/riders/ines.glb",
+    "fingerprint": "d88908f42f8f3074d67e31f903bd3834565316f0e5ac7ec3a3075617884dcfea",
+    "outputs": [
+      "../godot/assets/models/riders/ines.glb"
+    ],
     "size": [
       0.84614,
       1.55224,
@@ -67,8 +274,10 @@
   },
   "models/riders/koa": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "fbae7fe5ac7c87e92087636200e3b9acf87d77d48494a86600f58f552822ba8c",
-    "output": "../godot/assets/models/riders/koa.glb",
+    "fingerprint": "17a90fd8a118ebbee73885be6ed58b8093ee2cc421be74727f3927d9604670b0",
+    "outputs": [
+      "../godot/assets/models/riders/koa.glb"
+    ],
     "size": [
       0.92075,
       1.6205,
@@ -78,13 +287,165 @@
   },
   "models/riders/marina": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "10a525ff7946060d31a07402b5b0ae6231d3b7fb4fb498a5e5b61e4011af5508",
-    "output": "../godot/assets/models/riders/marina.glb",
+    "fingerprint": "5d0f7bcf09f91a034a51479bd6fd2264121a3dfb77d57b53f142b98082baca64",
+    "outputs": [
+      "../godot/assets/models/riders/marina.glb"
+    ],
     "size": [
       0.88063,
       1.58452,
       0.87919
     ],
     "triangles": 2256
+  },
+  "models/rocks/boulder_a": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "c8d5dd323761117b88e4c56f35e6e9934116a9204733a7451d465b502ac92d39",
+    "outputs": [
+      "../godot/assets/models/rocks/boulder_a.glb"
+    ],
+    "size": [
+      2.0,
+      2.0,
+      2.0
+    ],
+    "triangles": 1280
+  },
+  "models/rocks/boulder_b": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "11f77e780fce49ddf1a89372df1ee8b00f67d9c8f1e0b8ffed3617f166ca6eb7",
+    "outputs": [
+      "../godot/assets/models/rocks/boulder_b.glb"
+    ],
+    "size": [
+      2.0,
+      2.0,
+      2.0
+    ],
+    "triangles": 1280
+  },
+  "models/rocks/pillar_a": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "87f4e77614fd9d654a8d3b0f7dddabde9ce41af4668a9521b1f34160b0645cec",
+    "outputs": [
+      "../godot/assets/models/rocks/pillar_a.glb"
+    ],
+    "size": [
+      2.0,
+      5.2,
+      2.0
+    ],
+    "triangles": 1280
+  },
+  "models/rocks/pillar_b": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "4ef884f1916d06a8e7168793b6d1437d575419ca52acd11d9211b5df259bd352",
+    "outputs": [
+      "../godot/assets/models/rocks/pillar_b.glb"
+    ],
+    "size": [
+      2.0,
+      4.8,
+      2.0
+    ],
+    "triangles": 1280
+  },
+  "models/rocks/slab_a": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "9e9ff7f5accd2a7abb24dbb2e6fffbba258bddfa2514e466f5c2b9d66ad3b20a",
+    "outputs": [
+      "../godot/assets/models/rocks/slab_a.glb"
+    ],
+    "size": [
+      2.0,
+      1.0,
+      2.0
+    ],
+    "triangles": 1280
+  },
+  "models/rocks/slab_b": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "b40106d02f17f137cd2d02f43806da3148c602e0ad833a54b7f7e83ec9e8780f",
+    "outputs": [
+      "../godot/assets/models/rocks/slab_b.glb"
+    ],
+    "size": [
+      2.0,
+      0.9,
+      2.0
+    ],
+    "triangles": 1280
+  },
+  "textures/grass": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "90187f77777d45b6cf10185d8533ebdf408de7477592963e09dcf930722d26e4",
+    "maps": [
+      "albedo",
+      "normal",
+      "roughness"
+    ],
+    "outputs": [
+      "../godot/assets/textures/grass_albedo.png",
+      "../godot/assets/textures/grass_normal.png",
+      "../godot/assets/textures/grass_roughness.png"
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  },
+  "textures/rock": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "eca90fe380ee7faedd3c6631ab44f921f1ae261ca411038b5b88c844533cfceb",
+    "maps": [
+      "albedo",
+      "normal",
+      "roughness"
+    ],
+    "outputs": [
+      "../godot/assets/textures/rock_albedo.png",
+      "../godot/assets/textures/rock_normal.png",
+      "../godot/assets/textures/rock_roughness.png"
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  },
+  "textures/sand": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "33f782b66f9a976b263aa85ffb4609c2957f041f4d0b1a13ae6057f3b7f35635",
+    "maps": [
+      "albedo",
+      "normal",
+      "roughness"
+    ],
+    "outputs": [
+      "../godot/assets/textures/sand_albedo.png",
+      "../godot/assets/textures/sand_normal.png",
+      "../godot/assets/textures/sand_roughness.png"
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  },
+  "textures/wood": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "c62dfabc760df7f056395e8e46a3e85a795c768ff78460fd65015f77ca03f4f9",
+    "maps": [
+      "albedo",
+      "normal",
+      "roughness"
+    ],
+    "outputs": [
+      "../godot/assets/textures/wood_albedo.png",
+      "../godot/assets/textures/wood_normal.png",
+      "../godot/assets/textures/wood_roughness.png"
+    ],
+    "size": [
+      1024,
+      1024
+    ]
   }
 }

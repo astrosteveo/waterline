@@ -1,0 +1,197 @@
+{
+  "description": "The course scenery is kiln's: buoys, ramps, the start gate, rocks, palms, piers, lamps, harbour buildings and the crate, drawn in kiln's textures, fitted to the collision shapes the physics uses.",
+  "start": {
+    "scene": "res://test/scenery_preview.tscn",
+    "seed": 1
+  },
+  "steps": [
+    "step 3",
+    {
+      "expect": "[ResourceLoader.exists('res://assets/generated/race_buoy.glb'), ResourceLoader.exists('res://assets/generated/cargo_crate.glb'), ResourceLoader.exists('res://assets/generated/beach_sand.tres')]",
+      "equals": [
+        false,
+        false,
+        false
+      ],
+      "name": "the old generated buoy, crate and sand are gone"
+    },
+    {
+      "expect": "[course.get_node('Buoys/Buoy01/Model').scene_file_path, course.get_node('Ramps/Ramp1/Model').scene_file_path, course.get_node('StartGate/Model').scene_file_path, course.get_node('Rocks/Rock1/Model').scene_file_path, course.get_node('Rocks/Rock4/Model').scene_file_path]",
+      "equals": [
+        "res://assets/models/course/buoy.glb",
+        "res://assets/models/course/ramp.glb",
+        "res://assets/models/course/start_gate.glb",
+        "res://assets/models/rocks/pillar_a.glb",
+        "res://assets/models/rocks/boulder_b.glb"
+      ],
+      "name": "the buoys, ramps, start gate and rocks draw kiln's models, a pillar for a tall rock"
+    },
+    {
+      "expect": "[course.get_node('Buoys/Buoy01/Model/Float').get_surface_override_material(0).albedo_color.is_equal_approx(course.get_node('Buoys/Buoy01').RED_COLOR), course.get_node('Buoys/Buoy02/Model/Mast').get_surface_override_material(0).albedo_color.is_equal_approx(course.get_node('Buoys/Buoy02').YELLOW_COLOR), course.get_node('Buoys/Buoy01/Model/Band').get_surface_override_material(0) == null]",
+      "equals": [
+        true,
+        true,
+        true
+      ],
+      "name": "red and yellow buoys are painted their colour; the white band stays white"
+    },
+    {
+      "eval": "course.get_node('Buoys/Buoy01').flash(Color(1, 1, 1), 0.6)"
+    },
+    "step 2",
+    {
+      "expect": "course.get_node('Buoys/Buoy01/Model/Float').get_surface_override_material(0).emission_enabled",
+      "equals": true,
+      "name": "a passed buoy's paint flashes"
+    },
+    {
+      "expect": "[course.get_node('Ramps/Ramp1/Model').transform * Vector3(0, -2, 6), course.get_node('Ramps/Ramp1/Model').transform * Vector3(0, 1.8, -6)]",
+      "approx": [
+        [
+          0,
+          -2,
+          6
+        ],
+        [
+          0,
+          1.8,
+          -6
+        ]
+      ],
+      "within": 0.001,
+      "name": "a ramp's model slope runs from its collision's front edge to its lip"
+    },
+    {
+      "expect": "[course.get_node('StartGate/Model/PylonLeft').position.x, course.get_node('StartGate/Model/PylonRight').position.x, course.get_node('StartGate/Model/Banner').position.y]",
+      "approx": [
+        -23,
+        23,
+        11.8
+      ],
+      "within": 0.001,
+      "name": "the gate's pylons stand either side of the course and the banner at its top"
+    },
+    {
+      "expect": "course.get_node('Rocks/Rock1/Shape').shape.get_debug_mesh().get_aabb().size",
+      "approx": [
+        4.8,
+        12.48,
+        4.8
+      ],
+      "within": 0.01,
+      "name": "a rock's collision fills its radius across and its height up (2.4 m, 2.6 times as high)"
+    },
+    {
+      "expect": "course.get_node('Rocks/Rock1/Model/Rock').mesh.surface_get_material(0).resource_path",
+      "equals": "res://environment/materials/rock.tres",
+      "name": "rocks are drawn in kiln's rock texture"
+    },
+    {
+      "expect": "[course.get_node('Terrain').get_surface_override_material(0) == null, course.get_node('Terrain').mesh.surface_get_material(0).shader.resource_path, course.get_node('Terrain').mesh.surface_get_material(0).get_shader_parameter('sand_albedo').resource_path]",
+      "equals": [
+        true,
+        "res://environment/terrain.gdshader",
+        "res://assets/textures/sand_albedo.png"
+      ],
+      "name": "the terrain is drawn in kiln's sand, grass and rock textures"
+    },
+    {
+      "expect": "course.get_node('Terrain/Palms0').multimesh.instance_count + course.get_node('Terrain/Palms1').multimesh.instance_count + course.get_node('Terrain/Palms2').multimesh.instance_count > 40",
+      "name": "palm trees grow on Gull Cove's islands"
+    },
+    {
+      "expect": "[course.get_node('Terrain').height_at(course.get_node('Terrain/Palms0').multimesh.get_instance_transform(0).origin.x, course.get_node('Terrain/Palms0').multimesh.get_instance_transform(0).origin.z) >= 1.2, course.get_node('Terrain/Palms0').layers]",
+      "equals": [
+        true,
+        2
+      ],
+      "name": "on land above the beach, on a layer the shore map leaves out"
+    },
+    {
+      "expect": "ResourceLoader.load('res://props/crate.tscn').instantiate().get_node('Model/Boards').mesh.surface_get_material(0).resource_path",
+      "equals": "res://environment/materials/wood.tres",
+      "name": "the crate is kiln's, in kiln's wood texture"
+    },
+    {
+      "eval": "show_course('ebb_reef')"
+    },
+    "step 2",
+    {
+      "expect": "[course.get_node('Ramps/Ramp1/Model').transform * Vector3(0, -2, 6), course.get_node('Ramps/Ramp1/Model').transform * Vector3(0, 1.8, -6)]",
+      "approx": [
+        [
+          0,
+          -4.2,
+          9.475
+        ],
+        [
+          0,
+          1.8,
+          -9.475
+        ]
+      ],
+      "within": 0.001,
+      "name": "Ebb Reef's deeper ramps stretch the model to the same slope"
+    },
+    {
+      "expect": "course.get_node('Rocks/Rock1/Model').scene_file_path",
+      "equals": "res://assets/models/rocks/slab_a.glb",
+      "name": "a flat rock draws a slab"
+    },
+    {
+      "expect": "course.get_node('Rocks/Rock1').global_position.y + course.get_node('Rocks/Rock1/Shape').shape.get_debug_mesh().get_aabb().end.y",
+      "approx": -0.66,
+      "within": 0.01,
+      "name": "the reef's hidden rocks top out 0.66 m under the high-tide level"
+    },
+    {
+      "eval": "show_course('lantern_harbor')"
+    },
+    "step 2",
+    {
+      "expect": "[course.get_node('Props/Building8/Model').scene_file_path, course.get_node('Props/Building8/Model/Walls').get_surface_override_material(0).albedo_color.is_equal_approx(course.get_node('Props/Building8').wall_color), course.get_node('Props/Building8/Model/Roof').get_surface_override_material(0).albedo_color.is_equal_approx(course.get_node('Props/Building8').roof_color)]",
+      "equals": [
+        "res://assets/models/harbor/boathouse.glb",
+        true,
+        true
+      ],
+      "name": "harbour buildings are kiln's, in their own wall and roof colours"
+    },
+    {
+      "expect": "[course.get_node('Props/Building8/Model/Windows').get_surface_override_material(0).emission_enabled, course.get_node('Props/Building8/Model/Windows').get_surface_override_material(1) == null]",
+      "equals": [
+        true,
+        true
+      ],
+      "name": "some of their windows glow at night and some stay dark"
+    },
+    {
+      "expect": "[course.get_node('Props/Pier4/Model').scene_file_path, course.get_node('Props/Pier4/Model/Deck').mesh.surface_get_material(0).resource_path, course.get_node('Props/Pier4/Model').scale]",
+      "equals": [
+        "res://assets/models/harbor/pier.glb",
+        "res://environment/materials/wood.tres",
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "name": "piers are kiln's, in kiln's wood texture, at the size they were built"
+    },
+    {
+      "expect": "course.get_node('Props/Lamp1/Model/Lamp').get_surface_override_material(0).emission.is_equal_approx(course.get_node('Props/Lamp1').light_color)",
+      "equals": true,
+      "name": "a lamp's glass glows in its light's colour"
+    },
+    {
+      "expect": "course.get_node('Props/Lamp1').find_children('*', 'OmniLight3D', true, false)[0].position",
+      "approx": [
+        0,
+        4.58,
+        0
+      ],
+      "within": 0.001,
+      "name": "and its light is in the lantern"
+    }
+  ]
+}

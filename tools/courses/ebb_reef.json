@@ -191,6 +191,7 @@
   "cells": 190,
   "coast_noise": 0.15
  },
+ "palm_spacing": 14,
  "islands": [
   [
    50,

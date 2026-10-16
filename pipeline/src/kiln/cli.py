@@ -67,9 +67,9 @@ def status(project: Project, blender: str) -> int:
     lock = project.read_lock()
     for asset in project.assets():
         entry = lock.get(asset.id)
-        if entry is None or not asset.output.is_file():
+        if entry is None or not all(path.is_file() for path in project.built_files(entry)):
             state = "not built"
-        elif entry["fingerprint"] != project.fingerprint(asset, version):
+        elif not project.up_to_date(asset, lock, project.fingerprint(asset, version)):
             state = "out of date"
         else:
             state = "up to date"
@@ -81,8 +81,7 @@ def build_assets(project: Project, blender: str, assets: list[Asset], force: boo
     version = blender_version(blender)
     lock = project.read_lock()
     fingerprints = {a.id: project.fingerprint(a, version) for a in assets}
-    todo = [a for a in assets
-            if force or not a.output.is_file() or lock.get(a.id, {}).get("fingerprint") != fingerprints[a.id]]
+    todo = [a for a in assets if force or not project.up_to_date(a, lock, fingerprints[a.id])]
     for asset in assets:
         if asset not in todo:
             print(f"up to date   {asset.id}")
@@ -94,11 +93,14 @@ def build_assets(project: Project, blender: str, assets: list[Asset], force: boo
         if report and report["ok"]:
             lock[asset.id] = {
                 "fingerprint": fingerprints[asset.id],
-                "output": os.path.relpath(asset.output, project.root),
-                "triangles": report["triangles"],
+                "outputs": [os.path.relpath(path, project.root) for path in report["outputs"]],
                 "size": report["size"],
                 "blender": version,
             }
+            if report["kind"] == "model":
+                lock[asset.id]["triangles"] = report["triangles"]
+            else:
+                lock[asset.id]["maps"] = report["maps"]
     project.write_lock(lock)
     return code
 
@@ -112,7 +114,7 @@ def run(project: Project, blender: str, assets: list[Asset], export: bool, previ
             "export": export,
             "preview": preview,
             "result": os.path.join(folder, "result.json"),
-            "assets": [{"id": a.id, "recipe": str(a.recipe), "output": str(a.output),
+            "assets": [{"id": a.id, "recipe": str(a.recipe), "stem": str(a.stem),
                         "report_dir": str(a.report_dir)} for a in assets],
         }
         job_path = os.path.join(folder, "job.json")
@@ -131,9 +133,17 @@ def run(project: Project, blender: str, assets: list[Asset], export: bool, previ
     for asset in assets:
         report = results[asset.id]
         if report["ok"]:
-            size = " x ".join(f"{v:.2f}" for v in report["size"])
-            where = f" -> {os.path.relpath(asset.output)}" if export else ""
-            print(f"ok           {asset.id}  {report['triangles']} triangles, {size} m{where}")
+            where = ""
+            if export:
+                where = f" -> {os.path.relpath(report['outputs'][0])}"
+                if len(report["outputs"]) > 1:
+                    where += f" and {len(report['outputs']) - 1} more"
+            if report["kind"] == "texture":
+                size = " x ".join(str(v) for v in report["size"])
+                print(f"ok           {asset.id}  {size} px: {', '.join(report['maps'])}{where}")
+            else:
+                size = " x ".join(f"{v:.2f}" for v in report["size"])
+                print(f"ok           {asset.id}  {report['triangles']} triangles, {size} m{where}")
         else:
             failed += 1
             print(f"FAILED       {asset.id}")

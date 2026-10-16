@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from kiln import cli
+from kiln import cli, png
 
 BLENDER = shutil.which("blender")
 EXAMPLES = Path(__file__).resolve().parents[1] / "examples" / "basics"
@@ -58,6 +58,28 @@ def build(k):
 ''',
 }
 
+# Texture recipes that break their promises.
+BROKEN_TEXTURES = {
+    "seam": '''
+from kiln import texture
+@texture(size=64, maps=("albedo",), samples=1)
+def build(t):
+    t.output(albedo=t.ramp(t.u, [(0, "#000000"), (1, "#ffffff")]))
+''',
+    "no_height": '''
+from kiln import texture
+@texture(size=64, samples=1)
+def build(t):
+    t.output(albedo="#808080", roughness=0.5)
+''',
+    "half_stripes": '''
+from kiln import texture
+@texture(size=64, maps=("height",), samples=1)
+def build(t):
+    t.output(height=t.stripes(2.5))
+''',
+}
+
 HANDLEBAR = '''
 from kiln import model
 @model(markers=["Handlebar"])
@@ -72,6 +94,7 @@ def build(k):
 def project(tmp_path):
     root = tmp_path / "art"
     shutil.copytree(EXAMPLES / "models", root / "models")
+    shutil.copytree(EXAMPLES / "textures", root / "textures")
     (root / "kiln.toml").write_text('output = "out"\nreports = "reports"\n')
     return root
 
@@ -89,6 +112,10 @@ def test_builds_the_examples_once_and_identically(project, capsys):
     assert (project / "reports" / "models" / "crate" / "preview.png").is_file()
     lock = json.loads((project / "kiln.lock.json").read_text())
     assert lock["models/crate"]["triangles"] > 0
+    # The meshes are closed, so the materials draw only their front faces.
+    materials = read_gltf(crate)["materials"]
+    assert [m["name"] for m in materials] == ["Wood", "Iron"]
+    assert not any(m.get("doubleSided") for m in materials)
     first = crate.read_bytes()
 
     assert kiln(project, "build") == 0
@@ -96,6 +123,47 @@ def test_builds_the_examples_once_and_identically(project, capsys):
 
     assert kiln(project, "build", "--force", "--no-preview", "models/crate") == 0
     assert crate.read_bytes() == first
+
+
+def test_bakes_textures_that_tile_identically(project, capsys):
+    assert kiln(project, "build", "textures") == 0
+    assert "ok           textures/planks  256 x 256 px: albedo, normal, roughness, height" in capsys.readouterr().out
+    out = project / "out" / "textures"
+    shapes = {name: png.read(str(out / f"planks_{name}.png"))[:4] for name in ("albedo", "normal", "roughness", "height")}
+    assert shapes == {"albedo": (256, 256, 3, 8), "normal": (256, 256, 3, 8),
+                      "roughness": (256, 256, 1, 8), "height": (256, 256, 1, 16)}
+    lock = json.loads((project / "kiln.lock.json").read_text())
+    assert lock["textures/planks"]["outputs"][0] == "out/textures/planks_albedo.png"
+    assert lock["textures/planks"]["maps"] == ["albedo", "normal", "roughness", "height"]
+    report = json.loads((project / "reports" / "textures" / "planks" / "report.json").read_text())
+    for edge, inside in report["seams"].values():
+        assert edge <= inside * 1.5 + 0.002
+    # Flat where the planks are flat: the normal map's blue is near 1 and its red and green
+    # near the middle on most pixels.
+    width, height, _, _, data = png.read(str(out / "planks_normal.png"))
+    blues = data[2::3]
+    assert sum(1 for b in blues if b > 240) > 0.5 * width * height
+    first = (out / "planks_normal.png").read_bytes()
+    assert kiln(project, "build", "--force", "--no-preview", "textures/planks") == 0
+    assert (out / "planks_normal.png").read_bytes() == first
+    # A deleted map is rebuilt.
+    (out / "planks_height.png").unlink()
+    capsys.readouterr()
+    assert kiln(project, "build", "--no-preview", "textures") == 0
+    assert "ok           textures/planks" in capsys.readouterr().out
+
+
+def test_broken_textures_fail_with_reasons(project, capsys):
+    (project / "textures" / "broken").mkdir(parents=True)
+    for name, text in BROKEN_TEXTURES.items():
+        (project / "textures" / "broken" / f"{name}.py").write_text(text)
+    assert kiln(project, "build", "textures/broken") == 1
+    out = capsys.readouterr().out
+    sections = {name: out.split(f"textures/broken/{name}")[1].split("textures/broken/")[0] for name in BROKEN_TEXTURES}
+    assert "albedo doesn't tile" in sections["seam"]
+    assert "the recipe gave no height" in sections["no_height"]
+    assert "2.5 stripes don't tile" in sections["half_stripes"]
+    assert not (project / "out" / "textures" / "broken").exists()
 
 
 def test_check_writes_no_outputs(project, capsys):

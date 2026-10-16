@@ -8,8 +8,8 @@ extends RigidBody3D
 ## The node's origin sits at the water line; the float hangs below it. The buoy is moored:
 ## springs pull it to its anchor, to the water height and upright along the waves, so a
 ## craft that hits it knocks it aside and loses some speed, and it swings back. Gates use
-## the anchor, not where the buoy has been pushed. The meshes are built from code and can be
-## replaced by any child scene named "Model".
+## the anchor, not where the buoy has been pushed. It draws [member model], painted in its
+## colour.
 
 enum Kind {
 	## Keep on the racer's right: pass to its left.
@@ -20,11 +20,20 @@ enum Kind {
 
 const RED_COLOR := Color(0.93, 0.13, 0.10)
 const YELLOW_COLOR := Color(1.0, 0.80, 0.05)
-const STRIPE_COLOR := Color(0.97, 0.97, 0.95)
+## The model's size as built (art/models/course/buoy.py): its float's radius at the water
+## line and the height of its lamp. [member radius] and [member height] stretch it.
+const MODEL_RADIUS := 0.75
+const MODEL_HEIGHT := 2.3
 
 @export var kind: Kind = Kind.RED:
 	set(value):
 		kind = value
+		_queue_build()
+## The buoy's model: kiln's (art/models/course/buoy.py). Its materials named Paint take the
+## buoy's colour and flash, and its Lamp glows in the buoy's colour on night courses.
+@export var model: PackedScene = preload("res://assets/models/course/buoy.glb"):
+	set(value):
+		model = value
 		_queue_build()
 ## Height of the buoy above the water line, in meters.
 @export_range(0.5, 6.0, 0.01, "suffix:m") var height: float = 2.3:
@@ -148,66 +157,19 @@ func _build() -> void:
 	shape.shape = cylinder
 	shape.position = Vector3(0.0, (height - 0.8) * 0.5, 0.0)
 	_add_part(shape)
-	if get_node_or_null(^"Model") != null:
+	if model == null:
 		return
-
-	_main_material = _material(color())
-	var stripe := _material(STRIPE_COLOR)
-	var dark := _material(Color(0.12, 0.13, 0.16))
-	# Float: a fat drum half under water.
-	_add_mesh(_cylinder(radius, radius * 0.9, 0.8), Vector3(0.0, -0.15, 0.0), _main_material)
-	_add_mesh(_cylinder(radius * 1.02, radius * 1.02, 0.14), Vector3(0.0, 0.12, 0.0), stripe)
-	# A tapered mast with a white band and a ball on top, so it reads from far away.
-	var mast_height := height - 0.45
-	_add_mesh(_cylinder(radius * 0.18, radius * 0.7, mast_height), Vector3(0.0, 0.25 + mast_height * 0.5, 0.0), _main_material)
-	_add_mesh(_cylinder(radius * 0.47, radius * 0.53, mast_height * 0.16),
-			Vector3(0.0, 0.25 + mast_height * 0.45, 0.0), stripe)
-	var ball := SphereMesh.new()
-	ball.radius = radius * 0.26
-	ball.height = radius * 0.52
-	ball.radial_segments = 10
-	ball.rings = 5
+	var drawn := SceneryModel.add(self, model, &"buoy_part", ShoreMap.DYNAMIC_LAYER)
+	drawn.scale = Vector3(radius / MODEL_RADIUS, height / MODEL_HEIGHT, radius / MODEL_RADIUS)
+	_main_material = SceneryModel.paint(drawn, "Paint", color())
 	if lamp_energy > 0.0:
-		var glow := _material(color())
-		glow.emission_enabled = true
-		glow.emission = color()
-		glow.emission_energy_multiplier = 3.0
-		_add_mesh(ball, Vector3(0.0, height, 0.0), glow)
+		SceneryModel.paint(drawn, "Lamp", color(), color(), 3.0)
 		var light := OmniLight3D.new()
 		light.light_color = color().lerp(Color.WHITE, 0.3)
 		light.light_energy = lamp_energy
 		light.omni_range = 12.0
 		light.position = Vector3(0.0, height + 0.4, 0.0)
 		_add_part(light)
-	else:
-		_add_mesh(ball, Vector3(0.0, height, 0.0), stripe)
-	_add_mesh(_cylinder(radius * 0.92, radius * 0.92, 0.06), Vector3(0.0, -0.56, 0.0), dark)
-
-
-func _cylinder(top: float, bottom: float, h: float) -> CylinderMesh:
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = top
-	mesh.bottom_radius = bottom
-	mesh.height = h
-	mesh.radial_segments = 10
-	mesh.rings = 1
-	return mesh
-
-
-func _material(albedo: Color) -> StandardMaterial3D:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = albedo
-	material.roughness = 0.45
-	return material
-
-
-func _add_mesh(mesh: PrimitiveMesh, at: Vector3, material: Material) -> void:
-	mesh.material = material
-	var node := MeshInstance3D.new()
-	node.mesh = mesh
-	node.position = at
-	node.layers = ShoreMap.DYNAMIC_LAYER
-	_add_part(node)
 
 
 func _add_part(node: Node3D) -> void:

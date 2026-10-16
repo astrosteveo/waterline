@@ -2,8 +2,9 @@ from pathlib import Path
 
 import pytest
 
+from kiln import png
 from kiln.project import Project
-from kiln.recipe import ModelSpec, find_recipe, model
+from kiln.recipe import ModelSpec, TextureSpec, find_recipe, model, texture
 
 
 def make_project(root: Path) -> Project:
@@ -24,7 +25,7 @@ def test_finds_recipes_but_not_shared_code(tmp_path):
     project = make_project(tmp_path / "art")
     assert [a.id for a in project.assets()] == ["models/craft/petrel", "models/props/barrel", "models/props/crate"]
     crate = project.select(["models/props/crate"])[0]
-    assert crate.output == (tmp_path / "out" / "models" / "props" / "crate.glb").resolve()
+    assert crate.stem == (tmp_path / "out" / "models" / "props" / "crate").resolve()
     assert crate.report_dir == (tmp_path / "reports" / "models" / "props" / "crate").resolve()
 
 
@@ -80,3 +81,52 @@ def test_a_module_needs_exactly_one_recipe():
 
     with pytest.raises(ValueError):
         find_recipe(Module)
+
+
+def test_texture_decorator_records_the_spec():
+    @texture(size=256, tile=2.0, maps=("albedo", "height"))
+    def build(t):
+        pass
+
+    class Module:
+        __file__ = "recipe.py"
+
+    Module.build = build
+    recipe = find_recipe(Module)
+    assert recipe.kind == "texture"
+    assert recipe.spec == TextureSpec(size=256, tile=2.0, maps=("albedo", "height"))
+
+
+def test_texture_spec_rejects_unknown_maps_and_odd_sizes():
+    with pytest.raises(ValueError, match="unknown texture maps"):
+        TextureSpec(maps=("albedo", "gloss"))
+    with pytest.raises(ValueError, match="power of two"):
+        TextureSpec(size=1000)
+
+
+def test_up_to_date_needs_the_same_fingerprint_and_every_file(tmp_path):
+    project = make_project(tmp_path / "art")
+    crate = project.select(["models/props/crate"])[0]
+    out = tmp_path / "out" / "textures"
+    out.mkdir(parents=True)
+    (out / "sand_albedo.png").write_bytes(b"png")
+    lock = {crate.id: {"fingerprint": "f", "outputs": ["../out/textures/sand_albedo.png",
+                                                       "../out/textures/sand_normal.png"]}}
+    assert not project.up_to_date(crate, lock, "f")
+    (out / "sand_normal.png").write_bytes(b"png")
+    assert project.up_to_date(crate, lock, "f")
+    assert not project.up_to_date(crate, lock, "g")
+    # An entry from before kiln built textures names its one output.
+    assert project.built_files({"output": "../out/models/props/crate.glb"}) == \
+        [tmp_path / "art" / "../out/models/props/crate.glb"]
+
+
+def test_png_round_trip(tmp_path):
+    rgb = bytes(range(0, 4 * 3 * 3))
+    png.write(str(tmp_path / "rgb.png"), rgb, 4, 3, 3)
+    assert png.read(str(tmp_path / "rgb.png")) == (4, 3, 3, 8, rgb)
+    grey16 = bytes(range(0, 2 * 5 * 2))
+    png.write(str(tmp_path / "grey.png"), grey16, 5, 2, 1, 16)
+    assert png.read(str(tmp_path / "grey.png")) == (5, 2, 1, 16, grey16)
+    with pytest.raises(ValueError):
+        png.write(str(tmp_path / "short.png"), rgb[:-1], 4, 3, 3)
