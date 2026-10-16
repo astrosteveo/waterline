@@ -1,0 +1,22 @@
+{
+  "description": "The terrain near the water's edge is split into 1 m cells (issue #76): on every course, at points every 3.7 m where the ground is between 7 m deep and 1 m up, a ray down finds the terrain's collision (no holes), and the ground lies within 6 cm of the terrain's own height, where the coarse 4 m grid it replaced was 0.45 to 0.68 m off (shallows_check.gd).",
+  "start": {"scene": "res://test/scenery_preview.tscn", "seed": 1},
+  "steps": [
+    "step 3",
+    {"eval": "set_meta('shallows', ResourceLoader.load('res://test/shallows_check.gd').new().run(course.get_node('Terrain')))"},
+    {"expect": "[get_meta('shallows').points > 500, get_meta('shallows').holes, get_meta('shallows').worst < 0.06, get_meta('shallows').coarse_worst > 0.3]", "equals": [true, 0, true, true], "name": "Gull Cove: no holes, the ground within 6 cm of the terrain's height (the coarse grid over 30 cm off)"},
+    {"eval": "show_course('ebb_reef')"},
+    "step 3",
+    {"eval": "set_meta('shallows', ResourceLoader.load('res://test/shallows_check.gd').new().run(course.get_node('Terrain')))"},
+    {"expect": "[get_meta('shallows').points > 500, get_meta('shallows').holes, get_meta('shallows').worst < 0.06, get_meta('shallows').coarse_worst > 0.3]", "equals": [true, 0, true, true], "name": "Ebb Reef: no holes, the ground within 6 cm of the terrain's height (the coarse grid over 30 cm off)"},
+    {"eval": "show_course('whitecap_point')"},
+    "step 3",
+    {"eval": "set_meta('shallows', ResourceLoader.load('res://test/shallows_check.gd').new().run(course.get_node('Terrain')))"},
+    {"expect": "[get_meta('shallows').points > 500, get_meta('shallows').holes, get_meta('shallows').worst < 0.06, get_meta('shallows').coarse_worst > 0.3]", "equals": [true, 0, true, true], "name": "Whitecap Point: no holes, the ground within 6 cm of the terrain's height (the coarse grid over 30 cm off)"},
+    {"eval": "show_course('lantern_harbor')"},
+    "step 3",
+    {"eval": "set_meta('shallows', ResourceLoader.load('res://test/shallows_check.gd').new().run(course.get_node('Terrain')))"},
+    {"expect": "[get_meta('shallows').points > 500, get_meta('shallows').holes, get_meta('shallows').worst < 0.06, get_meta('shallows').coarse_worst > 0.3]", "equals": [true, 0, true, true], "name": "Lantern Harbor: no holes, the ground within 6 cm of the terrain's height (the coarse grid over 30 cm off)"},
+    {"expect": "course.get_node('Terrain').shallow_subdivisions", "equals": 4, "name": "the shallows are split into 4 by 4 cells"}
+  ]
+}
