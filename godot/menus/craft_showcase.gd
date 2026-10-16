@@ -49,8 +49,8 @@ func _process(delta: float) -> void:
 	_camera.look_at(focus + Vector3.DOWN * 0.3, Vector3.UP)
 
 
-## Puts [param craft]'s scene on the water ([constant DEFAULT_CRAFT] when it has none) in
-## [param rider]'s colours. The craft already there stays when it comes from the same scene.
+## Puts [param craft]'s scene on the water ([constant DEFAULT_CRAFT] when it has none), with
+## [param rider] on it in the rider's colours. The craft already there stays when it comes from the same scene.
 func show_craft(craft: CraftProfile, rider: RiderProfile) -> void:
 	var scene := craft.scene if craft != null and craft.scene != null else DEFAULT_CRAFT
 	if _craft == null or _craft.scene_file_path != scene.resource_path:
@@ -64,7 +64,7 @@ func show_craft(craft: CraftProfile, rider: RiderProfile) -> void:
 		add_child(_craft)
 		_craft.hold(_anchor)
 	if rider != null:
-		rider.apply_colors(_craft.get_node_or_null(^"Model"))
+		rider.dress(_craft.get_node_or_null(^"Model"))
 
 
 ## Adds the screen's UI layer with [param title] and the mode at the top left and

@@ -11,8 +11,8 @@ var _model: Node3D
 
 
 ## Sets up the ghost from a recording ([method Records.load_ghost]), drawn with the model of
-## [param craft_scene] (a craft scene: its root is a [JetSki] with a Model node) in
-## [param rider]'s colours. Returns false if the recording holds no frames or the craft scene
+## [param craft_scene] (a craft scene: its root is a [JetSki] with a Model node), with
+## [param rider] on it in the rider's colours. Returns false if the recording holds no frames or the craft scene
 ## has no Model node.
 func setup(ghost: Dictionary, craft_scene: PackedScene, rider: RiderProfile) -> bool:
 	_frames = ghost.get("frames", PackedFloat32Array())
@@ -26,7 +26,7 @@ func setup(ghost: Dictionary, craft_scene: PackedScene, rider: RiderProfile) -> 
 	if "ghost" in _model:
 		_model.set(&"ghost", true)
 	if rider != null:
-		rider.apply_colors(_model)
+		rider.dress(_model)
 	add_child(_model)
 	_show(0.0)
 	return true

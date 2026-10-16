@@ -1,0 +1,146 @@
+{
+  "description": "The riders built by kiln (assets/models/riders/*.glb) on test/craft/rider_preview.tscn: each rider wears their own body and gear, painted in their own colours (a light grey material a darker shade), with their own build and gear; the boots stand flat while riding; and in every pose (riding, leaning into a turn, thrown, swimming, a handstand) the knees and elbows bend so each limb keeps the length it was built with.",
+  "start": {
+    "scene": "res://test/craft/rider_preview.tscn",
+    "seed": 1
+  },
+  "steps": [
+    "step 3",
+    {
+      "expect": "[get_node('Rider0').rider_scene.resource_path, get_node('Rider1').rider_scene.resource_path, get_node('Rider2').rider_scene.resource_path, get_node('Rider3').rider_scene.resource_path]",
+      "equals": [
+        "res://assets/models/riders/marina.glb",
+        "res://assets/models/riders/koa.glb",
+        "res://assets/models/riders/ines.glb",
+        "res://assets/models/riders/dax.glb"
+      ],
+      "name": "each rider wears their own kiln-built body and gear"
+    },
+    {
+      "expect": "[get_node('Rider1/Rider/Torso').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Koa').suit_color), get_node('Rider1/Rider/Torso/Vest').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Koa').vest_color), get_node('Rider1/Rider/Head/Helmet').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Koa').helmet_color)]",
+      "equals": [
+        true,
+        true,
+        true
+      ],
+      "name": "Koa's suit, vest and helmet are painted in Koa's colours"
+    },
+    {
+      "expect": "get_node('Rider1/Rider/ShinLeft').get_surface_override_material(0).albedo_color.v < Game.rider_named('Koa').suit_color.v * 0.85",
+      "name": "the light grey of the shins paints a darker shade of the suit"
+    },
+    {
+      "expect": "[get_node('Rider3/Rider/ForearmLeft').get_surface_override_material(0).resource_name, get_node('Rider3/Rider/ShinRight').get_surface_override_material(0).resource_name, get_node('Rider3/Rider/BootRight').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Dax').suit_color)]",
+      "equals": [
+        "Skin",
+        "Skin",
+        false
+      ],
+      "name": "Dax's shorty leaves the forearms and shins bare, and the boots keep their own colour"
+    },
+    {
+      "expect": "[has_node('Rider2/Rider/Head/Ponytail'), has_node('Rider2/Rider/Head/Goggles'), has_node('Rider1/Rider/Head/Ponytail'), has_node('Rider1/Rider/Head/Visor'), has_node('Rider3/Rider/Head/Peak')]",
+      "equals": [
+        true,
+        true,
+        false,
+        true,
+        true
+      ],
+      "name": "Ines has goggles and a ponytail, Koa a visor, Dax a peak"
+    },
+    {
+      "expect": "get_node('Rider1').rider_joint('shoulder_l').distance_to(get_node('Rider1').rider_joint('shoulder_r')) - get_node('Rider2').rider_joint('shoulder_l').distance_to(get_node('Rider2').rider_joint('shoulder_r'))",
+      "approx": 0.094,
+      "within": 0.001,
+      "name": "Koa's shoulders are 9.4 cm wider than Ines's"
+    },
+    {
+      "expect": "[get_node('Rider0/Rider/BootLeft').global_transform.basis.y.dot(Vector3(0, 1, 0)), get_node('Turn/Rider/BootRight').global_transform.basis.y.dot(Vector3(0, 1, 0))]",
+      "approx": [
+        1.0,
+        1.0
+      ],
+      "within": 0.001,
+      "name": "riding, the boots stand flat on the footrests, also leaning into a turn"
+    },
+    {
+      "expect": "[get_node('Rider0').rider_joint('hip_l').distance_to(get_node('Rider0').rider_joint('knee_l')), get_node('Rider0').rider_joint('knee_r').distance_to(get_node('Rider0').rider_joint('foot_r')), get_node('Rider0').rider_joint('shoulder_l').distance_to(get_node('Rider0').rider_joint('elbow_l')), get_node('Rider0').rider_joint('elbow_r').distance_to(get_node('Rider0').rider_joint('hand_r'))]",
+      "approx": [
+        0.4923,
+        0.3622,
+        0.4311,
+        0.3796
+      ],
+      "within": 0.002,
+      "name": "rider0: the knees and elbows bend so each limb keeps its length"
+    },
+    {
+      "expect": "[get_node('Turn').rider_joint('hip_l').distance_to(get_node('Turn').rider_joint('knee_l')), get_node('Turn').rider_joint('knee_r').distance_to(get_node('Turn').rider_joint('foot_r')), get_node('Turn').rider_joint('shoulder_l').distance_to(get_node('Turn').rider_joint('elbow_l')), get_node('Turn').rider_joint('elbow_r').distance_to(get_node('Turn').rider_joint('hand_r'))]",
+      "approx": [
+        0.4923,
+        0.3622,
+        0.4311,
+        0.3796
+      ],
+      "within": 0.002,
+      "name": "turn: the knees and elbows bend so each limb keeps its length"
+    },
+    {
+      "expect": "[get_node('Thrown').rider_joint('hip_l').distance_to(get_node('Thrown').rider_joint('knee_l')), get_node('Thrown').rider_joint('knee_r').distance_to(get_node('Thrown').rider_joint('foot_r')), get_node('Thrown').rider_joint('shoulder_l').distance_to(get_node('Thrown').rider_joint('elbow_l')), get_node('Thrown').rider_joint('elbow_r').distance_to(get_node('Thrown').rider_joint('hand_r'))]",
+      "approx": [
+        0.4923,
+        0.3622,
+        0.4311,
+        0.3796
+      ],
+      "within": 0.002,
+      "name": "thrown: the knees and elbows bend so each limb keeps its length"
+    },
+    {
+      "expect": "[get_node('Swimming').rider_joint('hip_l').distance_to(get_node('Swimming').rider_joint('knee_l')), get_node('Swimming').rider_joint('knee_r').distance_to(get_node('Swimming').rider_joint('foot_r')), get_node('Swimming').rider_joint('shoulder_l').distance_to(get_node('Swimming').rider_joint('elbow_l')), get_node('Swimming').rider_joint('elbow_r').distance_to(get_node('Swimming').rider_joint('hand_r'))]",
+      "approx": [
+        0.4923,
+        0.3622,
+        0.4311,
+        0.3796
+      ],
+      "within": 0.002,
+      "name": "swimming: the knees and elbows bend so each limb keeps its length"
+    },
+    {
+      "expect": "[get_node('Handstand').rider_joint('hip_l').distance_to(get_node('Handstand').rider_joint('knee_l')), get_node('Handstand').rider_joint('knee_r').distance_to(get_node('Handstand').rider_joint('foot_r')), get_node('Handstand').rider_joint('shoulder_l').distance_to(get_node('Handstand').rider_joint('elbow_l')), get_node('Handstand').rider_joint('elbow_r').distance_to(get_node('Handstand').rider_joint('hand_r'))]",
+      "approx": [
+        0.4923,
+        0.3622,
+        0.4311,
+        0.3796
+      ],
+      "within": 0.002,
+      "name": "handstand: the knees and elbows bend so each limb keeps its length"
+    },
+    "step 30",
+    {
+      "expect": "[get_node('Thrown').rider_joint('hip_l').distance_to(get_node('Thrown').rider_joint('knee_l')), get_node('Thrown').rider_joint('knee_r').distance_to(get_node('Thrown').rider_joint('foot_r')), get_node('Thrown').rider_joint('shoulder_l').distance_to(get_node('Thrown').rider_joint('elbow_l')), get_node('Thrown').rider_joint('elbow_r').distance_to(get_node('Thrown').rider_joint('hand_r'))]",
+      "approx": [
+        0.4923,
+        0.3622,
+        0.4311,
+        0.3796
+      ],
+      "within": 0.002,
+      "name": "thrown: the knees and elbows bend so each limb keeps its length"
+    },
+    {
+      "expect": "[get_node('Swimming').rider_joint('hip_l').distance_to(get_node('Swimming').rider_joint('knee_l')), get_node('Swimming').rider_joint('knee_r').distance_to(get_node('Swimming').rider_joint('foot_r')), get_node('Swimming').rider_joint('shoulder_l').distance_to(get_node('Swimming').rider_joint('elbow_l')), get_node('Swimming').rider_joint('elbow_r').distance_to(get_node('Swimming').rider_joint('hand_r'))]",
+      "approx": [
+        0.4923,
+        0.3622,
+        0.4311,
+        0.3796
+      ],
+      "within": 0.002,
+      "name": "swimming: the knees and elbows bend so each limb keeps its length"
+    }
+  ]
+}

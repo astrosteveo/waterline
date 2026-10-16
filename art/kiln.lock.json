@@ -1,7 +1,7 @@
 {
   "models/craft/petrel": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "c5bee050cc934bee2fe0c896293ea846679785f23a965c74b10ebbd4a84328ac",
+    "fingerprint": "47172705ee0ad7ccef3d2468241e82c2da56a8fe68a44c2dfbf51468041b64bc",
     "output": "../godot/assets/models/craft/petrel.glb",
     "size": [
       1.11975,
@@ -12,7 +12,7 @@
   },
   "models/craft/skipjack": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "b9f60d11f650112fc570dda6292e1ec4a05dd5000e9e713d8770ac70b22fb393",
+    "fingerprint": "24f9b2830eb362b657357d9a27b4486f8012bf1ae71eb6ed286cbe6aba7357a6",
     "output": "../godot/assets/models/craft/skipjack.glb",
     "size": [
       1.19998,
@@ -23,7 +23,7 @@
   },
   "models/craft/swordfish": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "332f0d13c1c05bc05e435283f22d8b8c541c39f3d783fb2ffd2a0d69907357a3",
+    "fingerprint": "e33669b082206c4d2a154924c97881f05926aa9780bbd85b054f5cbf237c9444",
     "output": "../godot/assets/models/craft/swordfish.glb",
     "size": [
       1.03988,
@@ -34,7 +34,7 @@
   },
   "models/craft/tradewind": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "1fd7feed66c37c5ea0566ba1969a0d68d235c8a9d12260007b5b6f461b71cdfb",
+    "fingerprint": "5b7fac3fa252740bee3c383b14d443487aaf4ab1b9249a454af3c906fd394fa8",
     "output": "../godot/assets/models/craft/tradewind.glb",
     "size": [
       1.13988,
@@ -42,5 +42,49 @@
       3.07
     ],
     "triangles": 1808
+  },
+  "models/riders/dax": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "310b68ab2fc2b4678cec4496aca77418ae382dd35c17e82528aca7c31465b71d",
+    "output": "../godot/assets/models/riders/dax.glb",
+    "size": [
+      0.86483,
+      1.584,
+      0.87374
+    ],
+    "triangles": 2488
+  },
+  "models/riders/ines": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "f341816f24c7e6332e6f66cf642094a45e92e57d2ea7e99c143fc8692f7c2862",
+    "output": "../godot/assets/models/riders/ines.glb",
+    "size": [
+      0.84614,
+      1.55224,
+      0.86628
+    ],
+    "triangles": 2208
+  },
+  "models/riders/koa": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "fbae7fe5ac7c87e92087636200e3b9acf87d77d48494a86600f58f552822ba8c",
+    "output": "../godot/assets/models/riders/koa.glb",
+    "size": [
+      0.92075,
+      1.6205,
+      0.89518
+    ],
+    "triangles": 2352
+  },
+  "models/riders/marina": {
+    "blender": "Blender 5.2.2 LTS",
+    "fingerprint": "10a525ff7946060d31a07402b5b0ae6231d3b7fb4fb498a5e5b61e4011af5508",
+    "output": "../godot/assets/models/riders/marina.glb",
+    "size": [
+      0.88063,
+      1.58452,
+      0.87919
+    ],
+    "triangles": 2256
   }
 }

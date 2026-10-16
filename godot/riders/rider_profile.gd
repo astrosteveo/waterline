@@ -12,6 +12,9 @@ extends Resource
 @export var tagline: String = ""
 ## The craft this rider rides when the computer rides, and the player's first choice.
 @export var default_craft: CraftProfile
+## The rider's body and gear, built by kiln (see [member JetSkiModel.rider_scene]). Empty: the
+## model's own.
+@export var model: PackedScene
 @export_group("Colours")
 @export var hull_color: Color = Color(0.98, 0.78, 0.10)
 @export var trim_color: Color = Color(0.10, 0.35, 0.85)
@@ -35,13 +38,17 @@ func weight_rating() -> float:
 	return clampf(snappedf(3.0 + (mass - 300.0) / 15.0, 0.5), 1.0, 5.0)
 
 
-## Paints a [JetSkiModel] (or any model with the same colour properties) in this rider's colours.
-func apply_colors(model: Node) -> void:
-	if model == null:
+## Dresses a [JetSkiModel] (or any model with the same properties) as this rider: puts the
+## rider's body and gear on it ([member model]) and paints the craft and the gear in the rider's
+## colours.
+func dress(craft_model: Node) -> void:
+	if craft_model == null:
 		return
+	if model != null and &"rider_scene" in craft_model:
+		craft_model.set(&"rider_scene", model)
 	for property in [&"hull_color", &"trim_color", &"bottom_color", &"suit_color", &"vest_color", &"helmet_color"]:
-		if property in model:
-			model.set(property, get(property))
+		if property in craft_model:
+			craft_model.set(property, get(property))
 
 
 ## A copy of [param base] changed by this rider's weight. Every force that scales with the

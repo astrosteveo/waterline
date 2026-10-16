@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="RiderProfile" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="RiderProfile" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://riders/rider_profile.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/riders/koa.glb" id="3"]
 [ext_resource type="Resource" path="res://craft/swordfish.tres" id="2"]
 
 [resource]
@@ -8,6 +9,7 @@ script = ExtResource("1")
 display_name = "Koa"
 tagline = "The heaviest rider. Hard to push off a line."
 default_craft = ExtResource("2")
+model = ExtResource("3")
 hull_color = Color(0.95, 0.95, 0.97, 1)
 trim_color = Color(0.85, 0.1, 0.12, 1)
 bottom_color = Color(0.55, 0.08, 0.1, 1)
