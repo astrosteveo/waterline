@@ -5,9 +5,9 @@ extends RefCounted
 ## stretched to their size, with materials repainted by name where they take a colour of
 ## their own (a red or yellow buoy, a building's walls).
 ##
-## A model's Rock, Wood and WoodDark materials are drawn in kiln's textures through the
-## model's import settings (its .glb.import remaps them to environment/materials/), so they
-## need nothing here.
+## A model's Rock, Wood and WoodDark materials are drawn in kiln's textures by its import
+## script (environment/model_import.gd swaps them for environment/materials/), so they need
+## nothing here.
 
 
 ## Instantiates [param scene] as [param parent]'s internal child named "Model", marked with

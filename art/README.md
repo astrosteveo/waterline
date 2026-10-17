@@ -14,10 +14,11 @@ Commit the recipe, the built files (and the `.import` files Godot writes for the
 `kiln.lock.json` together. Recipes are in game space: metres, +X right, +Y up, -Z forward.
 Shared code goes in files or folders whose names start with `_`.
 
-The game draws a model's Rock, Wood and WoodDark materials in these textures through its
-import settings: the model's `.glb.import` remaps them to `godot/environment/materials/`.
-A new model with one of those materials needs the same lines in its `.import` file (copy them
-from `godot/assets/models/rocks/boulder_a.glb.import`).
+The game draws a model's Rock, Wood and WoodDark materials in these textures: when Godot
+imports a model, `godot/environment/model_import.gd` (every model's import script, the
+default in `project.godot`) swaps them for the materials in `godot/environment/materials/`.
+A new model needs only to name its material so; list the name in its spec's `materials` so
+kiln checks it stays.
 
 The music (`audio/music/`) is written as Ogg Vorbis, which carries no loop points: each
 track's `.ogg.import` has `loop=true`. For a new track, set it after Godot first imports the
