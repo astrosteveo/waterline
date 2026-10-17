@@ -50,6 +50,13 @@ from kiln import model, geometry
 def build(k):
     k.mesh("Two", geometry.box((1, 1, 1)).merged(geometry.box((1, 1, 1), center=(0.5, 0.2, 0.1))))
 ''',
+    "flat_uvs": '''
+from kiln import model, geometry
+@model()
+def build(k):
+    box = geometry.box((1, 1, 1))
+    k.mesh("Box", geometry.Mesh(box.vertices, box.faces, uvs=tuple(((0, 0),) * 4 for _ in box.faces)))
+''',
     "raises": '''
 from kiln import model
 @model()
@@ -79,6 +86,24 @@ def build(t):
     t.output(height=t.stripes(2.5))
 ''',
 }
+
+# A mesh made with bpy, unwrapped by the kit.
+UNWRAPPED = '''
+import bmesh
+import bpy
+from kiln import model
+@model()
+def build(k):
+    mesh = bpy.data.meshes.new("Ball")
+    bm = bmesh.new()
+    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=0.5)
+    bm.to_mesh(mesh)
+    bm.free()
+    ball = bpy.data.objects.new("Ball", mesh)
+    k.collection.objects.link(ball)
+    ball.scale = (2, 1, 1)
+    k.unwrap(ball)
+'''
 
 HANDLEBAR = '''
 from kiln import model
@@ -186,6 +211,7 @@ def test_broken_recipes_fail_with_reasons(project, capsys):
     assert "x size 1.000 m, expected 2.000 m" in sections["over_budget"]
     assert "no marker named Seat" in sections["over_budget"]
     assert "cut through each other" in sections["crossed"]
+    assert "6 faces whose UVs cover no area" in sections["flat_uvs"]
     assert "no wood left" in sections["raises"]
     for name in BROKEN:
         assert not (project / "out" / "models" / "broken" / f"{name}.glb").exists()
@@ -208,6 +234,26 @@ def test_markers_and_parents_export_in_game_space(project):
     # offset, and turned back by the handlebar's 20 degrees (glTF leaves a zero translation out).
     assert bar.get("translation", [0, 0, 0]) == pytest.approx([0, 0, 0], abs=1e-5)
     assert bar["rotation"] == pytest.approx([-math.sin(half), 0, 0, math.cos(half)], abs=1e-5)
+
+
+def test_every_mesh_has_uvs_in_metres(project):
+    (project / "models" / "unwrapped.py").write_text(UNWRAPPED)
+    assert kiln(project, "build") == 0
+    for name in ("crate", "buoy", "unwrapped"):
+        gltf = read_gltf(project / "out" / "models" / f"{name}.glb")
+        assert all("TEXCOORD_0" in primitive["attributes"] for mesh in gltf["meshes"] for primitive in mesh["primitives"])
+        report = json.loads((project / "reports" / "models" / name / "report.json").read_text())
+        for mesh in report["meshes"].values():
+            assert mesh["uvs"] and mesh["flat_uv_faces"] == 0
+    # A box's faces, the bevel's included, and the unwrapped ball (stretched by its object's
+    # scale) are mapped a UV unit to a metre. A lathe's poles are mapped a little larger.
+    crate = json.loads((project / "reports" / "models" / "crate" / "report.json").read_text())["meshes"]["Body"]
+    assert crate["uv_area"] == pytest.approx(crate["area"], rel=0.01)
+    ball = json.loads((project / "reports" / "models" / "unwrapped" / "report.json").read_text())["meshes"]["Ball"]
+    assert ball["uv_area"] == pytest.approx(ball["area"], rel=1e-3)
+    first = (project / "out" / "models" / "unwrapped.glb").read_bytes()
+    assert kiln(project, "build", "--force", "--no-preview", "models/unwrapped") == 0
+    assert (project / "out" / "models" / "unwrapped.glb").read_bytes() == first
 
 
 def read_gltf(path: Path) -> dict:

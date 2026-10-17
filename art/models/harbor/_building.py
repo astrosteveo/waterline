@@ -90,8 +90,7 @@ def build(k, b: Building) -> None:
                 panes = panes.merged(geometry.box((0.1, PANE[1], PANE[0]), (normal * (w / 2 + 0.03), y, 0)))
                 slots.append(0 if rng.random() < b.lit else 1)
     # Each pane is a box of six faces; give each box its slot.
-    k.mesh("Windows", geometry.Mesh(panes.vertices, panes.faces, tuple(s for s in slots for _ in range(6))),
-           material=[lit, dark])
+    k.mesh("Windows", panes.with_materials([s for s in slots for _ in range(6)]), material=[lit, dark])
     trims = trims.merged(sills)
     k.mesh("Trim", trims, material=trim)
     k.box("Door", (door_size[0], door_size[1], 0.12), center=(door_x, 0.6 + door_size[1] / 2 - 0.3, d / 2 + 0.03),

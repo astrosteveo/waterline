@@ -32,7 +32,7 @@ def banded_column(width: float, low: float, high: float, bands: int) -> geometry
     for band in range(bands):
         for side in range(4):
             slots[band * 4 + side] = band % 2
-    return geometry.Mesh(column.vertices, column.faces, tuple(slots))
+    return column.with_materials(slots)
 
 
 def chequer(width: float, height: float, depth: float, cols: int, rows: int) -> geometry.Mesh:

@@ -77,12 +77,34 @@ at (0, 0.8, 0.4) is at (0, 0.8, 0.4) in the game.
 | `k.mesh(name, mesh, material, parent, smooth_angle, position)` | an object from any `kiln.geometry.Mesh`, its origin at `position`; `material` is one material or a list, one per slot |
 | `k.marker(name, position, rotation, parent)` | a named empty; the game finds it by name (imports as a Node3D) |
 | `k.parent(child, parent)` | makes `child` move with `parent`, where it is now |
-| `k.bevel(obj, width, segments, angle)` | rounds an object's sharp edges |
+| `k.bevel(obj, width, segments, angle)` | rounds an object's sharp edges, and projects its UVs afresh (`project_uvs`) |
+| `k.project_uvs(obj)` | UVs projected onto each face from the axis it faces most (box mapping) |
+| `k.unwrap(obj, angle)` | UVs for an object made with `bpy`, by Blender's Smart UV Project, scaled to metres |
 
 Recipes can also use `bpy` directly for anything the kit lacks. `kiln.geometry` builds meshes
 as plain data (`box`, `loft`, `lathe`, `ring`, `mirrored_ring`), moves them (`translated`,
-`rotated`, `scaled`, `merged`), gives faces material slots (`materials`, `with_material`) and
-is tested without Blender.
+`rotated`, `scaled`, `merged`), gives faces material slots (`materials`, `with_material`,
+`with_materials`) and UVs (`uvs`, `projected`), and is tested without Blender.
+
+### UVs
+
+Every mesh kiln exports has UVs (glTF's `TEXCOORD_0`), in metres along the surface, so a
+texture that repeats every UV unit is drawn a metre to a tile on every model (one `tile`
+metres across takes a UV scale of 1 / `tile`). Each shape gives its own:
+
+- `box` is projected onto each face from the axis it faces (`projected`), each face a
+  rectangle of its own size.
+- `loft` and `lathe` run u round the rings from their first point and v along the loft. u is
+  the share of the way round a ring times the rings' mean length round, so a texture is
+  squeezed round a narrow ring rather than sheared; v is the mean distance from one ring to
+  the next, the length along a lathe's profile. Caps are projected.
+- A `Mesh` made from bare vertices and faces has none until `projected` gives it some, and
+  `k.mesh` projects one that has none. `merged` projects either part that lacks them.
+
+Moving, turning and scaling a mesh keeps its UVs, so its texture moves and stretches with
+it. A face's UVs run counter-clockwise, as its corners do seen from outside, so a texture
+isn't mirrored; seen from outside, a side's v runs up, and on the top and bottom v runs
+forward (-Z).
 
 ## A texture recipe
 
@@ -181,7 +203,9 @@ the start, and what `arrange` places past the end comes in again at the start.
 | `closed` (default True) | every mesh is closed: each edge shared by exactly two faces |
 | `allow_self_intersections` (default False) | no mesh cuts through itself (separate objects may overlap) |
 
-Faces with no area always fail.
+Faces with no area always fail, and so do faces whose UVs cover no area (a texture would smear
+across them). `report.json` gives each mesh's surface area and its UVs' (`area`, `uv_area`):
+the two match where the UVs are in metres.
 
 A texture always gets two checks: every map tiles (its wrap-round edges differ no more than
 neighbouring pixels do inside it, within 1.5 times), and every value lies between 0 and 1.
@@ -202,8 +226,10 @@ Every sound is checked too:
 Each build renders `<reports>/<id>/preview.png`. A sound recipe's has a row for each sound:
 its name, length, peak and RMS, its waveform, its spectrogram (log frequency from 30 Hz) and,
 for a loop, its last and first few milliseconds joined at the seam. A model's shows the front, side, top and
-three-quarter views in the materials' colours, with markers as small magenta diamonds; a
-texture's shows each map tiled two by two, so a seam would show as a cross. `report.json`
+three-quarter views in the materials' colours, with markers as small magenta diamonds, and
+below them the front and back three-quarter views in a checker on the UVs, so stretched or
+sheared UVs show: squares about a sixteenth of the model across, red rising along u and green
+along v. A texture's shows each map tiled two by two, so a seam would show as a cross. `report.json`
 beside it holds the measurements and problems.
 
 ## Tests
