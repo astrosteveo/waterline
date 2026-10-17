@@ -1,4 +1,4 @@
-[gd_resource type="AudioBusLayout" load_steps=4 format=3]
+[gd_resource type="AudioBusLayout" format=3 uid="uid://cqvu3uhtscoaq"]
 
 [sub_resource type="AudioEffectHardLimiter" id="limiter"]
 resource_name = "HardLimiter"
@@ -15,7 +15,6 @@ sidechain = &"Voice"
 [sub_resource type="AudioEffectCompressor" id="music_duck"]
 resource_name = "Compressor"
 threshold = -20.0
-ratio = 4.0
 attack_us = 20000.0
 release_ms = 500.0
 sidechain = &"Voice"
