@@ -24,6 +24,7 @@ def measure() -> dict:
     triangles = 0
     lows, highs = [float("inf")] * 3, [float("-inf")] * 3
     meshes = {}
+    materials: set[str] = set()
     for obj in mesh_objects():
         bm = bmesh.new()
         bm.from_object(obj, depsgraph)
@@ -36,6 +37,8 @@ def measure() -> dict:
         tris = sum(len(face.verts) - 2 for face in bm.faces)
         triangles += tris
         uv = bm.loops.layers.uv.active
+        slots = [slot.material.name if slot.material else None for slot in obj.material_slots]
+        materials.update(slots[face.material_index] for face in bm.faces if face.material_index < len(slots))
         areas = [face.calc_area() for face in bm.faces]
         uv_areas = [uv_area([loop[uv].uv for loop in face.loops]) for face in bm.faces] if uv else []
         meshes[obj.name] = {
@@ -62,6 +65,8 @@ def measure() -> dict:
         "size": size,
         "bounds": [[round(v, 5) for v in lows], [round(v, 5) for v in highs]] if meshes else None,
         "objects": sorted(o.name for o in bpy.context.scene.objects),
+        # The materials on at least one face.
+        "materials": sorted(name for name in materials if name),
         "meshes": meshes,
     }
 
@@ -94,6 +99,9 @@ def problems(spec: ModelSpec, measured: dict) -> list[str]:
     for name in spec.markers:
         if name not in measured["objects"]:
             found.append(f"no marker named {name}")
+    for name in spec.materials:
+        if name not in measured["materials"]:
+            found.append(f"no face has the material {name}")
     for name, mesh in measured["meshes"].items():
         if spec.closed and mesh["open_edges"]:
             found.append(f"{name}: {mesh['open_edges']} edges not shared by exactly two faces "

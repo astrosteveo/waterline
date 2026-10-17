@@ -20,6 +20,9 @@ from dataclasses import dataclass
 from kiln import geometry
 
 PANE = (1.0, 1.2)
+# The materials the game paints: the walls and roof in the building's colours, and the panes
+# that glow at night.
+MATERIALS = ["Wall", "Roof", "Window"]
 
 
 @dataclass(frozen=True)

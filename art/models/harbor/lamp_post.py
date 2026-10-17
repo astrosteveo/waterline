@@ -11,7 +11,7 @@ HEIGHT = 4.5
 LIGHT = HEIGHT + 0.08
 
 
-@model(max_triangles=800, size=(0.54, 5.1, None), markers=["Light"])
+@model(max_triangles=800, size=(0.54, 5.1, None), markers=["Light"], materials=["Lamp"])
 def build(k):
     iron = k.material("Iron", "#1d2026", roughness=0.55, metallic=0.6)
     glass = k.material("Lamp", "#fff1d2", roughness=0.2)

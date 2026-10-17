@@ -11,7 +11,8 @@ SIZE = 1.0
 FRAME = 0.09
 
 
-@model(max_triangles=800, size=(SIZE, SIZE, SIZE), allow_self_intersections=True)
+@model(max_triangles=800, size=(SIZE, SIZE, SIZE), allow_self_intersections=True,
+       materials=["Wood", "WoodDark"])
 def build(k):
     wood = k.material("Wood", "#a07a52", roughness=0.85)
     dark = k.material("WoodDark", "#5b432d", roughness=0.9)

@@ -61,6 +61,9 @@ SOLE = "#0d0e10"
 SIDES = (("Left", -1.0), ("Right", 1.0))
 JOINTS = ["Pelvis"] + [f"{joint}{side}" for side, _ in SIDES
                        for joint in ("Hip", "Knee", "Foot", "Shoulder", "Elbow", "Hand")]
+# The materials the game paints in the rider's suit, vest and helmet colours (it matches the
+# start of a name, so SuitShade is painted too).
+PAINTED = ["Suit", "Vest", "Helmet"]
 # The parts the game poses; each recipe's build must make all of them.
 PARTS = ["Torso", "Head"] + [f"{part}{side}" for side, _ in SIDES
                              for part in ("Thigh", "Shin", "Boot", "UpperArm", "Forearm", "Glove")]

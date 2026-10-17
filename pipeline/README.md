@@ -55,7 +55,7 @@ Builds are deterministic: the same inputs give the same files.
 from kiln import model
 
 
-@model(max_triangles=2000, size=(0.82, 0.82, 0.82), markers=["Lid"])
+@model(max_triangles=2000, size=(0.82, 0.82, 0.82), markers=["Lid"], materials=["Wood"])
 def build(k):
     wood = k.material("Wood", "#9a6a3a", roughness=0.8)
     k.box("Body", (0.8, 0.8, 0.8), center=(0, 0.4, 0), bevel=0.02, material=wood)
@@ -200,6 +200,7 @@ the start, and what `arrange` places past the end comes in again at the start.
 | `max_triangles` | the total triangle count is within budget |
 | `size`, `size_tolerance` | the bounding box (x, y, z; None skips an axis) is within the tolerance (2%) |
 | `markers` | an object with each name exists |
+| `materials` | each material is on at least one face (for those the game finds by name) |
 | `closed` (default True) | every mesh is closed: each edge shared by exactly two faces |
 | `allow_self_intersections` (default False) | no mesh cuts through itself (separate objects may overlap) |
 
