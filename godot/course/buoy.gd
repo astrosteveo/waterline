@@ -20,10 +20,6 @@ enum Kind {
 
 const RED_COLOR := Color(0.93, 0.13, 0.10)
 const YELLOW_COLOR := Color(1.0, 0.80, 0.05)
-## The model's size as built (art/models/course/buoy.py): its float's radius at the water
-## line and the height of its lamp. [member radius] and [member height] stretch it.
-const MODEL_RADIUS := 0.75
-const MODEL_HEIGHT := 2.3
 
 @export var kind: Kind = Kind.RED:
 	set(value):
@@ -160,7 +156,11 @@ func _build() -> void:
 	if model == null:
 		return
 	var drawn := SceneryModel.add(self, model, &"buoy_part", ShoreMap.DYNAMIC_LAYER)
-	drawn.scale = Vector3(radius / MODEL_RADIUS, height / MODEL_HEIGHT, radius / MODEL_RADIUS)
+	# Stretched from the model's size as built: its Float's radius at the water line to the
+	# radius, its Lamp's height to the height.
+	var built_radius := (drawn.get_node("Float") as MeshInstance3D).get_aabb().size.x * 0.5
+	var built_height := SceneryModel.point(drawn, "Lamp").y
+	drawn.scale = Vector3(radius / built_radius, height / built_height, radius / built_radius)
 	_main_material = SceneryModel.paint(drawn, "Paint", color())
 	if lamp_energy > 0.0:
 		SceneryModel.paint(drawn, "Lamp", color(), color(), 3.0)

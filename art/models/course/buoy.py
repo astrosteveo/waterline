@@ -3,19 +3,20 @@ tapered mast with a white band, and a lamp on top. The origin is at the water li
 
 The white parts named Paint take the buoy's colour in the game (red or yellow, see
 course/buoy.gd), and flash when a racer passes. The Lamp glows in the buoy's colour on night
-courses; its node's position is where the light goes.
+courses; its node's position is where the light goes. course/buoy.gd fits the model to a
+buoy's size by the Float's radius and the Lamp's height.
 """
 import math
 
 from kiln import geometry, model
 
-# Height of the lamp's centre above the water line, and the float's radius at the water line,
-# as course/buoy.gd's defaults.
+# Height of the lamp's centre above the water line, and the float's radius at the water line.
 HEIGHT = 2.3
 RADIUS = 0.75
 
 
-@model(max_triangles=1500, size=(1.62, 3.16, 1.62), markers=["Lamp"], materials=["Paint", "Lamp"])
+@model(max_triangles=1500, size=(1.62, 3.16, 1.62), markers=["Float", "Lamp"],
+       materials=["Paint", "Lamp"])
 def build(k):
     paint = k.material("Paint", "#f4f4f4", roughness=0.45)
     stripe = k.material("Stripe", "#f7f7f2", roughness=0.4)

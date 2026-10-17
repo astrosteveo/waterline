@@ -56,6 +56,17 @@
       "name": "Koa's shoulders are 9.4 cm wider than Ines's"
     },
     {
+      "expect": "[get_node('Rider0').seat.distance_to(get_node('Rider0/Hull/SeatMarker').position), get_node('Rider1').seat.distance_to(get_node('Rider1/Hull/SeatMarker').position), get_node('Rider2').seat.distance_to(get_node('Rider2/Hull/SeatMarker').position), get_node('Rider3').seat.distance_to(get_node('Rider3/Hull/SeatMarker').position)]",
+      "approx": [0, 0, 0, 0],
+      "name": "each craft scene's Seat marker is where its hull model's SeatMarker is (JetSki.seat_marker() in art/models/craft/_jetski.py)"
+    },
+    {
+      "expect": "max(built_pose_error(get_node('Built0')), built_pose_error(get_node('Built1')), built_pose_error(get_node('Built2')), built_pose_error(get_node('Built3')))",
+      "approx": 0,
+      "within": 0.001,
+      "name": "on the Tradewind with the controls centred, every rider sits as their recipe built them: art/models/riders/_rider.py follows JetSkiModel._riding_joints(), and the craft scene's Seat is the hull's"
+    },
+    {
       "expect": "[get_node('Rider0/Rider/BootLeft').global_transform.basis.y.dot(Vector3(0, 1, 0)), get_node('Turn/Rider/BootRight').global_transform.basis.y.dot(Vector3(0, 1, 0))]",
       "approx": [
         1.0,

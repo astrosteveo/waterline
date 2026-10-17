@@ -1,6 +1,6 @@
 """A harbour lamp post: a cast plinth, a tapering post and a six-sided lantern with a roof
-and finial. 4.5 m to the top of the post, as environment/lamp_post.gd's default height; the
-game scales it to other heights.
+and finial. 4.5 m to the top of the post (the PostTop marker), as environment/lamp_post.gd's
+default height; the game scales it to other heights by that marker.
 
 The lantern's glass is named Lamp: the game makes it glow in the lamp's colour. The Light
 marker is where the light goes.
@@ -11,7 +11,7 @@ HEIGHT = 4.5
 LIGHT = HEIGHT + 0.08
 
 
-@model(max_triangles=800, size=(0.54, 5.1, None), markers=["Light"], materials=["Lamp"])
+@model(max_triangles=800, size=(0.54, 5.1, None), markers=["Light", "PostTop"], materials=["Lamp"])
 def build(k):
     iron = k.material("Iron", "#1d2026", roughness=0.55, metallic=0.6)
     glass = k.material("Lamp", "#fff1d2", roughness=0.2)
@@ -26,3 +26,4 @@ def build(k):
     k.lathe("Finial", [(0, HEIGHT + 0.49), (0.045, HEIGHT + 0.49), (0.03, HEIGHT + 0.56), (0, HEIGHT + 0.6)],
             segments=6, material=iron)
     k.marker("Light", (0, LIGHT, 0))
+    k.marker("PostTop", (0, HEIGHT, 0))

@@ -27,9 +27,6 @@ extends Node3D
 		model = value
 		_queue_build()
 
-## The model's height as built, to the top of the post.
-const MODEL_HEIGHT := 4.5
-
 var _build_queued := false
 
 
@@ -52,7 +49,8 @@ func _build() -> void:
 	var light_at := Vector3(0.0, height + 0.1, 0.0)
 	if model != null:
 		var drawn := SceneryModel.add(self, model, &"lamp_part")
-		drawn.scale = Vector3.ONE * height / MODEL_HEIGHT
+		# Scaled so the top of its post (its PostTop marker) is at the height.
+		drawn.scale = Vector3.ONE * height / SceneryModel.point(drawn, "PostTop").y
 		SceneryModel.paint(drawn, "Lamp", light_color, light_color, 4.0)
 		for mesh in SceneryModel.meshes(drawn):
 			mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

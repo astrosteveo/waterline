@@ -56,8 +56,8 @@ def build_texture(recipe, stem: str, export: bool, report_dir: str | None) -> di
         low, high = float(pixels.min()), float(pixels.max())
         if low < -0.001 or high > 1.001:
             problems.append(f"{name} runs from {low:.3f} to {high:.3f}, outside 0 to 1")
-    report = {"kind": "texture", "size": [spec.size, spec.size], "maps": list(spec.maps), "seams": seams,
-              "problems": problems}
+    report = {"kind": "texture", "size": [spec.size, spec.size], "tile": spec.tile, "maps": list(spec.maps),
+              "seams": seams, "problems": problems}
     if problems:
         return report
     outputs = [f"{stem}_{name}.png" for name in spec.maps]

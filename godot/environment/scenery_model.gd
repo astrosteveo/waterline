@@ -23,6 +23,22 @@ static func add(parent: Node3D, scene: PackedScene, part_meta: StringName, layer
 	return model
 
 
+## Where [param model]'s node named [param node_name] (a marker or a part) is in the model's
+## own space, as built: how scenery measures a model to fit it to its own size, so the sizes
+## a model was built at are read from it rather than written again here.
+static func point(model: Node3D, node_name: String) -> Vector3:
+	var node := model.find_child(node_name, true, false) as Node3D
+	if node == null:
+		push_error("SceneryModel: %s has no %s." % [model.scene_file_path, node_name])
+		return Vector3.ZERO
+	var at := node.transform
+	var parent := node.get_parent()
+	while parent != model:
+		at = (parent as Node3D).transform * at
+		parent = parent.get_parent()
+	return at.origin
+
+
 ## Every [MeshInstance3D] in [param model], itself included.
 static func meshes(model: Node) -> Array[MeshInstance3D]:
 	var found: Array[MeshInstance3D] = []

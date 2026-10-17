@@ -5,8 +5,9 @@ the lip and two posts under it.
 The wedge is exactly course/ramp.gd's default collision shape: 7 m wide, its slope rising
 from 2 m under the water's rest level at the front (+Z) to a 1.8 m lip 12 m back (-Z), its
 underside 0.4 m below the front edge. course/ramp.gd stretches the model to a ramp of
-another size; stretching a wedge keeps its slope flat, so the slope still lies on the
-collision shape.
+another size, measuring the slope as built from the SlopeFront and SlopeLip markers (the
+right-hand ends of its front edge and its lip); stretching a wedge keeps its slope flat, so
+the slope still lies on the collision shape.
 """
 import math
 
@@ -27,7 +28,8 @@ def slope_y(z: float) -> float:
     return BOTTOM + (LENGTH / 2 - z) / LENGTH * (TOP - BOTTOM)
 
 
-@model(max_triangles=1500, size=(WIDTH + 0.12, TOP + 0.02 - (BASE - POST_DEPTH), LENGTH), markers=[])
+@model(max_triangles=1500, size=(WIDTH + 0.12, TOP + 0.02 - (BASE - POST_DEPTH), LENGTH),
+       markers=["SlopeFront", "SlopeLip"])
 def build(k):
     stripe_a = k.material("StripeA", "#f5520c", roughness=0.6)
     stripe_b = k.material("StripeB", "#f4f2ea", roughness=0.6)
@@ -48,6 +50,8 @@ def build(k):
         slots[band * 4 + 1] = 0 if band % 2 == 0 else 1
     wedge = wedge.with_materials(slots)
     k.mesh("Wedge", wedge, material=[stripe_a, stripe_b, side, end])
+    k.marker("SlopeFront", (hw, BOTTOM, hl))
+    k.marker("SlopeLip", (hw, TOP, -hl))
     # A white trim along the lip, lying on the slope so it doesn't stick up into a craft's way.
     angle = math.degrees(math.atan2(TOP - BOTTOM, LENGTH))
     trim_length = 0.5

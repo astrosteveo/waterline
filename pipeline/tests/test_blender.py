@@ -58,6 +58,13 @@ def build(k):
     box = geometry.box((1, 1, 1))
     k.mesh("Box", geometry.Mesh(box.vertices, box.faces, uvs=tuple(((0, 0),) * 4 for _ in box.faces)))
 ''',
+    "same_name": '''
+from kiln import model
+@model()
+def build(k):
+    k.box("Seat", (1, 1, 1))
+    k.marker("Seat", (0, 1, 0))
+''',
     "raises": '''
 from kiln import model
 @model()
@@ -163,6 +170,7 @@ def test_bakes_textures_that_tile_identically(project, capsys):
     lock = json.loads((project / "kiln.lock.json").read_text())
     assert lock["textures/planks"]["outputs"][0] == "out/textures/planks_albedo.png"
     assert lock["textures/planks"]["maps"] == ["albedo", "normal", "roughness", "height"]
+    assert lock["textures/planks"]["tile"] == 1.2
     report = json.loads((project / "reports" / "textures" / "planks" / "report.json").read_text())
     for edge, inside in report["seams"].values():
         assert edge <= inside * 1.5 + 0.002
@@ -218,6 +226,7 @@ def test_broken_recipes_fail_with_reasons(project, capsys):
     assert "cut through each other" in sections["crossed"]
     assert "6 faces whose UVs cover no area" in sections["flat_uvs"]
     assert "no wood left" in sections["raises"]
+    assert "an object named 'Seat' already exists" in sections["same_name"]
     for name in BROKEN:
         assert not (project / "out" / "models" / "broken" / f"{name}.glb").exists()
     lock = json.loads((project / "kiln.lock.json").read_text())
