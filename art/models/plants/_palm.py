@@ -71,20 +71,13 @@ def _bezier(curve, t: float):
 
 def _trunk(palm: Palm, curve) -> geometry.Mesh:
     rings, sides = 16, 7
-    sections = []
+    points, radii = [], []
     for r in range(rings + 1):
         t = r / rings
-        centre = _bezier(curve, t)
-        ahead = _bezier(curve, min(t + 0.01, 1.0))
-        behind = _bezier(curve, max(t - 0.01, 0.0))
-        tangent = _unit(tuple(ahead[i] - behind[i] for i in range(3)))
-        side = _unit(_cross(tangent, (0.0, 0.0, 1.0)))
-        other = _cross(side, tangent)
+        points.append(_bezier(curve, t))
         radius = palm.trunk_base + (palm.trunk_top - palm.trunk_base) * t
-        radius *= 1.0 + 0.5 * (1 - t) ** 8 + (0.05 if r % 2 else 0.0)
-        sections.append([tuple(centre[i] + radius * (math.cos(a) * side[i] + math.sin(a) * other[i]) for i in range(3))
-                         for a in (math.tau * s / sides for s in range(sides))])
-    return geometry.loft(sections).with_material(TRUNK)
+        radii.append(radius * (1.0 + 0.5 * (1 - t) ** 8 + (0.05 if r % 2 else 0.0)))
+    return geometry.sweep(points, radii, sides).with_material(TRUNK)
 
 
 def _frond(crown, azimuth: float, rise: float, length: float, droop: float, width: float, slot: int) -> geometry.Mesh:
@@ -109,12 +102,3 @@ def _frond(crown, azimuth: float, rise: float, length: float, droop: float, widt
     tip_rib = tuple(crown[i] + out[i] * length * math.cos(rise) for i in range(3))
     sections.append([(tip_rib[0], tip_rib[1] + length * math.sin(rise) - droop, tip_rib[2])])
     return geometry.loft(sections).with_material(slot)
-
-
-def _unit(v):
-    n = math.sqrt(sum(c * c for c in v))
-    return tuple(c / n for c in v)
-
-
-def _cross(a, b):
-    return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])

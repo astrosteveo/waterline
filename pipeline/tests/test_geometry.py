@@ -231,3 +231,79 @@ def test_projection_joins_faces_that_face_the_same_way():
 def test_uvs_need_one_per_corner():
     with pytest.raises(ValueError):
         geometry.Mesh(((0, 0, 0), (1, 0, 0), (0, 1, 0)), ((0, 1, 2),), uvs=(((0, 0), (1, 0)),))
+
+
+# --- More shapes ----------------------------------------------------------------------------
+
+def test_sweep_follows_a_bending_path_without_twisting():
+    # A quarter circle, from going up +Y to going along +X.
+    path = [(1 - math.cos(a), math.sin(a), 0.0) for a in (math.pi / 2 * i / 12 for i in range(13))]
+    mesh = geometry.sweep([(0.0, -0.2, 0.0)] + path + [(1.2, 1.0, 0.0)], [0.0] + [0.1] * 13 + [0.0], segments=8)
+    assert mesh.open_edges() == [] and mesh.inconsistent_edges() == [] and mesh.signed_volume() > 0
+    assert_uvs_read_right_way_round(mesh)
+    # Each ring is the radius from the path, and its first point turns with the path: the
+    # angle between one ring's first point and the next's is no more than the path turns.
+    rings = [mesh.vertices[1 + 8 * i:1 + 8 * (i + 1)] for i in range(13)]
+    for centre, ring in zip(path, rings):
+        assert all(math.dist(p, centre) == pytest.approx(0.1) for p in ring)
+    sides = [geometry._normalized(geometry._sub(ring[0], centre)) for centre, ring in zip(path, rings)]
+    for a, b in zip(sides, sides[1:]):
+        assert math.degrees(math.acos(min(1.0, geometry._dot(a, b)))) <= 90 / 12 + 1e-6
+
+
+def test_sweep_needs_a_radius_per_point():
+    with pytest.raises(ValueError):
+        geometry.sweep([(0, 0, 0), (0, 1, 0)], [0.1])
+
+
+def test_icosphere_is_a_closed_unit_sphere():
+    for levels in (0, 2):
+        mesh = geometry.icosphere(levels)
+        assert len(mesh.faces) == 20 * 4 ** levels and mesh.open_edges() == [] and mesh.signed_volume() > 0
+        assert all(math.hypot(*v) == pytest.approx(1.0) for v in mesh.vertices)
+        assert_uvs_read_right_way_round(mesh)
+
+
+def test_value_noise_is_smooth_and_repeatable():
+    samples = [geometry.value_noise((x * 0.37, x * 0.11, 2.5)) for x in range(200)]
+    assert all(-1.0 <= s <= 1.0 for s in samples) and max(samples) - min(samples) > 0.5
+    assert samples == [geometry.value_noise((x * 0.37, x * 0.11, 2.5)) for x in range(200)]
+    assert abs(geometry.value_noise((0.5, 0.5, 0.5)) - geometry.value_noise((0.501, 0.5, 0.5))) < 0.01
+
+
+def test_symmetric_joins_a_half_to_its_mirror_image():
+    # A box from x = 0 to 1 with no face on x = 0: open only along the plane.
+    box = geometry.box((1, 1, 1), center=(0.5, 0, 0))
+    half = geometry.Mesh(box.vertices, tuple(f for f in box.faces if any(box.vertices[i][0] > 0.5 for i in f)),
+                         uvs=tuple(u for f, u in zip(box.faces, box.uvs) if any(box.vertices[i][0] > 0.5 for i in f)))
+    assert len(half.open_edges()) == 4
+    whole = geometry.symmetric(half)
+    assert whole.open_edges() == [] and whole.inconsistent_edges() == []
+    assert whole.signed_volume() == pytest.approx(2.0)
+    assert len(whole.vertices) == 12 and whole.bounds() == ((-1.0, -0.5, -0.5), (1.0, 0.5, 0.5))
+
+
+def test_inset_frames_a_face_and_carries_on_its_uvs():
+    box = geometry.box((2, 2, 2))
+    top = next(f for f, face in enumerate(box.faces) if all(box.vertices[i][1] == 1 for i in face))
+    mesh = box.inset([top], 0.25)
+    assert mesh.open_edges() == [] and mesh.inconsistent_edges() == [] and len(mesh.faces) == 6 + 4
+    assert mesh.signed_volume() == pytest.approx(8.0)
+    assert_uvs_read_right_way_round(mesh)
+    # The frame's four faces and the pane take the top's place among the faces.
+    pane = top + 4
+    assert face_area(mesh, mesh.faces[pane]) == pytest.approx(1.5 * 1.5)
+    # The frame and the pane cover the top's UVs exactly, so its texture runs on unbroken.
+    assert sum(uv_signed_area(mesh.uvs[f]) for f in range(top, top + 5)) == pytest.approx(uv_signed_area(box.uvs[top]))
+    assert all(abs(u) == pytest.approx(0.75) and abs(v) == pytest.approx(0.75) for u, v in mesh.uvs[pane])
+
+
+def test_extruded_moves_a_face_out_or_in_with_walls():
+    box = geometry.box((1, 1, 1))
+    front = next(f for f, face in enumerate(box.faces) if all(box.vertices[i][2] == -0.5 for i in face))
+    for distance in (0.4, -0.3):
+        mesh = box.extruded([front], distance)
+        assert mesh.open_edges() == [] and mesh.inconsistent_edges() == []
+        assert mesh.signed_volume() == pytest.approx(1.0 + distance)
+        assert min(v[2] for v in mesh.vertices) == pytest.approx(-0.5 - max(distance, 0.0))
+    assert box.with_material(3).extruded([front], 0.1).slots() == (3,) * 10
