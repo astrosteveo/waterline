@@ -89,9 +89,16 @@ Every object needs a name of its own: the game finds parts and markers by name, 
 would rename a second `Seat` to `Seat.001`, kiln fails the build.
 
 Recipes can also use `bpy` directly for anything the kit lacks. `kiln.geometry` builds meshes
-as plain data (`box`, `loft`, `lathe`, `ring`, `mirrored_ring`), moves them (`translated`,
-`rotated`, `scaled`, `merged`), gives faces material slots (`materials`, `with_material`,
-`with_materials`) and UVs (`uvs`, `projected`), and is tested without Blender.
+as plain data, and is tested without Blender:
+
+- shapes: `box`, `loft` (through rings of points, from `ring` and `mirrored_ring`), `lathe`,
+  `sweep` (a round tube along a path of points, a radius at each, its rings following the
+  path without twisting), `icosphere`, and `symmetric` (a half joined to its mirror image);
+- changes: `translated`, `rotated`, `scaled`, `merged`, `inset` (a face shrunk in, framed by
+  new faces) and `extruded` (a face moved out or in, with walls);
+- material slots (`materials`, `with_material`, `with_materials`) and UVs (`uvs`,
+  `projected`);
+- `value_noise`, smooth noise from -1 to 1 for moving points about (a rock's lumps).
 
 ### UVs
 

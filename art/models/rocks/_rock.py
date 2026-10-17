@@ -41,13 +41,14 @@ class Rock:
 
 def mesh(rock: Rock) -> geometry.Mesh:
     rng = random.Random(rock.seed)
-    vertices, faces = icosphere(3)
+    sphere = geometry.icosphere(3)
+    vertices, faces = list(sphere.vertices), sphere.faces
     if rock.squareness != 2.0:
         vertices = [_squared(v, rock.squareness) for v in vertices]
     offsets = [tuple(rng.uniform(-50, 50) for _ in range(3)) for _ in range(3)]
     points = []
     for v in vertices:
-        lump = sum(_noise(tuple(v[i] * (1.6 * 2 ** o) + offsets[o][i] for i in range(3))) * 0.5 ** o
+        lump = sum(geometry.value_noise(tuple(v[i] * (1.6 * 2 ** o) + offsets[o][i] for i in range(3))) * 0.5 ** o
                    for o in range(3))
         r = 1.0 + lump * rock.lumps
         points.append((v[0] * r, v[1] * r, v[2] * r))
@@ -86,61 +87,9 @@ def build(k, rock: Rock) -> None:
     k.mesh("Rock", mesh(rock), material=stone)
 
 
-def icosphere(levels: int) -> tuple[list[tuple[float, float, float]], list[tuple[int, int, int]]]:
-    """A unit sphere of triangles: an icosahedron split `levels` times."""
-    t = (1 + 5 ** 0.5) / 2
-    vertices = [_unit(v) for v in [(-1, t, 0), (1, t, 0), (-1, -t, 0), (1, -t, 0), (0, -1, t), (0, 1, t),
-                                   (0, -1, -t), (0, 1, -t), (t, 0, -1), (t, 0, 1), (-t, 0, -1), (-t, 0, 1)]]
-    faces = [(0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11), (1, 5, 9), (5, 11, 4), (11, 10, 2),
-             (10, 7, 6), (7, 1, 8), (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9), (4, 9, 5),
-             (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1)]
-    for _ in range(levels):
-        middles: dict[tuple[int, int], int] = {}
-
-        def middle(a: int, b: int) -> int:
-            key = (min(a, b), max(a, b))
-            if key not in middles:
-                va, vb = vertices[a], vertices[b]
-                vertices.append(_unit(((va[0] + vb[0]) / 2, (va[1] + vb[1]) / 2, (va[2] + vb[2]) / 2)))
-                middles[key] = len(vertices) - 1
-            return middles[key]
-
-        split = []
-        for a, b, c in faces:
-            ab, bc, ca = middle(a, b), middle(b, c), middle(c, a)
-            split += [(a, ab, ca), (b, bc, ab), (c, ca, bc), (ab, bc, ca)]
-        faces = split
-    return vertices, faces
-
-
 def _squared(v, power: float):
     """The point in direction `v` on the surface where (horizontal distance)^power +
     |height|^power = 1: a cylinder with rounded edges for a high power."""
     across = math.hypot(v[0], v[2])
     t = (across ** power + abs(v[1]) ** power) ** (-1 / power)
     return (v[0] * t, v[1] * t, v[2] * t)
-
-
-def _unit(v):
-    n = math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
-    return (v[0] / n, v[1] / n, v[2] / n)
-
-
-def _hash(x: int, y: int, z: int) -> float:
-    h = (x * 374761393 + y * 668265263 + z * 2147483647) & 0xFFFFFFFF
-    h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
-    return ((h ^ (h >> 16)) & 0xFFFF) / 32767.5 - 1.0
-
-
-def _noise(p) -> float:
-    """Smooth value noise from -1 to 1."""
-    cell = [math.floor(c) for c in p]
-    f = [c - math.floor(c) for c in p]
-    s = [t * t * (3 - 2 * t) for t in f]
-    total = 0.0
-    for dx in (0, 1):
-        for dy in (0, 1):
-            for dz in (0, 1):
-                w = (s[0] if dx else 1 - s[0]) * (s[1] if dy else 1 - s[1]) * (s[2] if dz else 1 - s[2])
-                total += w * _hash(cell[0] + dx, cell[1] + dy, cell[2] + dz)
-    return total

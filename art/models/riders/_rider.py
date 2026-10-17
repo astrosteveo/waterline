@@ -267,7 +267,7 @@ def build(k, rider: Rider) -> None:
     if rider.ponytail:
         hair = k.material("Hair", rider.ponytail, roughness=0.85)
         path = [(0.0, -0.01, 0.135), (0.0, -0.06, 0.19), (0.0, -0.14, 0.215), (0.0, -0.22, 0.2)]
-        k.mesh("Ponytail", _tube([_add(head_at, p) for p in path], [0.035, 0.036, 0.026, 0.0], 8)
+        k.mesh("Ponytail", geometry.sweep([_add(head_at, p) for p in path], [0.035, 0.036, 0.026, 0.0], 8)
                .translated(_neg(head_at)), hair, parent=head, position=head_at, smooth_angle=60)
 
     # --- Limbs --------------------------------------------------------------------------
@@ -368,7 +368,7 @@ def _glove(k, name, hand, side, g, material):
                            (0.0, 0.045)], 10).scaled((1.0, 1.0, 1.1)).rotated("z", 90)
     obj = k.mesh(name, fist.scaled((g, g, g)).translated((0.0, 0.006, 0.008)), material, position=hand,
                  smooth_angle=60)
-    thumb = _tube([(-0.02 * side, 0.03, -0.035), (0.0, 0.045, -0.02), (0.012 * side, 0.048, 0.005)],
+    thumb = geometry.sweep([(-0.02 * side, 0.03, -0.035), (0.0, 0.045, -0.02), (0.012 * side, 0.048, 0.005)],
                   [0.016, 0.015, 0.0], 6)
     k.mesh(f"{name}Thumb", thumb, material, parent=obj, position=hand, smooth_angle=60)
     return obj
@@ -407,39 +407,15 @@ def _limb(a, b, profile, n, tips=True):
     axis = _sub(b, a)
     length = _length(axis)
     y = _scale(axis, 1 / length)
-    x, z = _across(y)
-
-    def ring(d, r):
-        c = _add(a, _scale(y, d))
-        return [_add(c, _add(_scale(x, r * math.cos(math.tau * i / n)), _scale(z, r * math.sin(math.tau * i / n))))
-                for i in range(n)]
-
-    sections = []
-    first_d, first_r = profile[0][0] * length, profile[0][1]
-    last_d, last_r = profile[-1][0] * length, profile[-1][1]
+    points = [_add(a, _scale(y, t * length)) for t, _ in profile]
+    radii = [r for _, r in profile]
     if tips:
-        sections.append([_add(a, _scale(y, first_d - first_r * 0.95))])
-        sections.append(ring(first_d - first_r * 0.62, first_r * 0.78))
-    sections.extend(ring(t * length, r) for t, r in profile)
-    if tips:
-        sections.append(ring(last_d + last_r * 0.62, last_r * 0.78))
-        sections.append([_add(a, _scale(y, last_d + last_r * 0.95))])
-    return geometry.loft(sections)
-
-
-def _tube(path, radii, n):
-    """A tube along `path` with a radius per point; a radius of 0 is a tip."""
-    sections = []
-    for i, (p, r) in enumerate(zip(path, radii)):
-        if r <= 0:
-            sections.append([p])
-            continue
-        ahead = path[min(i + 1, len(path) - 1)]
-        behind = path[max(i - 1, 0)]
-        x, z = _across(_normalized(_sub(ahead, behind)))
-        sections.append([_add(p, _add(_scale(x, r * math.cos(math.tau * j / n)), _scale(z, r * math.sin(math.tau * j / n))))
-                         for j in range(n)])
-    return geometry.loft(sections)
+        (first_t, first_r), (last_t, last_r) = profile[0], profile[-1]
+        first_d, last_d = first_t * length, last_t * length
+        points = ([_add(a, _scale(y, first_d - first_r * 0.95)), _add(a, _scale(y, first_d - first_r * 0.62))] + points
+                  + [_add(a, _scale(y, last_d + last_r * 0.62)), _add(a, _scale(y, last_d + last_r * 0.95))])
+        radii = [0.0, first_r * 0.78] + radii + [last_r * 0.78, 0.0]
+    return geometry.sweep(points, radii, n)
 
 
 def _front_band(radius, y0, y1, half_angle, gap, thickness, z_scale, droop=0.0):
@@ -552,10 +528,3 @@ def _length(a):
 
 def _normalized(a):
     return _scale(a, 1 / _length(a))
-
-
-def _across(y):
-    """Two directions square to `y` and to each other: the first as close to +X as it can be."""
-    ref = (1.0, 0.0, 0.0) if abs(y[0]) < 0.9 else (0.0, 0.0, -1.0)
-    x = _normalized(_sub(ref, _scale(y, _dot(ref, y))))
-    return x, _cross(x, y)
