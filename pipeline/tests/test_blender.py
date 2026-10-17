@@ -95,6 +95,12 @@ def build(k):
     k.box("Hood", (1, 1, 1), center=(2, 0, 0), material=k.material("Paint", "#ff0000", roughness=0.4))
     k.box("Deck", (1, 1, 1), center=(4, 0, 0), material=k.material("Paint", "#0000ff", roughness=0.4))
 ''',
+    "clear": '''
+from kiln import model
+@model()
+def build(k):
+    k.box("Box", (1, 1, 1), material=k.material("Nothing", "#ffffff", alpha=0.0))
+''',
     "raises": '''
 from kiln import model
 @model()
@@ -273,6 +279,7 @@ def test_broken_recipes_fail_with_reasons(project, capsys):
     assert "Two:" not in sections["crossed"]
     assert "6 faces whose UVs cover no area" in sections["flat_uvs"]
     assert "no wood left" in sections["raises"]
+    assert "the material 'Nothing' has alpha 0.0" in sections["clear"]
     # Asked for again with the same settings it is the same material; with others, it fails.
     assert "the material 'Paint' was made with other settings (color '#ff0000', now '#0000ff')" in sections["two_paints"]
     assert "an object named 'Seat' already exists" in sections["same_name"]
@@ -321,6 +328,24 @@ def test_every_mesh_has_uvs_in_metres(project):
     first = (project / "out" / "models" / "unwrapped.glb").read_bytes()
     assert kiln(project, "build", "--force", "--no-preview", "models/unwrapped") == 0
     assert (project / "out" / "models" / "unwrapped.glb").read_bytes() == first
+
+
+def test_materials_glow_and_let_light_through(project):
+    (project / "models" / "lantern.py").write_text('''
+from kiln import model
+@model()
+def build(k):
+    k.box("Glass", (0.3, 0.3, 0.3), material=k.material("Glass", "#d0e8f0", alpha=0.4))
+    k.box("Flame", (0.1, 0.1, 0.1), center=(1, 0, 0), material=k.material("Flame", "#ffffff", emission="#ffb040", emission_strength=4.0))
+    k.box("Base", (0.3, 0.1, 0.3), center=(2, 0, 0), material=k.material("Iron", "#202020"))
+''')
+    assert kiln(project, "build", "models/lantern") == 0
+    materials = {m["name"]: m for m in read_gltf(project / "out" / "models" / "lantern.glb")["materials"]}
+    assert materials["Glass"]["alphaMode"] == "BLEND"
+    assert materials["Glass"]["pbrMetallicRoughness"]["baseColorFactor"][3] == pytest.approx(0.4)
+    assert materials["Flame"]["emissiveFactor"] == pytest.approx([1.0, 0.434, 0.051], abs=0.01)
+    assert materials["Flame"]["extensions"]["KHR_materials_emissive_strength"]["emissiveStrength"] == 4.0
+    assert "alphaMode" not in materials["Iron"] and "emissiveFactor" not in materials["Iron"]
 
 
 def test_skinned_meshes_export_with_their_skeleton(project):
