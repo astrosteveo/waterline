@@ -134,6 +134,8 @@ def _export(path: str) -> None:
         export_extras=False,
         export_animations=False,
         export_tangents=False,
+        # A mesh's colour attribute, where it has one, as COLOR_0 (data for the game's shaders).
+        export_vertex_color="ACTIVE",
         use_selection=False,
     )
 

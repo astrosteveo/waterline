@@ -4,6 +4,11 @@ dry fronds hanging under it and a cluster of coconuts.
 Everything is one mesh with a material per part (Trunk, Frond, FrondDry, Coconut), so the
 game can draw a whole grove of one palm at once (environment/terrain.gd). The origin is at
 the foot of the trunk; the game sinks it a little into the ground.
+
+The vertex colours say how the palm sways in the wind, for the game's shader
+(environment/palm.gdshader): red how far a point sways (0 at the foot of the trunk, CROWN_SWAY
+at the crown, 1 at a frond's tip), green a phase for each frond, so they don't move as one,
+and blue how much it flutters (more toward a frond's tip).
 """
 from __future__ import annotations
 
@@ -14,6 +19,8 @@ from dataclasses import dataclass
 from kiln import geometry
 
 TRUNK, FROND, DRY, COCONUT = range(4)
+# How far the crown sways, as a share of a frond's tip: the trunk bends less than the fronds.
+CROWN_SWAY = 0.3
 
 
 @dataclass(frozen=True)
@@ -37,18 +44,22 @@ def mesh(palm: Palm) -> geometry.Mesh:
     lean_dir = rng.uniform(0, math.tau)
     lean = (math.cos(lean_dir) * palm.lean, math.sin(lean_dir) * palm.lean)
     curve = [(0.0, 0.0, 0.0), (lean[0] * 0.85, palm.height * 0.45, lean[1] * 0.85), (lean[0], palm.height, lean[1])]
-    out = _trunk(palm, curve)
+    # The fronds' phases come from a generator of their own, so the shapes stay as they were.
+    phases = random.Random(palm.seed + 1)
+    out = _trunk(palm, curve).with_colors(lambda p: (CROWN_SWAY * (max(p[1], 0.0) / palm.height) ** 2, 0.0, 0.0))
     crown = curve[2]
     for i in range(palm.fronds):
         azimuth = i * 2.39996 + rng.uniform(-0.2, 0.2)
         rise = rng.uniform(0.25, 0.75)
         length = palm.frond_length * rng.uniform(0.85, 1.1)
-        out = out.merged(_frond(crown, azimuth, rise, length, palm.droop * rng.uniform(0.8, 1.2), 0.5, FROND))
+        frond = _frond(crown, azimuth, rise, length, palm.droop * rng.uniform(0.8, 1.2), 0.5, FROND)
+        out = out.merged(_swaying(frond, crown, length, phases.random(), 1.0))
     for i in range(palm.dry_fronds):
         azimuth = rng.uniform(0, math.tau)
-        out = out.merged(_frond((crown[0], crown[1] - 0.35, crown[2]), azimuth, -0.9, palm.frond_length * 0.7,
-                                0.3, 0.32, DRY))
-    nut = geometry.lathe([(0, -0.11), (0.09, -0.07), (0.11, 0.0), (0.09, 0.07), (0, 0.11)], 6).with_material(COCONUT)
+        frond = _frond((crown[0], crown[1] - 0.35, crown[2]), azimuth, -0.9, palm.frond_length * 0.7, 0.3, 0.32, DRY)
+        out = out.merged(_swaying(frond, crown, palm.frond_length * 0.7, phases.random(), 0.4))
+    nut = (geometry.lathe([(0, -0.11), (0.09, -0.07), (0.11, 0.0), (0.09, 0.07), (0, 0.11)], 6)
+           .with_material(COCONUT).with_colors(lambda p: (CROWN_SWAY, 0.0, 0.0)))
     for i in range(palm.coconuts):
         angle = i * math.tau / palm.coconuts + rng.uniform(-0.3, 0.3)
         out = out.merged(nut.translated((crown[0] + math.cos(angle) * 0.2, crown[1] - 0.3 - rng.uniform(0, 0.12),
@@ -62,6 +73,17 @@ def build(k, palm: Palm) -> None:
     dry = k.material("FrondDry", "#8d6e3e", roughness=0.85)
     coconut = k.material("Coconut", "#5b4a2b", roughness=0.7)
     k.mesh("Palm", mesh(palm), material=[trunk, frond, dry, coconut])
+
+
+def _swaying(frond: geometry.Mesh, crown, length: float, phase: float, reach: float) -> geometry.Mesh:
+    """`frond` coloured to sway from the crown's sway at its foot to `reach` times a full
+    frond's at its tip, with one phase and a flutter rising toward its tip."""
+
+    def color(p):
+        out = min(math.dist(p, crown) / length, 1.0)
+        return (CROWN_SWAY + (reach - CROWN_SWAY * reach) * out ** 1.5, phase, out * reach)
+
+    return frond.with_colors(color)
 
 
 def _bezier(curve, t: float):
