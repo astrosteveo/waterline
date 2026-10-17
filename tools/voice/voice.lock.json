@@ -1,0 +1,1314 @@
+{
+  "combo_dax": {
+    "text": "What a combo from Dax!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "combo_ines": {
+    "text": "What a combo from Ines!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "combo_koa": {
+    "text": "What a combo from Koa!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "combo_marina": {
+    "text": "What a combo from Marina!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "disqualified_dax": {
+    "text": "Dax is disqualified!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "disqualified_ines": {
+    "text": "Ines is disqualified!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "disqualified_koa": {
+    "text": "Koa is disqualified!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "disqualified_marina": {
+    "text": "Marina is disqualified!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "final_lap_dax": {
+    "text": "Final lap! Dax leads!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "final_lap_ines": {
+    "text": "Final lap! Ines leads!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "final_lap_koa": {
+    "text": "Final lap! Koa leads!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "final_lap_marina": {
+    "text": "Final lap! Marina leads!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_dax_fourth": {
+    "text": "Dax finishes fourth!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_dax_second": {
+    "text": "Dax finishes second!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_dax_third": {
+    "text": "Dax finishes third!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_ines_fourth": {
+    "text": "Ines finishes fourth!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_ines_second": {
+    "text": "Ines finishes second!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_ines_third": {
+    "text": "Ines finishes third!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_koa_fourth": {
+    "text": "Koa finishes fourth!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_koa_second": {
+    "text": "Koa finishes second!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_koa_third": {
+    "text": "Koa finishes third!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_marina_fourth": {
+    "text": "Marina finishes fourth!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_marina_second": {
+    "text": "Marina finishes second!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "finishes_marina_third": {
+    "text": "Marina finishes third!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "full_power_dax": {
+    "text": "Dax is at full power!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "full_power_ines": {
+    "text": "Ines is at full power!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "full_power_koa": {
+    "text": "Koa is at full power!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "full_power_marina": {
+    "text": "Marina is at full power!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "go": {
+    "text": "Go!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "in_water_dax": {
+    "text": "Dax is in the water!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "in_water_ines": {
+    "text": "Ines is in the water!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "in_water_koa": {
+    "text": "Koa is in the water!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "in_water_marina": {
+    "text": "Marina is in the water!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "lap_record": {
+    "text": "New lap record!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "lead_dax": {
+    "text": "Dax takes the lead!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "lead_ines": {
+    "text": "Ines takes the lead!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "lead_koa": {
+    "text": "Koa takes the lead!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "lead_marina": {
+    "text": "Marina takes the lead!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "marks_ebb_reef": {
+    "text": "Riders, take your marks at Ebb Reef!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "marks_gull_cove": {
+    "text": "Riders, take your marks at Gull Cove!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "marks_gull_cove_mirror": {
+    "text": "Riders, take your marks at Gull Cove Mirror!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "marks_gull_cove_reverse": {
+    "text": "Riders, take your marks at Gull Cove Reverse!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "marks_gull_cove_swell": {
+    "text": "Riders, take your marks at Gull Cove Swell!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "marks_lantern_harbor": {
+    "text": "Riders, take your marks at Lantern Harbor!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "marks_whitecap_point": {
+    "text": "Riders, take your marks at Whitecap Point!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "moves_up_dax_second": {
+    "text": "Dax moves up to second!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "moves_up_dax_third": {
+    "text": "Dax moves up to third!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "moves_up_ines_second": {
+    "text": "Ines moves up to second!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "moves_up_ines_third": {
+    "text": "Ines moves up to third!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "moves_up_koa_second": {
+    "text": "Koa moves up to second!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "moves_up_koa_third": {
+    "text": "Koa moves up to third!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "moves_up_marina_second": {
+    "text": "Marina moves up to second!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "moves_up_marina_third": {
+    "text": "Marina moves up to third!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_dax_backflip": {
+    "text": "Dax nails the backflip!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_dax_barrel_roll": {
+    "text": "Dax nails the barrel roll!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_dax_handstand": {
+    "text": "Dax nails the handstand!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_dax_spin": {
+    "text": "Dax nails the spin!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_ines_backflip": {
+    "text": "Ines nails the backflip!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_ines_barrel_roll": {
+    "text": "Ines nails the barrel roll!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_ines_handstand": {
+    "text": "Ines nails the handstand!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_ines_spin": {
+    "text": "Ines nails the spin!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_koa_backflip": {
+    "text": "Koa nails the backflip!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_koa_barrel_roll": {
+    "text": "Koa nails the barrel roll!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_koa_handstand": {
+    "text": "Koa nails the handstand!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_koa_spin": {
+    "text": "Koa nails the spin!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_marina_backflip": {
+    "text": "Marina nails the backflip!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_marina_barrel_roll": {
+    "text": "Marina nails the barrel roll!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_marina_handstand": {
+    "text": "Marina nails the handstand!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "nails_marina_spin": {
+    "text": "Marina nails the spin!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "off": {
+    "text": "And they're off!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "photo_finish": {
+    "text": "Photo finish!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_10": {
+    "text": "10 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_11": {
+    "text": "11 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_12": {
+    "text": "12 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_13": {
+    "text": "13 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_14": {
+    "text": "14 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_15": {
+    "text": "15 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_3": {
+    "text": "3 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_4": {
+    "text": "4 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_5": {
+    "text": "5 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_6": {
+    "text": "6 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_7": {
+    "text": "7 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_8": {
+    "text": "8 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "rings_9": {
+    "text": "9 rings in a row!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "solo_finish_dax": {
+    "text": "Dax finishes!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "solo_finish_ines": {
+    "text": "Ines finishes!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "solo_finish_koa": {
+    "text": "Koa finishes!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "solo_finish_marina": {
+    "text": "Marina finishes!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "stunt_run_ebb_reef": {
+    "text": "Stunt run at Ebb Reef. Hit the rings!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "stunt_run_gull_cove": {
+    "text": "Stunt run at Gull Cove. Hit the rings!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "stunt_run_gull_cove_mirror": {
+    "text": "Stunt run at Gull Cove Mirror. Hit the rings!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "stunt_run_gull_cove_reverse": {
+    "text": "Stunt run at Gull Cove Reverse. Hit the rings!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "stunt_run_gull_cove_swell": {
+    "text": "Stunt run at Gull Cove Swell. Hit the rings!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "stunt_run_lantern_harbor": {
+    "text": "Stunt run at Lantern Harbor. Hit the rings!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "stunt_run_whitecap_point": {
+    "text": "Stunt run at Whitecap Point. Hit the rings!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "ten_seconds": {
+    "text": "Ten seconds left!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_dax_backflip": {
+    "text": "Dax throws a backflip!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_dax_barrel_roll": {
+    "text": "Dax throws a barrel roll!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_dax_handstand": {
+    "text": "Dax throws a handstand!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_dax_spin": {
+    "text": "Dax throws a spin!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_ines_backflip": {
+    "text": "Ines throws a backflip!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_ines_barrel_roll": {
+    "text": "Ines throws a barrel roll!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_ines_handstand": {
+    "text": "Ines throws a handstand!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_ines_spin": {
+    "text": "Ines throws a spin!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_koa_backflip": {
+    "text": "Koa throws a backflip!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_koa_barrel_roll": {
+    "text": "Koa throws a barrel roll!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_koa_handstand": {
+    "text": "Koa throws a handstand!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_koa_spin": {
+    "text": "Koa throws a spin!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_marina_backflip": {
+    "text": "Marina throws a backflip!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_marina_barrel_roll": {
+    "text": "Marina throws a barrel roll!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_marina_handstand": {
+    "text": "Marina throws a handstand!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "throws_marina_spin": {
+    "text": "Marina throws a spin!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "tide": {
+    "text": "The tide is going out. Watch for rocks!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_ebb_reef": {
+    "text": "Time trial at Ebb Reef. Set the pace!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_ghost_ebb_reef": {
+    "text": "Time trial at Ebb Reef. Beat the ghost!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_ghost_gull_cove": {
+    "text": "Time trial at Gull Cove. Beat the ghost!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_ghost_gull_cove_mirror": {
+    "text": "Time trial at Gull Cove Mirror. Beat the ghost!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_ghost_gull_cove_reverse": {
+    "text": "Time trial at Gull Cove Reverse. Beat the ghost!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_ghost_gull_cove_swell": {
+    "text": "Time trial at Gull Cove Swell. Beat the ghost!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_ghost_lantern_harbor": {
+    "text": "Time trial at Lantern Harbor. Beat the ghost!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_ghost_whitecap_point": {
+    "text": "Time trial at Whitecap Point. Beat the ghost!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_gull_cove": {
+    "text": "Time trial at Gull Cove. Set the pace!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_gull_cove_mirror": {
+    "text": "Time trial at Gull Cove Mirror. Set the pace!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_gull_cove_reverse": {
+    "text": "Time trial at Gull Cove Reverse. Set the pace!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_gull_cove_swell": {
+    "text": "Time trial at Gull Cove Swell. Set the pace!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_lantern_harbor": {
+    "text": "Time trial at Lantern Harbor. Set the pace!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "time_trial_whitecap_point": {
+    "text": "Time trial at Whitecap Point. Set the pace!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "weather_change": {
+    "text": "The weather is changing!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "weather_clear": {
+    "text": "The sky clears and the water calms down!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "weather_fog": {
+    "text": "Fog rolls in. Watch for the buoys!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "weather_overcast": {
+    "text": "Clouds roll in and the swell is rising!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "weather_storm": {
+    "text": "Here comes the storm! Hold on tight!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_dax_ebb_reef": {
+    "text": "Dax wins at Ebb Reef!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_dax_gull_cove": {
+    "text": "Dax wins at Gull Cove!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_dax_gull_cove_mirror": {
+    "text": "Dax wins at Gull Cove Mirror!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_dax_gull_cove_reverse": {
+    "text": "Dax wins at Gull Cove Reverse!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_dax_gull_cove_swell": {
+    "text": "Dax wins at Gull Cove Swell!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_dax_lantern_harbor": {
+    "text": "Dax wins at Lantern Harbor!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_dax_whitecap_point": {
+    "text": "Dax wins at Whitecap Point!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_ines_ebb_reef": {
+    "text": "Ines wins at Ebb Reef!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_ines_gull_cove": {
+    "text": "Ines wins at Gull Cove!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_ines_gull_cove_mirror": {
+    "text": "Ines wins at Gull Cove Mirror!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_ines_gull_cove_reverse": {
+    "text": "Ines wins at Gull Cove Reverse!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_ines_gull_cove_swell": {
+    "text": "Ines wins at Gull Cove Swell!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_ines_lantern_harbor": {
+    "text": "Ines wins at Lantern Harbor!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_ines_whitecap_point": {
+    "text": "Ines wins at Whitecap Point!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_koa_ebb_reef": {
+    "text": "Koa wins at Ebb Reef!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_koa_gull_cove": {
+    "text": "Koa wins at Gull Cove!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_koa_gull_cove_mirror": {
+    "text": "Koa wins at Gull Cove Mirror!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_koa_gull_cove_reverse": {
+    "text": "Koa wins at Gull Cove Reverse!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_koa_gull_cove_swell": {
+    "text": "Koa wins at Gull Cove Swell!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_koa_lantern_harbor": {
+    "text": "Koa wins at Lantern Harbor!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_koa_whitecap_point": {
+    "text": "Koa wins at Whitecap Point!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_marina_ebb_reef": {
+    "text": "Marina wins at Ebb Reef!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_marina_gull_cove": {
+    "text": "Marina wins at Gull Cove!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_marina_gull_cove_mirror": {
+    "text": "Marina wins at Gull Cove Mirror!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_marina_gull_cove_reverse": {
+    "text": "Marina wins at Gull Cove Reverse!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_marina_gull_cove_swell": {
+    "text": "Marina wins at Gull Cove Swell!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_marina_lantern_harbor": {
+    "text": "Marina wins at Lantern Harbor!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wins_marina_whitecap_point": {
+    "text": "Marina wins at Whitecap Point!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wipeout_dax": {
+    "text": "Oh! Dax wipes out!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wipeout_ines": {
+    "text": "Oh! Ines wipes out!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wipeout_koa": {
+    "text": "Oh! Koa wipes out!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  },
+  "wipeout_marina": {
+    "text": "Oh! Marina wipes out!",
+    "voice": "Waterline Announcer",
+    "seed": 7,
+    "effect_preset": "broadcast",
+    "speed": 1.0,
+    "guidance_scale": 2.0
+  }
+}
