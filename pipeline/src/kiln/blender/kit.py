@@ -11,13 +11,18 @@ import math
 from typing import Sequence
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Quaternion, Vector
 
 from kiln import geometry
 from kiln.blender.space import rotation_to_blender, to_blender, to_game
 
 # UVs covering less than this (m²) count as none: a texture would smear across the face.
 MIN_UV_AREA = 1e-10
+# Frames a second a clip is keyed and exported at.
+CLIP_FPS = 30
+# How far a looping clip's end may be from its start (in a channel's units: metres, a
+# quaternion's parts, a scale) and still join without a jump.
+LOOP_TOLERANCE = 1e-4
 
 
 def srgb_to_linear(c: float) -> float:
@@ -45,6 +50,9 @@ class Kit:
         self.collection = bpy.context.scene.collection
         # Each material made, by name, with the settings it was made with.
         self._materials: dict[str, tuple[bpy.types.Material, dict]] = {}
+        # Each clip made: its name, length, whether it loops, and its action.
+        self.clips: list[dict] = []
+        bpy.context.scene.render.fps = CLIP_FPS
 
     # --- Materials ---------------------------------------------------------------------
 
@@ -295,6 +303,120 @@ class Kit:
         self.parent(obj, armature)
 
 
+    # --- Clips -------------------------------------------------------------------------
+
+    def clip(self, name: str, seconds: float, keys: dict, loop: bool = False, smooth: bool = True) -> None:
+        """An animation clip `seconds` long, exported as a glTF animation that Godot imports into
+        the model's AnimationPlayer. A looping clip's name gets -loop after it, which Godot
+        takes off, looping the animation; it must end as it starts, which kiln checks.
+
+        `keys` gives each object (or its name), or a skeleton's bone ("Skeleton/ThighLeft"), its
+        poses as [(time in seconds, pose)]: a pose is a dict of `position` (metres), `rotation`
+        (degrees, applied as Godot does) and `scale` (a number, or x, y, z), what it leaves out
+        staying as built. An object's pose is where it goes in the model as built, as positions
+        are everywhere in a recipe, and it moves with its parent on top; a bone's moves it from
+        its rest, about its head. With `smooth` the motion eases from key to key, else it's
+        even. The model stays as built: a clip plays only in the game."""
+        if seconds <= 0:
+            raise ValueError(f"clip {name!r} is {seconds} s long")
+        action = bpy.data.actions.new(name + ("-loop" if loop else ""))
+        action.use_frame_range = True
+        action.frame_start, action.frame_end = 0, round(seconds * CLIP_FPS)
+        owners: dict = {}
+        for target, poses in keys.items():
+            owner, bone = self._clip_target(name, target)
+            owners.setdefault(owner, []).append((bone, poses))
+        for owner, entries in owners.items():
+            data = owner.animation_data or owner.animation_data_create()
+            rest = owner.matrix_basis.copy()
+            bpy.context.view_layer.update()
+            data.action = action
+            for bone, poses in entries:
+                last = None
+                for time, pose in sorted(poses, key=lambda key: key[0]):
+                    if not -1e-9 <= time <= seconds + 1e-9:
+                        raise ValueError(f"clip {name!r}: a key at {time} s is outside 0 to {seconds} s")
+                    frame = round(time * CLIP_FPS)
+                    moved = owner if bone is None else owner.pose.bones[bone]
+                    last = self._pose(owner, rest, bone, pose, last)
+                    for path in ("location", "rotation_quaternion", "scale"):
+                        moved.keyframe_insert(path, frame=frame)
+            for fcurve in _fcurves(action, data.action_slot):
+                for point in fcurve.keyframe_points:
+                    point.interpolation = "BEZIER" if smooth else "LINEAR"
+            # Kept in a muted track, the clip doesn't move the model as built, its checks and
+            # its preview, but the export still takes it.
+            slot = data.action_slot
+            data.action = None
+            track = data.nla_tracks.new()
+            track.name = action.name
+            strip = track.strips.new(action.name, 0, action)
+            strip.action_slot = slot
+            track.mute = True
+            owner.matrix_basis = rest
+            if owner.type == "ARMATURE":
+                for pose_bone in owner.pose.bones:
+                    pose_bone.matrix_basis = Matrix.Identity(4)
+        self.clips.append({"name": name, "seconds": seconds, "loop": loop, "action": action})
+
+    def clip_problems(self) -> list[str]:
+        """Each looping clip whose end isn't its start: the jump a player would see."""
+        found = []
+        for clip in self.clips:
+            if not clip["loop"]:
+                continue
+            end = clip["seconds"] * CLIP_FPS
+            for owner, fcurve in _owned_fcurves(clip["action"]):
+                start, finish = fcurve.evaluate(0), fcurve.evaluate(end)
+                if abs(start - finish) > LOOP_TOLERANCE:
+                    found.append(f"clip {clip['name']} doesn't loop: {owner} {fcurve.data_path}[{fcurve.array_index}] "
+                                 f"is {start:.4f} at the start and {finish:.4f} at the end")
+        return found
+
+    def _clip_target(self, clip: str, target):
+        """The object a clip's key moves, and the bone in it (or None)."""
+        if isinstance(target, bpy.types.Object):
+            return target, None
+        name, _, bone = str(target).partition("/")
+        owner = bpy.data.objects.get(name)
+        if owner is None or (bone and (owner.type != "ARMATURE" or bone not in owner.data.bones)):
+            raise ValueError(f"clip {clip!r}: nothing called {target!r} to move")
+        if not bone:
+            owner.rotation_mode = "QUATERNION"
+            return owner, None
+        owner.pose.bones[bone].rotation_mode = "QUATERNION"
+        return owner, bone
+
+    def _pose(self, owner, rest: Matrix, bone: str | None, pose: dict, last: Quaternion | None) -> Quaternion:
+        """Puts `owner` (or its `bone`) in `pose`, turning the shorter way from `last`; returns
+        the turn set."""
+        scale = pose.get("scale", 1.0)
+        scale = Vector((scale, scale, scale)) if isinstance(scale, (int, float)) else Vector(scale).xzy
+        if bone is None:
+            # From where it goes in the model as built to where that is in its parent's space,
+            # with the parent as built (each object is put back as built after its keys).
+            parent = owner.parent.matrix_world.copy() if owner.parent is not None else Matrix.Identity(4)
+            built_position, built_turn, built_scale = (parent @ rest).decompose()
+            world = Matrix.LocRotScale(to_blender(pose["position"]) if "position" in pose else built_position,
+                                       rotation_to_blender(pose["rotation"]).to_quaternion() if "rotation" in pose
+                                       else built_turn,
+                                       scale if "scale" in pose else built_scale)
+            position, turn, scale = (parent.inverted() @ world).decompose()
+            moved = owner
+        else:
+            # A bone's pose is in its own space: carry the game-space move into it.
+            into = owner.data.bones[bone].matrix_local.to_3x3()
+            position = into.inverted() @ to_blender(pose.get("position", (0.0, 0.0, 0.0)))
+            turn = (into.inverted() @ rotation_to_blender(pose.get("rotation", (0.0, 0.0, 0.0))) @ into).to_quaternion()
+            moved = owner.pose.bones[bone]
+        if last is not None:
+            turn.make_compatible(last)
+        moved.location = position
+        moved.rotation_quaternion = turn
+        moved.scale = scale
+        return turn
+
+
 def uv_area(points) -> float:
     """The area a face covers in UV space, from its corners' UVs."""
     return abs(sum(points[i][0] * points[(i + 1) % len(points)][1] - points[(i + 1) % len(points)][0] * points[i][1]
@@ -307,3 +429,15 @@ def _area(points) -> float:
     for i in range(len(points)):
         total = total + points[i].cross(points[(i + 1) % len(points)])
     return total.length / 2
+
+
+def _fcurves(action, slot) -> list:
+    """The animation curves of one slot of `action` (the channels it keys for one object)."""
+    return [fcurve for layer in action.layers for strip in layer.strips for bag in strip.channelbags
+            if bag.slot == slot for fcurve in bag.fcurves]
+
+
+def _owned_fcurves(action) -> list:
+    """Every animation curve of `action`, with the name of the object it moves."""
+    return [(bag.slot.name_display, fcurve) for layer in action.layers for strip in layer.strips
+            for bag in strip.channelbags for fcurve in bag.fcurves]

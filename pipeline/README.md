@@ -80,6 +80,7 @@ at (0, 0.8, 0.4) is at (0, 0.8, 0.4) in the game.
 | `k.marker(name, position, rotation, parent)` | a named empty; the game finds it by name (imports as a Node3D) |
 | `k.parent(child, parent)` | makes `child` move with `parent`, where it is now |
 | `k.armature(name, bones)` | a skeleton of bones from `{name: (head, tail)}`, none parented to another; imports as a Skeleton3D |
+| `k.clip(name, seconds, keys, loop, smooth)` | an animation clip: keys of each object's (or bone's) position, rotation and scale over time, exported as a glTF animation (see below) |
 | `k.skin(obj, armature, weights)` | fixes `obj` to the armature's bones: wholly to one (a bone's name), or by a function from a vertex's position to `{bone: weight}`; `obj` becomes the armature's child |
 | `k.bevel(obj, width, segments, angle)` | rounds an object's sharp edges, and projects its UVs afresh (`project_uvs`) |
 | `k.project_uvs(obj)` | UVs projected onto each face from the axis it faces most (box mapping) |
@@ -101,6 +102,25 @@ as plain data, and is tested without Blender:
   function of its position, exported as the mesh's vertex colours (`COLOR_0`), as data for a
   game's shaders (Godot doesn't draw them unless a material asks);
 - `value_noise`, smooth noise from -1 to 1 for moving points about (a rock's lumps).
+
+### Clips
+
+```python
+flag = k.mesh("Flag", ..., parent=pole, position=(0.04, 2.6, 0))
+k.clip("Wave", 2.0, {flag: [(0.0, {"rotation": (0, -20, 0)}), (1.0, {"rotation": (0, 20, 0)}),
+                            (2.0, {"rotation": (0, -20, 0)})]}, loop=True)
+k.clip("Bend", 0.5, {"Skeleton/ForearmLeft": [(0.0, {}), (0.5, {"rotation": (60, 0, 0)})]})
+```
+
+A clip keys objects (or their names) and a skeleton's bones (`"Skeleton/BoneName"`) with poses
+over time: `position` (metres), `rotation` (degrees, applied as Godot does) and `scale`, what a
+pose leaves out staying as built. An object's pose is where it goes in the model as built,
+as everywhere in a recipe, and it moves with its parent on top; a bone's pose moves it from its
+rest, about its head. Clips are sampled at 30 frames a second and exported as glTF animations,
+which Godot imports into the model's `AnimationPlayer`; a looping clip's name gets `-loop`
+after it, which Godot takes off and loops the animation by. The model stays as built: kiln
+checks it at rest, and a looping clip must end as it starts (it fails the build, naming the
+channel, if not). Each clip gets a filmstrip beside the preview sheet, `clip-<name>.png`.
 
 ### UVs
 

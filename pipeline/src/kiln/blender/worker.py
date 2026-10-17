@@ -86,9 +86,11 @@ def build_asset(asset: dict, export: bool, with_preview: bool) -> dict:
 
 
 def _build_model(recipe, asset: dict, export: bool, with_preview: bool) -> dict:
-    recipe.build(Kit())
+    kit = Kit()
+    recipe.build(kit)
     report = {"kind": "model", **checks.measure()}
-    report["problems"] = checks.problems(recipe.spec, report)
+    report["problems"] = checks.problems(recipe.spec, report) + kit.clip_problems()
+    report["clips"] = {clip["name"]: {"seconds": clip["seconds"], "loop": clip["loop"]} for clip in kit.clips}
     if report["problems"]:
         return report
     output = asset["stem"] + ".glb"
@@ -98,8 +100,10 @@ def _build_model(recipe, asset: dict, export: bool, with_preview: bool) -> dict:
         _export(output)
     if with_preview:
         sheet = os.path.join(asset["report_dir"], "preview.png")
-        preview.render_sheet(sheet, report["bounds"], PREVIEW_MATERIALS)
+        strips = preview.render_sheet(sheet, report["bounds"], PREVIEW_MATERIALS, kit.clips)
         report["preview"] = sheet
+        for name, path in strips.items():
+            report["clips"][name]["filmstrip"] = path
     return report
 
 
@@ -132,7 +136,10 @@ def _export(path: str) -> None:
         export_cameras=False,
         export_lights=False,
         export_extras=False,
-        export_animations=False,
+        # Each clip (Kit.clip), kept in muted NLA tracks, as an animation sampled every frame.
+        export_animations=True,
+        export_animation_mode="ACTIONS",
+        export_force_sampling=True,
         export_tangents=False,
         # A mesh's colour attribute, where it has one, as COLOR_0 (data for the game's shaders).
         export_vertex_color="ACTIVE",
