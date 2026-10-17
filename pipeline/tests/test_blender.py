@@ -241,6 +241,34 @@ def test_bakes_textures_that_tile_identically(project, capsys):
     assert "ok           textures/planks" in capsys.readouterr().out
 
 
+# Ridges four to a tile, baked to make dirt in the troughs and an occlusion map.
+DIRTY = '''
+from kiln import texture
+@texture(size=64, tile=1.0, relief=0.05, maps=("albedo", "occlusion"), samples=1)
+def build(t):
+    height = t.stripes(4, along="u")
+    baked = t.bake(height)
+    dirt = t.hollows(baked, 0.04)
+    t.output(albedo=t.mix("#c0b090", "#403020", dirt), occlusion=t.occlusion(baked, 0.08), height=height)
+'''
+
+
+def test_masks_from_a_baked_height_darken_its_hollows(project, capsys):
+    (project / "textures" / "dirty.py").write_text(DIRTY)
+    assert kiln(project, "build", "textures/dirty") == 0
+    out = project / "out" / "textures"
+    width, _, _, _, occlusion = png.read(str(out / "dirty_occlusion.png"))
+    _, _, _, _, albedo = png.read(str(out / "dirty_albedo.png"))
+    row = list(occlusion[:width])
+    # Across a row: stripe crests (u = 1/16, 5/16, ...) and troughs (u = 3/16, 7/16, ...).
+    crest, trough = width // 16, 3 * width // 16
+    assert row[crest] > 240 and row[trough] < row[crest] - 20
+    assert albedo[3 * trough] < albedo[3 * crest] - 60
+    first = (out / "dirty_occlusion.png").read_bytes()
+    assert kiln(project, "build", "--force", "--no-preview", "textures/dirty") == 0
+    assert (out / "dirty_occlusion.png").read_bytes() == first
+
+
 def test_broken_textures_fail_with_reasons(project, capsys):
     (project / "textures" / "broken").mkdir(parents=True)
     for name, text in BROKEN_TEXTURES.items():

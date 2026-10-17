@@ -1,5 +1,5 @@
 """Weathered timber for piers and crates: grain along u with knots, sun-bleached in streaks
-along the grain."""
+along the grain, with grime down in the grain's grooves."""
 from kiln import texture
 
 
@@ -15,4 +15,7 @@ def build(t):
     timber = t.ramp(rings * 0.45 + grain * 0.55, [(0.3, "#6a482c"), (0.72, "#9c7550")])
     timber = t.mix(timber, "#a89f8f", bleach * 0.55)
     timber = t.mix(timber, "#3b2718", knot * 0.85)
+    # Grime gathers in the grain's grooves, found from the height as baked.
+    grooves = t.hollows(t.bake(height), 0.006)
+    timber = t.mix(timber, "#2a1c12", grooves * 0.3)
     t.output(albedo=timber, roughness=0.86 - grain * 0.1, height=height)

@@ -29,10 +29,11 @@ def build_texture(recipe, stem: str, export: bool, report_dir: str | None) -> di
     """Runs a texture recipe, bakes and checks its maps, and (with `export`) writes them next
     to `stem`. With `report_dir`, renders the preview sheet there. Returns the report fields."""
     spec: TextureSpec = recipe.spec
-    kit = TextureKit(spec.tile)
+    kit = TextureKit(spec.tile, spec.size, spec.relief, bake=lambda value: _bake(kit, value, spec)[:, :, 0])
     recipe.build(kit)
     problems = []
-    needed = {"albedo": "albedo", "roughness": "roughness", "height": "height", "normal": "height"}
+    needed = {"albedo": "albedo", "roughness": "roughness", "height": "height", "normal": "height",
+              "occlusion": "occlusion"}
     missing = sorted({needed[m] for m in spec.maps if needed[m] not in kit.outputs})
     if missing:
         return {"kind": "texture", "problems": [f"the recipe gave no {', '.join(missing)} (t.output)"]}

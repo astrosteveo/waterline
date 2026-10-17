@@ -71,6 +71,7 @@ TEXTURE_MAPS = {
     "normal": "tangent-space normals from the height (OpenGL convention: green points up the image)",
     "roughness": "roughness, 0 to 1",
     "height": "the height, 0 to 1 (16-bit)",
+    "occlusion": "ambient occlusion, 0 to 1: 1 open to the sky, toward 0 where the surface hides itself",
 }
 
 

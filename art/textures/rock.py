@@ -1,5 +1,6 @@
 """Weathered grey-brown rock for the rocks, pillars and cliffs: mottled stone with faint
-strata, wandering cracks, pits and patches of lichen."""
+strata, wandering cracks, pits and patches of lichen; dirt down in the cracks and pits,
+the edges worn paler, and the hollows shaded by the stone round them."""
 from kiln import texture
 
 
@@ -19,4 +20,13 @@ def build(t):
     lichen = t.noise(scale=2.0, detail=5, seed=7).smoothstep(0.6, 0.68)
     stone = t.mix(stone, "#8d8a58", lichen * 0.55)
     stone = stone * (1 - cracks * 0.55 - pits * 0.2)
-    t.output(albedo=stone, roughness=0.88 - lichen * 0.08, height=height.clamp())
+    # From the height as baked: grime in the hollows, the crests worn pale, and light kept
+    # out of the hollows by the stone round them.
+    baked = t.bake(height.clamp())
+    grime = t.hollows(baked, 0.04)
+    worn = t.ridges(baked, 0.08)
+    shade = t.occlusion(baked, 0.12)
+    stone = t.mix(stone, "#3e382f", grime * 0.35)
+    stone = t.mix(stone, "#a79f92", worn * 0.18)
+    stone = stone * (0.7 + shade * 0.3)
+    t.output(albedo=stone, roughness=0.88 - lichen * 0.08 + grime * 0.05, height=height.clamp())

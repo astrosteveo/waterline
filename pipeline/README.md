@@ -138,11 +138,16 @@ def build(t):
 A texture recipe builds a material from Blender's procedural textures, and kiln bakes it in
 Cycles (on the CPU, with a fixed seed, so every build gives the same pixels) into
 `<output>/<id>_<map>.png`: `albedo` (sRGB), `normal` (tangent space, OpenGL convention: green
-points up the image, as Godot expects), `roughness` and `height` (16-bit). The normal map is
-worked out from the height, `relief` metres between height 0 and 1. Every map tiles: noise and
-Voronoi are sampled on a torus in four dimensions, so the left edge meets the right and the
-top the bottom, and stripes and bands come in whole numbers per tile. Scales are per metre of
-the game's surface, `tile` metres to a tile.
+points up the image, as Godot expects), `roughness`, `height` (16-bit) and `occlusion`. The
+normal map is worked out from the height, `relief` metres between height 0 and 1. Every map
+tiles: noise and Voronoi are sampled on a torus in four dimensions, so the left edge meets
+the right and the top the bottom, and stripes and bands come in whole numbers per tile.
+Scales are per metre of the game's surface, `tile` metres to a tile.
+
+A node graph is worked out one pixel at a time, so it can't see the pixels round each one:
+to put dirt in cracks or wear on edges, `t.bake` bakes a value (the height) partway through,
+and the masks from it (`kiln.masks`, in numpy, wrapping round the edges so they tile) come
+back into the graph as values. Each bake takes as long as a map's.
 
 `t` (`kiln.blender.shading.TextureKit`) gives values and colours, which combine with numbers
 and each other through `+ - * / **`:
@@ -156,7 +161,10 @@ and each other through `+ - * / **`:
 | `t.bands(count, along, warp)`, `t.random(value, seed)` | which band a pixel is in, and a random number per band (planks) |
 | `value.clamp()`, `.min()`, `.max()`, `.floor()`, `.fract()`, `.wrap()`, `.sin()`, `.cos()`, `.remap()`, `.smoothstep()` | maths on a value |
 | `t.color(colour)`, `t.ramp(value, stops)`, `t.mix(a, b, factor)` | flat colours, colour ramps, and mixes of colours or values |
-| `t.output(albedo, roughness, height)` | which colour and values become the maps |
+| `t.bake(value)` | the value baked into the tile's pixels now (usually the height), for the masks below |
+| `t.blurred(baked, radius)`, `t.ridges(baked, radius)`, `t.hollows(baked, radius)` | values worked out from a baked height, looking `radius` metres round each point: it blurred; how far each point stands above the height round it (crests, where a surface wears) or below it (cracks and gaps, where dirt gathers), 0 to 1 |
+| `t.occlusion(baked, radius, relief)` | ambient occlusion from a baked height: 1 open to the sky, toward 0 deep in a hollow |
+| `t.output(albedo, roughness, height, occlusion)` | which colour and values become the maps |
 
 ## A sound recipe
 
