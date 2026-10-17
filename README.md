@@ -51,7 +51,7 @@ Shift, the right mouse button to look and the wheel for speed.
 | `godot/` | the game: the Godot project, its scenes, scripts, assets and tests (`res://` is here) |
 | `art/` | the recipes for the game's models, textures and sounds, which kiln builds into `godot/assets/` |
 | `pipeline/` | kiln, the asset pipeline: builds models and textures from Python recipes in headless Blender, and sounds with its own synthesis kit |
-| `tools/` | the course tool and the course specs it builds into `godot/levels/` |
+| `tools/` | the course tool and the course specs it builds into `godot/levels/`, and the voice tool that records the announcer's lines with VoiceStudio |
 | `docs/` | screenshots |
 | `build/` | exports (not in git) |
 

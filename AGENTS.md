@@ -23,7 +23,8 @@ and tuning from how a real jet ski behaves, and say so when realism would cost f
   textures and sounds from the recipes in `art/` (`uv run --project pipeline kiln build`;
   `art/README.md` says what to commit). Look at kiln's preview sheet in
   `build/kiln/<id>/preview.png`, then at the model in the game; for a sound, a `gdh movie`'s
-  `audio.png`. You can't hear the sounds, so ask the user to listen.
+  `audio.png`. You can't hear the sounds, so ask the user to listen. The announcer's lines are
+  recorded by `tools/voice/voice_tool.py` with VoiceStudio (`--check` hears them back).
   `pipeline/` must stay free of anything Waterline-specific, so it can become its own repository.
 - **Write `.tres`/`.tscn` by hand** rather than resaving through the headless editor, which adds
   `shader_parameter/x = null` lines to materials.

@@ -1,0 +1,51 @@
+{
+ "description": "The announcer speaks his lines on the Voice bus: the call to the start line plays its clip, the start cuts it off with its own (he never talks over himself), and every line the game can call has a clip. The voice ducks the music and the engines.",
+ "start": {
+  "scene": "res://race/race.tscn",
+  "seed": 1,
+  "user_data": "fresh"
+ },
+ "steps": [
+  {
+   "until": "get_node('Announcer').voiced.size() > 0",
+   "max": 400
+  },
+  {
+   "expect": "get_node('Announcer').voiced[0]",
+   "equals": "marks_gull_cove",
+   "name": "the countdown calls the riders to the start line"
+  },
+  {
+   "until": "get_node('Announcer/Voice').playing",
+   "max": 10,
+   "name": "and says it"
+  },
+  {
+   "expect": "get_node('Announcer/Voice').stream.resource_path",
+   "equals": "res://assets/audio/voice/marks_gull_cove.ogg"
+  },
+  {
+   "expect": "get_node('Announcer').unvoiced().size() == 0",
+   "name": "every line the game can call has its clip"
+  },
+  {
+   "until": "phase == 1",
+   "max": 400
+  },
+  "step 2",
+  {
+   "expect": "get_node('Announcer/Voice').stream.resource_path",
+   "equals": "res://assets/audio/voice/off.ogg",
+   "name": "the start cuts in with its own line"
+  },
+  {
+   "expect": "abs(AudioServer.get_bus_volume_db(AudioServer.get_bus_index('Voice')) - linear_to_db(0.8)) < 0.01",
+   "name": "on the Voice bus, at 80% to start with"
+  },
+  {
+   "expect": "[AudioServer.get_bus_effect(AudioServer.get_bus_index('Music'), 0).sidechain, AudioServer.get_bus_effect(AudioServer.get_bus_index('Engine'), 0).sidechain]",
+   "equals": ["Voice", "Voice"],
+   "name": "the voice ducks the music and the engines"
+  }
+ ]
+}
