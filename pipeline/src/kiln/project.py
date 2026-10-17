@@ -5,6 +5,10 @@ A project is a folder with a `kiln.toml`:
     output = "../godot/assets"    # where built assets go
     reports = "../build/kiln"     # where reports and preview sheets go (keep it out of git)
 
+    [preview.materials]           # how preview sheets draw the materials a game textures or paints
+    Rock = { texture = "textures/rock" }    # in a texture the project builds
+    "Suit*" = { color = "#d91f24" }         # in a colour, times its own (a name ending * is a prefix)
+
 Every `*.py` file under the folder is a recipe, except files and folders whose names start
 with `_`, which hold code that recipes share. A recipe at `models/props/crate.py` is the asset
 `models/props/crate` and builds `<output>/models/props/crate.glb`; a texture recipe at
@@ -23,7 +27,7 @@ import ast
 import hashlib
 import json
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from kiln.recipe import KINDS
@@ -55,6 +59,8 @@ class Project:
     root: Path
     output: Path
     reports: Path
+    # [preview.materials] from kiln.toml: by material name, {"texture": an id, "color": a colour}.
+    preview_materials: dict = field(default_factory=dict)
 
     @staticmethod
     def find(start: Path) -> "Project":
@@ -72,7 +78,8 @@ class Project:
         root = root.resolve()
         config = tomllib.loads((root / CONFIG).read_text())
         return Project(root, (root / config.get("output", "out")).resolve(),
-                       (root / config.get("reports", "reports")).resolve())
+                       (root / config.get("reports", "reports")).resolve(),
+                       config.get("preview", {}).get("materials", {}))
 
     def assets(self) -> list[Asset]:
         """Every recipe in the project, sorted by id."""

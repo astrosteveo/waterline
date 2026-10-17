@@ -95,6 +95,25 @@ def test_kind_is_read_from_the_decorator(tmp_path):
     assert project.kind(project.select(["textures/broken"])[0]) == "model"
 
 
+def test_preview_materials_come_from_kiln_toml_with_their_textures_from_the_lock(tmp_path):
+    from kiln.cli import preview_materials
+    project = make_project(tmp_path / "art")
+    (project.root / "kiln.toml").write_text('''output = "../out"
+[preview.materials]
+Rock = { texture = "textures/rock" }
+Moss = { texture = "textures/moss" }
+"Suit*" = { color = "#ff0000" }
+''')
+    project = Project.load(project.root)
+    project.write_lock({"textures/rock": {"outputs": ["../out/textures/rock_albedo.png", "../out/textures/rock_orm.png"],
+                                          "tile": 4.0}})
+    rules = {rule["name"]: rule for rule in preview_materials(project)}
+    assert rules["Rock"]["albedo"] == str(project.root / "../out/textures/rock_albedo.png") and rules["Rock"]["tile"] == 4.0
+    # A texture not built yet is left out; a name ending * matches the start of a name.
+    assert "albedo" not in rules["Moss"]
+    assert rules["Suit"] == {"name": "Suit", "prefix": True, "color": "#ff0000"}
+
+
 def test_lock_round_trip(tmp_path):
     project = make_project(tmp_path / "art")
     assert project.read_lock() == {}

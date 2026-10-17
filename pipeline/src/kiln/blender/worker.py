@@ -13,6 +13,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import shutil
 import sys
 import time
 import traceback
@@ -28,6 +29,8 @@ from kiln.recipe import find_recipe  # noqa: E402
 
 # The project being built: errors show the lines of its code they came through.
 PROJECT_ROOT = ""
+# How the preview sheets draw the materials a game paints or textures (cli.preview_materials).
+PREVIEW_MATERIALS: list[dict] = []
 
 
 def main() -> None:
@@ -37,8 +40,9 @@ def main() -> None:
     # Recipes import shared code by its path from the project folder
     # (`from models.craft._hull import hull`).
     sys.path.insert(0, job["project_root"])
-    global PROJECT_ROOT
+    global PROJECT_ROOT, PREVIEW_MATERIALS
     PROJECT_ROOT = job["project_root"]
+    PREVIEW_MATERIALS = job.get("preview_materials", [])
     results = {}
     for asset in job["assets"]:
         results[asset["id"]] = build_asset(asset, job.get("export", True), job.get("preview", True))
@@ -52,6 +56,11 @@ def build_asset(asset: dict, export: bool, with_preview: bool) -> dict:
     started = time.monotonic()
     bpy.ops.wm.read_factory_settings(use_empty=True)
     report = {"id": asset["id"], "recipe": asset["recipe"]}
+    # The last build's sheet, to show what this one changed.
+    sheet = os.path.join(asset["report_dir"], "preview.png")
+    before = sheet + ".before"
+    if with_preview and os.path.isfile(sheet):
+        shutil.copyfile(sheet, before)
     try:
         module = _load_module(asset["recipe"], asset["id"])
         recipe = find_recipe(module)
@@ -62,6 +71,12 @@ def build_asset(asset: dict, export: bool, with_preview: bool) -> dict:
             report.update(_build_model(recipe, asset, export, with_preview))
     except Exception as error:
         report["problems"] = [_describe_error(error, asset["recipe"])]
+    if os.path.isfile(before):
+        if report.get("preview"):
+            changes = preview.compare_sheets(before, sheet, os.path.join(asset["report_dir"], "changes.png"))
+            if changes:
+                report["changes"] = changes
+        os.remove(before)
     report["seconds"] = round(time.monotonic() - started, 2)
     report["ok"] = not report["problems"]
     os.makedirs(asset["report_dir"], exist_ok=True)
@@ -83,7 +98,7 @@ def _build_model(recipe, asset: dict, export: bool, with_preview: bool) -> dict:
         _export(output)
     if with_preview:
         sheet = os.path.join(asset["report_dir"], "preview.png")
-        preview.render_sheet(sheet, report["bounds"])
+        preview.render_sheet(sheet, report["bounds"], PREVIEW_MATERIALS)
         report["preview"] = sheet
     return report
 

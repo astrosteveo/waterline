@@ -254,12 +254,32 @@ Every sound is checked too:
 
 Each build renders `<reports>/<id>/preview.png`. A sound recipe's has a row for each sound:
 its name, length, peak and RMS, its waveform, its spectrogram (log frequency from 30 Hz) and,
-for a loop, its last and first few milliseconds joined at the seam. A model's shows the front, side, top and
-three-quarter views in the materials' colours, with markers as small magenta diamonds, and
-below them the front and back three-quarter views in a checker on the UVs, so stretched or
-sheared UVs show: squares about a sixteenth of the model across, red rising along u and green
-along v. A texture's shows each map tiled two by two, so a seam would show as a cross. `report.json`
-beside it holds the measurements and problems.
+for a loop, its last and first few milliseconds joined at the seam. A texture's shows each
+map tiled two by two, so a seam would show as a cross. A model's has four rows:
+
+- the front, side, top and three-quarter views, with markers as small magenta diamonds, each
+  material drawn as the game will where `kiln.toml` says how (below), in its own colour
+  elsewhere;
+- the front and back three-quarter views in a checker on the UVs, so stretched or sheared
+  UVs show: squares about a sixteenth of the model across, red rising along u and green
+  along v;
+- the same two views of its triangles, as the game gets them, over the model in grey.
+
+`report.json` beside it holds the measurements and problems. When an asset is built again
+and its sheet differs, `changes.png` beside it shows the sheet before, the sheet now, and
+the pixels that changed in red, and the build's output says how much of the sheet changed.
+
+A game textures or paints some materials itself, by name; `[preview.materials]` in
+`kiln.toml` says how the sheet should draw them: in a texture the project builds (its albedo
+map, at its `tile`), or in a colour times the material's own (as the game paints a light
+grey part a darker shade), or both. A name ending in `*` matches the start of a name.
+
+```toml
+[preview.materials]
+Rock = { texture = "textures/rock" }
+WoodDark = { texture = "textures/wood", color = "#8c8075" }
+"Suit*" = { color = "#d91f24" }
+```
 
 ## Tests
 

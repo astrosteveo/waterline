@@ -172,6 +172,9 @@ def run(project: Project, blender: str, assets: list[Asset], export: bool, previ
             print(f"             note: {note}")
         if report.get("preview"):
             print(f"             preview: {os.path.relpath(report['preview'])}")
+        if report.get("changes"):
+            changes = report["changes"]
+            print(f"             changes: {os.path.relpath(changes['path'])} ({changes['share']:.1%} of the sheet)")
     return (1 if failed else 0), results
 
 
@@ -201,6 +204,7 @@ def run_blender(project: Project, blender: str, assets: list[Asset], export: boo
             "result": os.path.join(folder, "result.json"),
             "assets": [{"id": a.id, "recipe": str(a.recipe), "stem": str(a.stem),
                         "report_dir": str(a.report_dir)} for a in assets],
+            "preview_materials": preview_materials(project),
         }
         job_path = os.path.join(folder, "job.json")
         with open(job_path, "w") as f:
@@ -214,6 +218,23 @@ def run_blender(project: Project, blender: str, assets: list[Asset], export: boo
             return {}
         with open(job["result"]) as f:
             return json.load(f)
+
+
+def preview_materials(project: Project) -> list[dict]:
+    """The project's [preview.materials], each texture found as its last build's albedo map
+    and tile (from the lock): how the preview sheets draw the materials a game paints or
+    textures. A texture not built yet is left out."""
+    lock = project.read_lock()
+    rules = []
+    for name, rule in project.preview_materials.items():
+        entry = {"name": name.rstrip("*"), "prefix": name.endswith("*"), "color": rule.get("color")}
+        built = lock.get(rule.get("texture", ""), {})
+        albedo = next((o for o in built.get("outputs", []) if o.endswith("_albedo.png")), None)
+        if albedo is not None:
+            entry["albedo"] = str(project.root / albedo)
+            entry["tile"] = built["tile"]
+        rules.append(entry)
+    return rules
 
 
 def blender_version(blender: str) -> str:
