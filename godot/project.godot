@@ -30,6 +30,12 @@ window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[importer_defaults]
+
+scene={
+"import_script/path": "res://environment/model_import.gd"
+}
+
 [input]
 
 ui_accept={
