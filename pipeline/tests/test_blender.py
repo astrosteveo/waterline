@@ -101,6 +101,13 @@ from kiln import model
 def build(k):
     k.box("Box", (1, 1, 1), material=k.material("Nothing", "#ffffff", alpha=0.0))
 ''',
+    "jumpy": '''
+from kiln import model
+@model()
+def build(k):
+    door = k.box("Door", (1, 2, 0.1), center=(0, 1, 0))
+    k.clip("Swing", 1.0, {door: [(0.0, {"rotation": (0, 0, 0)}), (1.0, {"rotation": (0, 90, 0)})]}, loop=True)
+''',
     "raises": '''
 from kiln import model
 @model()
@@ -338,6 +345,7 @@ def test_broken_recipes_fail_with_reasons(project, capsys):
     assert "Two:" not in sections["crossed"]
     assert "6 faces whose UVs cover no area" in sections["flat_uvs"]
     assert "no wood left" in sections["raises"]
+    assert "clip Swing doesn't loop: Door rotation_quaternion" in sections["jumpy"]
     assert "the material 'Nothing' has alpha 0.0" in sections["clear"]
     # Asked for again with the same settings it is the same material; with others, it fails.
     assert "the material 'Paint' was made with other settings (color '#ff0000', now '#0000ff')" in sections["two_paints"]
@@ -428,6 +436,61 @@ def build(k):
     assert set(round(g, 3) for g in greens) == {0.25}
     report = json.loads((project / "reports" / "models" / "frond" / "report.json").read_text())
     assert report["meshes"]["Frond"]["colors"] and not report["meshes"]["Stem"]["colors"]
+
+
+# A flag on a pole: a waving loop and a raising, and a bone's clip on the arm's skeleton.
+FLAG = '''
+from kiln import geometry, model
+@model(markers=["Pole", "Flag"])
+def build(k):
+    pole = k.box("Pole", (0.08, 3.0, 0.08), center=(0, 1.5, 0))
+    flag = k.mesh("Flag", geometry.box((1.2, 0.7, 0.04), (0.6, 0, 0)), parent=pole, position=(0.04, 2.6, 0))
+    k.clip("Wave", 2.0, {flag: [(0.0, {"rotation": (0, -20, 0)}), (1.0, {"rotation": (0, 20, 0)}),
+                                (2.0, {"rotation": (0, -20, 0)})]}, loop=True)
+    # Positions as built, in the model: the flag runs up the pole from near its foot.
+    k.clip("Raise", 1.0, {"Flag": [(0.0, {"position": (0.04, 0.4, 0)}), (1.0, {"position": (0.04, 2.6, 0)})]},
+           smooth=False)
+'''
+
+
+def test_clips_export_as_animations_with_filmstrips(project):
+    (project / "models" / "flag.py").write_text(FLAG)
+    (project / "models" / "arm.py").write_text(ARM.replace('''    k.marker("Elbow", (0.5, 0, 0))''', '''    k.marker("Elbow", (0.5, 0, 0))
+    k.clip("Bend", 0.5, {"Skeleton/LowerBone": [(0.0, {}), (0.5, {"rotation": (0, 0, 60)})]})'''))
+    assert kiln(project, "build", "models/flag", "models/arm") == 0
+    gltf = read_gltf(project / "out" / "models" / "flag.glb")
+    names = [node["name"] for node in gltf["nodes"]]
+    animations = {a["name"]: a for a in gltf["animations"]}
+    # A looping clip's name ends -loop, which Godot takes off, looping it.
+    assert sorted(animations) == ["Raise", "Wave-loop"]
+    assert {names[c["target"]["node"]] for c in animations["Raise"]["channels"]} == {"Flag"}
+    # The flag is built at the top of the pole; the clip moves it in its parent's space.
+    flag = gltf["nodes"][names.index("Flag")]
+    assert flag["translation"] == pytest.approx([0.04, 1.1, 0], abs=1e-5)
+    raise_path = next(c for c in animations["Raise"]["channels"] if c["target"]["path"] == "translation")
+    sampler = animations["Raise"]["samplers"][raise_path["sampler"]]
+    heights = [p[1] for p in read_accessor(project / "out" / "models" / "flag.glb", sampler["output"])]
+    assert (heights[0], heights[-1]) == pytest.approx((-1.1, 1.1), abs=1e-4)
+    times = read_accessor(project / "out" / "models" / "flag.glb", sampler["input"])
+    assert times[-1][0] == pytest.approx(1.0)
+    report = json.loads((project / "reports" / "models" / "flag" / "report.json").read_text())
+    assert report["clips"]["Wave"]["loop"] and Path(report["clips"]["Wave"]["filmstrip"]).is_file()
+    assert png_size(Path(report["clips"]["Raise"]["filmstrip"])) == (1024, 512)
+    # A skeleton's clip carries every bone (as the exporter samples them); the lower one turns
+    # through its 60 degrees and the upper one holds still.
+    arm = read_gltf(project / "out" / "models" / "arm.glb")
+    [bend] = arm["animations"]
+    turns = {}
+    for channel in bend["channels"]:
+        if channel["target"]["path"] == "rotation":
+            output = bend["samplers"][channel["sampler"]]["output"]
+            quaternions = read_accessor(project / "out" / "models" / "arm.glb", output)
+            dot = abs(sum(a * b for a, b in zip(quaternions[0], quaternions[-1])))
+            turns[arm["nodes"][channel["target"]["node"]]["name"]] = math.degrees(2 * math.acos(min(dot, 1.0)))
+    assert turns["LowerBone"] == pytest.approx(60, abs=0.5) and turns["UpperBone"] == pytest.approx(0, abs=0.01)
+    first = (project / "out" / "models" / "flag.glb").read_bytes()
+    assert kiln(project, "build", "--force", "--no-preview", "models/flag") == 0
+    assert (project / "out" / "models" / "flag.glb").read_bytes() == first
 
 
 def test_skinned_meshes_export_with_their_skeleton(project):

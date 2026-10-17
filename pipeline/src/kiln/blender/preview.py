@@ -8,6 +8,9 @@ shows it from the front and the back three-quarters in a checker, so stretched o
 UVs show: squares about a sixteenth of the model across, red rising along u and green along
 v. The last row shows its triangles, as the game gets them, over the model in grey.
 
+Each animation clip (`kiln.blender.kit.Kit.clip`) gets a filmstrip of its own beside the
+sheet, `clip-<name>.png`: the three-quarter view at eight moments through it, four to a row.
+
 `compare_sheets` puts a sheet beside the one before it, for a rebuild's changes. Run
 `render_sheet` after export: it adds a camera and the marker diamonds to the scene, changes
 the materials and rescales the UVs.
@@ -21,7 +24,7 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
-from kiln.blender.kit import parse_color
+from kiln.blender.kit import CLIP_FPS, parse_color
 from kiln.blender.space import to_blender
 
 VIEW_SIZE = 512
@@ -53,13 +56,16 @@ CHECKER_ACROSS = 2.0
 WIRE_WIDTH = 0.0015
 # A sheet's pixels that differ from the last by more than this (0 to 1) count as changed.
 CHANGED = 2 / 255
+# A clip's filmstrip: this many moments, four to a row, each this many pixels a side.
+FILMSTRIP_FRAMES = 8
+FILMSTRIP_SIZE = 256
 
 
-def render_sheet(path: str, bounds, materials: list[dict] = ()) -> None:
+def render_sheet(path: str, bounds, materials: list[dict] = (), clips: list[dict] = ()) -> dict[str, str]:
     """Renders the views and saves them as a sheet, two to a row, at `path`. `bounds` is the
     model's game-space bounding box (lowest corner, highest corner). `materials` says how to
     draw materials the game textures or paints: each {"name", "prefix", "color", "albedo",
-    "tile"} (see `kiln.cli.preview_materials`)."""
+    "tile"} (see `kiln.cli.preview_materials`). Returns each of `clips`' filmstrip, by name."""
     scene = bpy.context.scene
     low, high = Vector(to_blender(bounds[0])), Vector(to_blender(bounds[1]))
     centre = (low + high) / 2
@@ -77,6 +83,9 @@ def render_sheet(path: str, bounds, materials: list[dict] = ()) -> None:
     if has_uvs:
         _scale_uvs_by_material(meshes, tiles_by_material)
     tiles = _render_views(scene, camera, VIEWS, centre, extent)
+    strips = {clip["name"]: _filmstrip(scene, camera, clip, centre, extent,
+                                       os.path.join(os.path.dirname(path), f"clip-{clip['name']}.png"))
+              for clip in clips}
     _restore_uvs(meshes, saved)
     if has_uvs:
         _dress_in_checker(extent)
@@ -85,6 +94,39 @@ def render_sheet(path: str, bounds, materials: list[dict] = ()) -> None:
     scene.display.shading.color_type = "MATERIAL"
     tiles += _render_views(scene, camera, WIRE_VIEWS, centre, extent)
     _save_sheet(path, tiles)
+    return strips
+
+
+def _filmstrip(scene, camera, clip: dict, centre, extent, path: str) -> str:
+    """Renders `clip` from the three-quarter view at FILMSTRIP_FRAMES moments through it
+    (from its start to its end, or just short of it for a loop, whose end is its start) and
+    saves them four to a row at `path`."""
+    moved = [obj for obj in scene.objects if obj.animation_data
+             and any(track.name == clip["action"].name for track in obj.animation_data.nla_tracks)]
+    tracks = [track for obj in moved for track in obj.animation_data.nla_tracks if track.name == clip["action"].name]
+    # A muted track stops moving what it moved but doesn't put it back: keep the model as
+    # built to put back after.
+    built = {obj.name: (obj.matrix_basis.copy(), [b.matrix_basis.copy() for b in obj.pose.bones] if obj.pose else [])
+             for obj in moved}
+    for track in tracks:
+        track.mute = False
+    scene.render.resolution_x = scene.render.resolution_y = FILMSTRIP_SIZE
+    steps = FILMSTRIP_FRAMES if clip["loop"] else FILMSTRIP_FRAMES - 1
+    frames = []
+    for i in range(FILMSTRIP_FRAMES):
+        scene.frame_set(round(clip["seconds"] * i / steps * CLIP_FPS))
+        frames += _render_views(scene, camera, (VIEWS[3],), centre, extent)
+    for track in tracks:
+        track.mute = True
+    scene.frame_set(0)
+    for obj in moved:
+        obj.matrix_basis, bones = built[obj.name]
+        for pose_bone, matrix in zip(obj.pose.bones if obj.pose else [], bones):
+            pose_bone.matrix_basis = matrix
+    bpy.context.view_layer.update()
+    scene.render.resolution_x = scene.render.resolution_y = VIEW_SIZE
+    _save_sheet(path, frames, columns=4)
+    return path
 
 
 def compare_sheets(before: str, after: str, out: str) -> dict | None:
@@ -304,16 +346,16 @@ def _padded(pixels: np.ndarray, height: int, width: int) -> np.ndarray:
     return out
 
 
-def _save_sheet(path: str, tiles: list[np.ndarray]) -> None:
-    """Puts the tiles on the background colour, two to a row, and saves a PNG. Blender's
-    image rows run bottom to top, so the first tile goes in the top-left by filling from the
-    top."""
+def _save_sheet(path: str, tiles: list[np.ndarray], columns: int = 2) -> None:
+    """Puts the tiles on the background colour, `columns` to a row, and saves a PNG.
+    Blender's image rows run bottom to top, so the first tile goes in the top-left by filling
+    from the top."""
     h, w = tiles[0].shape[:2]
-    rows = (len(tiles) + 1) // 2
-    sheet = np.ones((h * rows, w * 2, 3), dtype=np.float32)
+    rows = (len(tiles) + columns - 1) // columns
+    sheet = np.ones((h * rows, w * columns, 3), dtype=np.float32)
     sheet[:, :] = BACKGROUND
     for index, tile in enumerate(tiles):
-        row, col = divmod(index, 2)
+        row, col = divmod(index, columns)
         y0 = (rows - 1 - row) * h
         alpha = tile[:, :, 3:4]
         region = sheet[y0:y0 + h, col * w:(col + 1) * w]
