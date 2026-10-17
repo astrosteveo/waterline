@@ -15,11 +15,14 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from dataclasses import dataclass
-from typing import Iterable, Sequence
+from dataclasses import dataclass, replace
+from typing import Callable, Iterable, Sequence
 
 Vec3 = tuple[float, float, float]
 UV = tuple[float, float]
+RGBA = tuple[float, float, float, float]
+# The colour a face corner without one of its own gets when a mesh with colours is merged in.
+WHITE: RGBA = (1.0, 1.0, 1.0, 1.0)
 
 # The directions u and v run across a face, by the axis and side it faces most (box mapping).
 # Seen from outside, u runs to the right and v up; on the top and bottom, v runs forward (-Z).
@@ -43,12 +46,17 @@ class Mesh:
     `uvs`, when given, holds a (u, v) for each corner of each face, in metres (see the module's
     notes). Moving, turning and scaling a mesh keeps its UVs, so its texture moves and
     stretches with it.
+
+    `colors`, when given, holds an (r, g, b, a) for each corner of each face, exported as the
+    mesh's vertex colours: data for a game's shader to read (how far a frond sways), as
+    Godot doesn't draw them unless a material asks it to. See `with_colors`.
     """
 
     vertices: tuple[Vec3, ...]
     faces: tuple[tuple[int, ...], ...]
     materials: tuple[int, ...] | None = None
     uvs: tuple[tuple[UV, ...], ...] | None = None
+    colors: tuple[tuple[RGBA, ...], ...] | None = None
 
     def __post_init__(self) -> None:
         if self.materials is not None and len(self.materials) != len(self.faces):
@@ -56,6 +64,9 @@ class Mesh:
         if self.uvs is not None and (len(self.uvs) != len(self.faces)
                                      or any(len(uv) != len(face) for uv, face in zip(self.uvs, self.faces))):
             raise ValueError("a mesh's uvs need a (u, v) for each corner of each face")
+        if self.colors is not None and (len(self.colors) != len(self.faces)
+                                        or any(len(c) != len(face) for c, face in zip(self.colors, self.faces))):
+            raise ValueError("a mesh's colors need an (r, g, b, a) for each corner of each face")
 
     def slots(self) -> tuple[int, ...]:
         """Each face's material slot (all 0 without `materials`)."""
@@ -67,7 +78,20 @@ class Mesh:
 
     def with_materials(self, slots: Sequence[int]) -> "Mesh":
         """The mesh with a material slot for each face."""
-        return Mesh(self.vertices, self.faces, tuple(slots), self.uvs)
+        return replace(self, materials=tuple(slots))
+
+    def with_colors(self, color: Callable[[Vec3], Sequence[float]]) -> "Mesh":
+        """The mesh with a colour at each corner of each face, `color(point)` of the corner's
+        vertex: (r, g, b), or (r, g, b, a) with alpha 1 if left out."""
+        made: dict[int, RGBA] = {}
+
+        def at(i: int) -> RGBA:
+            if i not in made:
+                value = tuple(float(c) for c in color(self.vertices[i]))
+                made[i] = value + (1.0,) * (4 - len(value))
+            return made[i]
+
+        return replace(self, colors=tuple(tuple(at(i) for i in face) for face in self.faces))
 
     def projected(self) -> "Mesh":
         """The mesh with UVs projected onto each face from the axis it faces most (box
@@ -77,7 +101,7 @@ class Mesh:
             points = [self.vertices[i] for i in face]
             normal = _newell(points)
             uvs.append(tuple(projected_uv(p, normal) for p in points))
-        return Mesh(self.vertices, self.faces, self.materials, tuple(uvs))
+        return replace(self, uvs=tuple(uvs))
 
     def triangle_count(self) -> int:
         """Triangles once every face is split into a fan."""
@@ -116,7 +140,8 @@ class Mesh:
         """The same mesh with every face turned the other way. Each corner keeps its UV, so the
         texture stays where it was and reads mirrored from the new outside."""
         uvs = None if self.uvs is None else tuple(tuple(reversed(uv)) for uv in self.uvs)
-        return Mesh(self.vertices, tuple(tuple(reversed(face)) for face in self.faces), self.materials, uvs)
+        colors = None if self.colors is None else tuple(tuple(reversed(c)) for c in self.colors)
+        return replace(self, faces=tuple(tuple(reversed(face)) for face in self.faces), uvs=uvs, colors=colors)
 
     def outward(self) -> "Mesh":
         """The mesh with its faces turned outward, judged by the sign of its volume."""
@@ -131,12 +156,15 @@ class Mesh:
         out_faces: list[tuple[int, ...]] = []
         slots: list[int] = []
         uvs: list[tuple[UV, ...]] = []
+        colors: list[tuple[RGBA, ...]] = []
         for f, face in enumerate(self.faces):
             slot, uv = self.slots()[f], None if self.uvs is None else self.uvs[f]
+            color = None if self.colors is None else self.colors[f]
             if f not in chosen:
                 out_faces.append(face)
                 slots.append(slot)
                 uvs.append(uv)
+                colors.append(color)
                 continue
             corners = [self.vertices[i] for i in face]
             normal = _normalized(_newell(corners))
@@ -156,12 +184,15 @@ class Mesh:
                 slots.append(slot)
                 if to_uv:
                     uvs.append((uv[i], uv[j], to_uv(vertices[inner[j]]), to_uv(vertices[inner[i]])))
+                # Each inner corner takes the colour of the corner it came from.
+                colors.append(None if color is None else (color[i], color[j], color[j], color[i]))
             out_faces.append(tuple(inner))
             slots.append(slot)
             if to_uv:
                 uvs.append(tuple(to_uv(vertices[i]) for i in inner))
+            colors.append(color)
         return Mesh(tuple(vertices), tuple(out_faces), None if self.materials is None else tuple(slots),
-                    None if self.uvs is None else tuple(uvs))
+                    None if self.uvs is None else tuple(uvs), None if self.colors is None else tuple(colors))
 
     def extruded(self, faces: Iterable[int], distance: float) -> "Mesh":
         """The mesh with each face in `faces` (indices) moved `distance` metres along its
@@ -173,12 +204,15 @@ class Mesh:
         out_faces: list[tuple[int, ...]] = []
         slots: list[int] = []
         uvs: list[tuple[UV, ...] | None] = []
+        colors: list[tuple[RGBA, ...] | None] = []
         for f, face in enumerate(self.faces):
             slot, uv = self.slots()[f], None if self.uvs is None else self.uvs[f]
+            color = None if self.colors is None else self.colors[f]
             if f not in chosen:
                 out_faces.append(face)
                 slots.append(slot)
                 uvs.append(uv)
+                colors.append(color)
                 continue
             corners = [self.vertices[i] for i in face]
             offset = _scale(_normalized(_newell(corners)), distance)
@@ -192,20 +226,22 @@ class Mesh:
                 points = [vertices[k] for k in wall]
                 wall_normal = _newell(points)
                 uvs.append(tuple(projected_uv(p, wall_normal) for p in points))
+                colors.append(None if color is None else (color[i], color[j], color[j], color[i]))
             out_faces.append(tuple(moved))
             slots.append(slot)
             uvs.append(uv)
+            colors.append(color)
         return Mesh(tuple(vertices), tuple(out_faces), None if self.materials is None else tuple(slots),
-                    None if self.uvs is None else tuple(uvs))
+                    None if self.uvs is None else tuple(uvs), None if self.colors is None else tuple(colors))
 
     def translated(self, offset: Vec3) -> "Mesh":
-        return Mesh(tuple(_add(v, offset) for v in self.vertices), self.faces, self.materials, self.uvs)
+        return replace(self, vertices=tuple(_add(v, offset) for v in self.vertices))
 
     def scaled(self, factor: Vec3) -> "Mesh":
         """Scaled per axis. A negative factor mirrors the mesh, and its faces are turned back
         outward."""
-        mesh = Mesh(tuple((v[0] * factor[0], v[1] * factor[1], v[2] * factor[2])
-                          for v in self.vertices), self.faces, self.materials, self.uvs)
+        mesh = replace(self, vertices=tuple((v[0] * factor[0], v[1] * factor[1], v[2] * factor[2])
+                                            for v in self.vertices))
         return mesh.flipped() if factor[0] * factor[1] * factor[2] < 0 else mesh
 
     def rotated(self, axis: str, degrees: float) -> "Mesh":
@@ -221,11 +257,12 @@ class Mesh:
             turn = lambda v: (v[0] * c - v[1] * s, v[0] * s + v[1] * c, v[2])  # noqa: E731
         else:
             raise ValueError(f"axis {axis!r} isn't x, y or z")
-        return Mesh(tuple(turn(v) for v in self.vertices), self.faces, self.materials, self.uvs)
+        return replace(self, vertices=tuple(turn(v) for v in self.vertices))
 
     def merged(self, other: "Mesh") -> "Mesh":
         """Both meshes as one (their vertices aren't joined). When either has UVs, one without
-        is projected (see `projected`) where it is now."""
+        is projected (see `projected`) where it is now; when either has colours, one without
+        is white."""
         shift = len(self.vertices)
         materials = None
         if self.materials is not None or other.materials is not None:
@@ -233,8 +270,11 @@ class Mesh:
         uvs = None
         if self.uvs is not None or other.uvs is not None:
             uvs = _uvs(self) + _uvs(other)
+        colors = None
+        if self.colors is not None or other.colors is not None:
+            colors = _colors(self) + _colors(other)
         return Mesh(self.vertices + other.vertices,
-                    self.faces + tuple(tuple(i + shift for i in face) for face in other.faces), materials, uvs)
+                    self.faces + tuple(tuple(i + shift for i in face) for face in other.faces), materials, uvs, colors)
 
 
 def projected_uv(point: Vec3, normal: Vec3) -> UV:
@@ -460,7 +500,8 @@ def symmetric(half: Mesh, axis: str = "x") -> Mesh:
     faces = half.faces + tuple(tuple(image[i] for i in reversed(face)) for face in half.faces)
     materials = None if half.materials is None else half.materials * 2
     uvs = None if half.uvs is None else half.uvs + tuple(tuple(reversed(uv)) for uv in half.uvs)
-    return Mesh(tuple(vertices), faces, materials, uvs)
+    colors = None if half.colors is None else half.colors + tuple(tuple(reversed(c)) for c in half.colors)
+    return Mesh(tuple(vertices), faces, materials, uvs, colors)
 
 
 def ring(points: Iterable[tuple[float, float]], z: float) -> list[Vec3]:
@@ -514,6 +555,10 @@ def _normalized(v: Vec3) -> Vec3:
 
 def _scale(v: Vec3, s: float) -> Vec3:
     return (v[0] * s, v[1] * s, v[2] * s)
+
+
+def _colors(mesh: Mesh) -> tuple[tuple[RGBA, ...], ...]:
+    return mesh.colors if mesh.colors is not None else tuple((WHITE,) * len(face) for face in mesh.faces)
 
 
 def _uvs(mesh: Mesh) -> tuple[tuple[UV, ...], ...]:

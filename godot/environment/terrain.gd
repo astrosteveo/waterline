@@ -102,6 +102,8 @@ const PALM_HIGHEST := 8.0
 const PALM_STEEPEST := 0.3
 ## How far a palm's foot sinks into the ground, so it doesn't float on a slope.
 const PALM_SINK := 0.3
+## Sways a palm in the wind, by the data in its vertex colours (art/models/plants/_palm.py).
+const PALM_SHADER := preload("res://environment/palm.gdshader")
 ## The same look as terrain.gdshader without receiving shadows, for the deep seabed.
 const DEEP_SHADER := preload("res://environment/terrain_deep.gdshader")
 ## How deep the seabed is when it is darkest, in metres.
@@ -511,12 +513,23 @@ func _plant_palms() -> void:
 		add_child(grove, false, Node.INTERNAL_MODE_FRONT)
 
 
-## The one mesh of a palm model.
+## The one mesh of a palm model, each of its materials drawn swaying in the wind
+## ([constant PALM_SHADER]) in its own colour and roughness.
 static func _palm_mesh(scene: PackedScene) -> Mesh:
 	var palm := scene.instantiate()
 	var found := SceneryModel.meshes(palm)
-	var shape: Mesh = found[0].mesh if not found.is_empty() else null
+	var shape: Mesh = found[0].mesh.duplicate() if not found.is_empty() else null
 	palm.free()
+	if shape == null:
+		return null
+	for surface in shape.get_surface_count():
+		var own := shape.surface_get_material(surface) as BaseMaterial3D
+		var swaying := ShaderMaterial.new()
+		swaying.shader = PALM_SHADER
+		if own != null:
+			swaying.set_shader_parameter(&"albedo", own.albedo_color)
+			swaying.set_shader_parameter(&"roughness", own.roughness)
+		shape.surface_set_material(surface, swaying)
 	return shape
 
 

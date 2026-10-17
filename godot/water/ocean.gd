@@ -58,9 +58,13 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(_delta: float) -> void:
+	var t := render_time()
+	# For shaders that move with the game's time and the wind (palms swaying): unlike TIME,
+	# game_time stops while the game is paused or held.
+	RenderingServer.global_shader_parameter_set(&"game_time", t)
+	RenderingServer.global_shader_parameter_set(&"wind", wind)
 	if _followers.is_empty():
 		return
-	var t := render_time()
 	var phases := wave_set.get_shader_wave_phases(t)
 	var changing := wave_set.is_changing()
 	var shapes := wave_set.get_shader_wave_shapes(t) if changing else PackedVector4Array()

@@ -120,6 +120,11 @@
       "name": "palm trees grow on Gull Cove's islands"
     },
     {
+      "expect": "[course.get_node('Terrain/Palms0').multimesh.mesh.surface_get_material(0).shader.resource_path, course.get_node('Terrain/Palms0').multimesh.mesh.surface_get_arrays(0)[3].size() > 0]",
+      "equals": ["res://environment/palm.gdshader", true],
+      "name": "the palms sway in the wind, by the data in their vertex colours (array 3, Mesh.ARRAY_COLOR)"
+    },
+    {
       "expect": "[course.get_node('Terrain').height_at(course.get_node('Terrain/Palms0').multimesh.get_instance_transform(0).origin.x, course.get_node('Terrain/Palms0').multimesh.get_instance_transform(0).origin.z) >= 1.2, course.get_node('Terrain/Palms0').layers]",
       "equals": [
         true,

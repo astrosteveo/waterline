@@ -307,3 +307,33 @@ def test_extruded_moves_a_face_out_or_in_with_walls():
         assert mesh.signed_volume() == pytest.approx(1.0 + distance)
         assert min(v[2] for v in mesh.vertices) == pytest.approx(-0.5 - max(distance, 0.0))
     assert box.with_material(3).extruded([front], 0.1).slots() == (3,) * 10
+
+
+# --- Colours ------------------------------------------------------------------------------------
+
+def test_colors_come_from_each_corner_and_follow_the_mesh():
+    mesh = geometry.box((1, 2, 1)).with_colors(lambda p: (p[1] + 1.0, 0.5, 0.0))
+    # Alpha 1 when left out; a corner's colour is its vertex's.
+    for face, colors in zip(mesh.faces, mesh.colors):
+        for vertex, color in zip(face, colors):
+            assert color == (mesh.vertices[vertex][1] + 1.0, 0.5, 0.0, 1.0)
+    moved = mesh.translated((5, 0, 0)).rotated("y", 40).scaled((-1, 1, 1))
+    for face, colors, old_face, old_colors in zip(moved.faces, moved.colors, mesh.faces, mesh.colors):
+        assert dict(zip(face, colors)) == dict(zip(old_face, old_colors))
+    assert mesh.with_material(2).colors == mesh.colors and mesh.projected().colors == mesh.colors
+
+
+def test_merged_colours_a_mesh_without_any_white():
+    coloured = geometry.box((1, 1, 1)).with_colors(lambda p: (0.2, 0.3, 0.4, 0.5))
+    both = coloured.merged(geometry.box((1, 1, 1), center=(3, 0, 0)))
+    assert both.colors[:6] == coloured.colors and set(c for f in both.colors[6:] for c in f) == {geometry.WHITE}
+    assert geometry.box((1, 1, 1)).merged(geometry.box((1, 1, 1))).colors is None
+
+
+def test_inset_and_extruded_carry_the_colours_on():
+    box = geometry.box((1, 1, 1)).with_colors(lambda p: (p[0] + 0.5, p[1] + 0.5, p[2] + 0.5))
+    for mesh in (box.inset([0, 3], 0.1), box.extruded([2], 0.3), geometry.symmetric(box)):
+        assert len(mesh.colors) == len(mesh.faces)
+        assert {c for f in mesh.colors for c in f} <= {c for f in box.colors for c in f}
+    with pytest.raises(ValueError):
+        geometry.Mesh(((0, 0, 0), (1, 0, 0), (0, 1, 0)), ((0, 1, 2),), colors=(((1, 1, 1, 1),),))

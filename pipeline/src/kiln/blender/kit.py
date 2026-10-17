@@ -104,7 +104,8 @@ class Kit:
         vertices are relative to it). `material` is one material, or a list with one per
         material slot of the mesh. With `smooth_angle` (degrees) its shading is smooth across
         edges whose faces meet at less than that angle, sharp elsewhere. A mesh without UVs
-        is given them by `kiln.geometry.Mesh.projected`."""
+        is given them by `kiln.geometry.Mesh.projected`. A mesh's colours (see
+        `kiln.geometry.Mesh.with_colors`) are exported as its vertex colours."""
         data = bpy.data.meshes.new(name)
         data.from_pydata([tuple(to_blender(v)) for v in mesh.vertices], [], [list(f) for f in mesh.faces])
         if mesh.materials is not None:
@@ -113,6 +114,11 @@ class Kit:
         # Blender keeps a UV for each corner of each face, in the order the faces list them.
         data.uv_layers.new(name="UVMap").data.foreach_set(
             "uv", [value for face in uvs for corner in face for value in corner])
+        if mesh.colors is not None:
+            # A colour for each face corner, exported as the mesh's vertex colours (COLOR_0).
+            colors = data.color_attributes.new("Color", "FLOAT_COLOR", "CORNER")
+            colors.data.foreach_set("color", [value for face in mesh.colors for corner in face for value in corner])
+            data.color_attributes.active_color = colors
         data.validate()
         if smooth_angle is not None:
             data.shade_smooth()

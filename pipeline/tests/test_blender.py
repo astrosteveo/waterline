@@ -407,6 +407,29 @@ def build(k):
     assert "alphaMode" not in materials["Iron"] and "emissiveFactor" not in materials["Iron"]
 
 
+def test_mesh_colours_export_as_vertex_colours(project):
+    (project / "models" / "frond.py").write_text('''
+from kiln import geometry, model
+@model()
+def build(k):
+    # Red rising up the box, as a sway weight would; green a constant phase.
+    k.mesh("Frond", geometry.box((0.2, 1.0, 0.2), (0, 0.5, 0)).with_colors(lambda p: (p[1], 0.25, 0.0)))
+    k.box("Stem", (0.1, 0.1, 0.1), center=(1, 0, 0))
+''')
+    assert kiln(project, "build", "models/frond") == 0
+    gltf = read_gltf(project / "out" / "models" / "frond.glb")
+    attributes = {node["name"]: gltf["meshes"][node["mesh"]]["primitives"][0]["attributes"]
+                  for node in gltf["nodes"] if "mesh" in node}
+    assert "COLOR_0" in attributes["Frond"] and "COLOR_0" not in attributes["Stem"]
+    colors = read_accessor(project / "out" / "models" / "frond.glb", attributes["Frond"]["COLOR_0"])
+    # The values go out as given, not converted: red 0 to 1 up the box, green 0.25 throughout.
+    reds, greens = [c[0] for c in colors], [c[1] for c in colors]
+    assert (min(reds), max(reds)) == pytest.approx((0.0, 1.0), abs=1e-3)
+    assert set(round(g, 3) for g in greens) == {0.25}
+    report = json.loads((project / "reports" / "models" / "frond" / "report.json").read_text())
+    assert report["meshes"]["Frond"]["colors"] and not report["meshes"]["Stem"]["colors"]
+
+
 def test_skinned_meshes_export_with_their_skeleton(project):
     (project / "models" / "arm.py").write_text(ARM)
     assert kiln(project, "build", "models/arm") == 0
@@ -458,6 +481,20 @@ Iron = { color = "#ff3030" }
 def png_size(path: Path) -> tuple[int, int]:
     """A PNG's width and height, from its header."""
     return struct.unpack(">II", path.read_bytes()[16:24])
+
+
+def read_accessor(path: Path, index: int) -> list[tuple[float, ...]]:
+    """An accessor's values from a binary glTF, normalised integers as 0 to 1."""
+    data = path.read_bytes()
+    gltf = read_gltf(path)
+    start = 20 + struct.unpack_from("<I", data, 12)[0] + 8
+    accessor = gltf["accessors"][index]
+    view = gltf["bufferViews"][accessor["bufferView"]]
+    size = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}[accessor["type"]]
+    kind, scale = {5126: ("f", 1.0), 5123: ("H", 65535.0), 5121: ("B", 255.0)}[accessor["componentType"]]
+    values = struct.unpack_from(f"<{accessor['count'] * size}{kind}", data,
+                                start + view.get("byteOffset", 0) + accessor.get("byteOffset", 0))
+    return [tuple(v / scale for v in values[i:i + size]) for i in range(0, len(values), size)]
 
 
 def read_gltf(path: Path) -> dict:

@@ -52,6 +52,7 @@ def measure() -> dict:
             "degenerate_faces": sum(1 for area in areas if area < MIN_FACE_AREA),
             "self_intersections": _self_intersections(bm),
             "uvs": uv is not None,
+            "colors": bool(obj.data.color_attributes),
             # Skinned: fixed to an armature's bones. Its vertices whose weights on them don't
             # add up to 1 would be left behind, or pulled toward the origin, when it's posed.
             "skinned": unweighted is not None,

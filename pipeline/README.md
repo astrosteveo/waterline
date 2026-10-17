@@ -96,8 +96,10 @@ as plain data, and is tested without Blender:
   path without twisting), `icosphere`, and `symmetric` (a half joined to its mirror image);
 - changes: `translated`, `rotated`, `scaled`, `merged`, `inset` (a face shrunk in, framed by
   new faces) and `extruded` (a face moved out or in, with walls);
-- material slots (`materials`, `with_material`, `with_materials`) and UVs (`uvs`,
-  `projected`);
+- material slots (`materials`, `with_material`, `with_materials`), UVs (`uvs`,
+  `projected`) and colours (`colors`, `with_colors`): a colour for each face corner from a
+  function of its position, exported as the mesh's vertex colours (`COLOR_0`), as data for a
+  game's shaders (Godot doesn't draw them unless a material asks);
 - `value_noise`, smooth noise from -1 to 1 for moving points about (a rock's lumps).
 
 ### UVs
