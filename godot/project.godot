@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 Ocean="*res://water/ocean.gd"
 Game="*res://game/game.gd"
 Settings="*res://game/settings.gd"
+Music="*res://audio/music.gd"
 
 [display]
 

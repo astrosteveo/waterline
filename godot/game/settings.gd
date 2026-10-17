@@ -7,7 +7,7 @@ extends Node
 
 const PATH := "user://settings.cfg"
 ## Volume sliders and the audio bus each sets.
-const VOLUMES: Dictionary[String, StringName] = {"master": &"Master", "engine": &"Engine", "effects": &"Effects"}
+const VOLUMES: Dictionary[String, StringName] = {"master": &"Master", "engine": &"Engine", "effects": &"Effects", "music": &"Music"}
 ## The actions the options screen lets the player rebind, with their names on screen.
 const REBINDABLE: Dictionary[StringName, String] = {
 	&"throttle": "THROTTLE",
@@ -23,7 +23,7 @@ const REBINDABLE: Dictionary[StringName, String] = {
 }
 
 ## Each volume from 0 to 1.
-var volumes: Dictionary[String, float] = {"master": 0.8, "engine": 0.8, "effects": 0.8}
+var volumes: Dictionary[String, float] = {"master": 0.8, "engine": 0.8, "effects": 0.8, "music": 0.6}
 var fullscreen: bool = false
 
 var _defaults: Dictionary[StringName, Array] = {}

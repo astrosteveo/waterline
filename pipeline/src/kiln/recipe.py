@@ -108,8 +108,12 @@ class SoundSpec:
     peak: float | None = -1.0
     # The shortest and longest each sound may be, in seconds. None: any length.
     seconds: Sequence[float] | None = None
+    # "wav" (16-bit PCM) or "ogg" (Ogg Vorbis, much smaller, for music; needs ffmpeg).
+    format: str = "wav"
 
     def __post_init__(self) -> None:
+        if self.format not in ("wav", "ogg"):
+            raise ValueError(f"a sound is written as wav or ogg, not {self.format!r}")
         if self.channels not in (1, 2):
             raise ValueError(f"a sound has 1 or 2 channels, not {self.channels}")
         if self.rate < 8000:

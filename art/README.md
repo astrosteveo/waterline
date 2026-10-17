@@ -18,3 +18,8 @@ The game draws a model's Rock, Wood and WoodDark materials in these textures thr
 import settings: the model's `.glb.import` remaps them to `godot/environment/materials/`.
 A new model with one of those materials needs the same lines in its `.import` file (copy them
 from `godot/assets/models/rocks/boulder_a.glb.import`).
+
+The music (`audio/music/`) is written as Ogg Vorbis, which carries no loop points: each
+track's `.ogg.import` has `loop=true`. For a new track, set it after Godot first imports the
+file, then delete the track's files in `godot/.godot/imported/` so Godot imports it again
+(it doesn't notice a changed `.import` file on its own).

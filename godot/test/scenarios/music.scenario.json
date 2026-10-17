@@ -1,0 +1,60 @@
+{
+ "description": "The music: the menus play Slack Tide on the Music bus at its 60% default; a race is silent through the countdown and brings its track in with the horn, each course taking the race tracks in turn; back in the menus Slack Tide comes back. Every track loops.",
+ "start": {
+  "scene": "res://menus/main_menu.tscn",
+  "seed": 1,
+  "user_data": "fresh"
+ },
+ "steps": [
+  {
+   "until": "Music.track != null",
+   "max": 30
+  },
+  {
+   "expect": "Music.track.resource_path",
+   "equals": "res://assets/audio/music/slack_tide.ogg",
+   "name": "the menus play Slack Tide"
+  },
+  {
+   "expect": "abs(AudioServer.get_bus_volume_db(AudioServer.get_bus_index('Music')) - linear_to_db(0.6)) < 0.01",
+   "name": "on the Music bus, at 60% to start with"
+  },
+  {
+   "expect": "Music.MENU.has_loop() and Music.RACES[0].has_loop() and Music.RACES[1].has_loop()",
+   "name": "every track loops"
+  },
+  {
+   "expect": "Music.race_track(Game.courses[0].scene) != Music.race_track(Game.courses[1].scene) and Music.race_track(Game.courses[0].scene) == Music.race_track(Game.courses[2].scene)",
+   "name": "the courses take the race tracks in turn"
+  },
+  {
+   "eval": "get_tree().change_scene_to_file('res://race/race.tscn')"
+  },
+  {
+   "until": "scene.get('phase') == 0",
+   "max": 30
+  },
+  "step 30",
+  {
+   "expect": "Music.track == null",
+   "name": "the countdown is the engines alone"
+  },
+  {
+   "until": "scene.phase == 1",
+   "max": 400
+  },
+  "step 2",
+  {
+   "expect": "Music.track == Music.race_track(scene.course_scene.resource_path)",
+   "name": "the horn brings in the course's track"
+  },
+  {
+   "eval": "Game.goto_main_menu()"
+  },
+  {
+   "until": "Music.track == Music.MENU",
+   "max": 60,
+   "name": "back in the menus, Slack Tide again"
+  }
+ ]
+}
