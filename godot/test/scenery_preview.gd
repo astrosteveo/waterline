@@ -44,6 +44,15 @@ func texture_tiles() -> Dictionary:
 	return tiles
 
 
+## A number a texture recipe gave in place of a map ([param name], such as roughness, for the
+## texture [param texture]), as kiln.lock.json beside the project records it: what the
+## material taking the number must have.
+func kiln_value(texture: String, name: String) -> float:
+	var lock_path := ProjectSettings.globalize_path("res://").path_join("../art/kiln.lock.json")
+	var lock: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(lock_path))
+	return lock["textures/" + texture]["values"][name]
+
+
 ## The materials in [method texture_tiles] that draw a texture at another size than kiln built
 ## it, as text: empty when they all agree.
 func mismatched_tiles() -> Array[String]:

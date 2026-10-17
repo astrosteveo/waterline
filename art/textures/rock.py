@@ -4,7 +4,7 @@ the edges worn paler, and the hollows shaded by the stone round them."""
 from kiln import texture
 
 
-@texture(size=1024, tile=4.0, relief=0.05, maps=("albedo", "normal", "roughness"))
+@texture(size=1024, tile=4.0, relief=0.05, maps=("albedo", "normal", "orm"))
 def build(t):
     lumps = t.noise(scale=1.2, detail=6, roughness=0.62, seed=1)
     strata = t.stripes(4, along="v", warp=t.noise(scale=0.5, detail=4, seed=2) * 2.5)
@@ -29,4 +29,4 @@ def build(t):
     stone = t.mix(stone, "#3e382f", grime * 0.35)
     stone = t.mix(stone, "#a79f92", worn * 0.18)
     stone = stone * (0.7 + shade * 0.3)
-    t.output(albedo=stone, roughness=0.88 - lichen * 0.08 + grime * 0.05, height=height.clamp())
+    t.output(albedo=stone, roughness=0.88 - lichen * 0.08 + grime * 0.05, height=height.clamp(), occlusion=shade)

@@ -269,6 +269,37 @@ def test_masks_from_a_baked_height_darken_its_hollows(project, capsys):
     assert (out / "dirty_occlusion.png").read_bytes() == first
 
 
+def test_orm_maps_pack_occlusion_roughness_and_metallic(project, capsys):
+    (project / "textures" / "metal.py").write_text('''
+from kiln import texture
+@texture(size=64, tile=1.0, relief=0.05, maps=("albedo", "orm"), samples=1)
+def build(t):
+    height = t.stripes(4, along="u")
+    t.output(albedo="#808080", height=height, roughness=0.2 + height * 0.6, metallic=0.4,
+             occlusion=t.occlusion(t.bake(height), 0.08))
+''')
+    (project / "textures" / "matte.py").write_text('''
+from kiln import texture
+@texture(size=64, maps=("albedo", "roughness"), samples=1)
+def build(t):
+    t.output(albedo=t.ramp(t.noise(scale=4, seed=1), [(0, "#404040"), (1, "#c0c0c0")]), roughness=0.7)
+''')
+    assert kiln(project, "build", "textures/metal", "textures/matte") == 0
+    out = capsys.readouterr().out
+    width, _, channels, _, orm = png.read(str(project / "out" / "textures" / "metal_orm.png"))
+    assert channels == 3
+    crest, trough = width // 16, 3 * width // 16
+    # Red the occlusion, green the roughness, blue the metallic.
+    assert orm[3 * crest] > orm[3 * trough] + 20
+    assert orm[3 * crest + 1] == pytest.approx(0.8 * 255, abs=3) and orm[3 * trough + 1] == pytest.approx(0.2 * 255, abs=3)
+    assert set(orm[2::3]) == {round(0.4 * 255)}
+    # A map of one value is pointed out, and an output given as a number is kept in the lock.
+    assert "note: roughness holds one value (0.700)" in out
+    lock = json.loads((project / "kiln.lock.json").read_text())
+    assert lock["textures/matte"]["values"] == {"roughness": 0.7}
+    assert lock["textures/metal"]["values"] == {"metallic": 0.4}
+
+
 def test_broken_textures_fail_with_reasons(project, capsys):
     (project / "textures" / "broken").mkdir(parents=True)
     for name, text in BROKEN_TEXTURES.items():

@@ -1,8 +1,10 @@
-"""Island grass: tufts of green over patches of drier yellow-green and bare earth."""
+"""Island grass: tufts of green over patches of drier yellow-green and bare earth. Its
+roughness is the same everywhere, so it is a number (in kiln.lock.json) the terrain's
+material takes, not a map."""
 from kiln import texture
 
 
-@texture(size=1024, tile=4.0, relief=0.02, maps=("albedo", "normal", "roughness"))
+@texture(size=1024, tile=4.0, relief=0.02, maps=("albedo", "normal"))
 def build(t):
     patches = t.noise(scale=0.5, detail=4, seed=1)
     tufts = t.voronoi(scale=30, output="smooth", smoothness=0.4, seed=2)

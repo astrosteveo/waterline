@@ -1,6 +1,6 @@
 {
   "audio/engines/petrel": {
-    "fingerprint": "b23855a986f87856378cc1c0c983aa1e7d5034f93ba6afbc9ceb971849d2cceb",
+    "fingerprint": "9b875b20823d1abec967996ec97e37b77c6a2cd3f6441423827b3238b09908a3",
     "outputs": [
       "../godot/assets/audio/engines/petrel_on_1350.wav",
       "../godot/assets/audio/engines/petrel_off_1350.wav",
@@ -28,7 +28,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/engines/skipjack": {
-    "fingerprint": "ae0b0e2e02c956cf75a28122940750b5dd0224f535389068ce50b81fcba35a0f",
+    "fingerprint": "ec2b3c218e88661135808797286baf556d558552f624e21fe31a31e022e177b7",
     "outputs": [
       "../godot/assets/audio/engines/skipjack_on_1400.wav",
       "../godot/assets/audio/engines/skipjack_off_1400.wav",
@@ -56,7 +56,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/engines/starts": {
-    "fingerprint": "d737a1725c47fa5c0bd0b81979cd49122c14c13c46ce9373c8231f5b86d0b8ac",
+    "fingerprint": "52e050485b5939a1376fd0bc512f44a11ddf765ef39445971ded55a65aa1a3d4",
     "outputs": [
       "../godot/assets/audio/engines/starts_petrel.wav",
       "../godot/assets/audio/engines/starts_skipjack.wav",
@@ -72,7 +72,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/engines/swordfish": {
-    "fingerprint": "4548489a06aeb17c33cd4fe0c7404ef1e09583564cd7362b259cd462101cf8b1",
+    "fingerprint": "70455c36c1e06b3a0a9ec865ce5020d3dc879427d3c596c90cbf93e3acf6a263",
     "outputs": [
       "../godot/assets/audio/engines/swordfish_on_1600.wav",
       "../godot/assets/audio/engines/swordfish_off_1600.wav",
@@ -100,7 +100,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/engines/tradewind": {
-    "fingerprint": "d01c3a1b1eb26a04c36eebf9f385a78c07435cffbc80019e14889b8ca794c690",
+    "fingerprint": "be5c24056ba40ab29a04e51cc9cdee5d998d64f1cbddbe1f882679c0c016993b",
     "outputs": [
       "../godot/assets/audio/engines/tradewind_on_1750.wav",
       "../godot/assets/audio/engines/tradewind_off_1750.wav",
@@ -128,7 +128,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/music/open_throttle": {
-    "fingerprint": "8dd5b6d27a1c729c186bd5d18db09d3142c85c64563bc70444c21384df2bf733",
+    "fingerprint": "0f654168cc9da76c5872f9a500f58763cdaced4b78cfdda1c568ee2edce45972",
     "outputs": [
       "../godot/assets/audio/music/open_throttle.ogg"
     ],
@@ -138,7 +138,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/music/reef_runner": {
-    "fingerprint": "dc8bcf84ee99d7b1a8057453772be72de1e461d6597936e975779371ca989567",
+    "fingerprint": "fa681994b6300ca896ab42304f0c6b4ba95c84ca344087f9d1d46d3da3e72926",
     "outputs": [
       "../godot/assets/audio/music/reef_runner.ogg"
     ],
@@ -148,7 +148,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/music/slack_tide": {
-    "fingerprint": "065ac5f6670bd27f4b869f6e2df631cbedee263ed160f425d38c758d6e45e3fe",
+    "fingerprint": "1ba9183aa0e6e40c7b529cb273be64ca209ec006d1058e961921e0f37b7eb099",
     "outputs": [
       "../godot/assets/audio/music/slack_tide.ogg"
     ],
@@ -158,7 +158,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/race/buoy": {
-    "fingerprint": "3eb599b41be406313155cab20cc359c3050f97c1702e1a2caaa271a7b06f6008",
+    "fingerprint": "42c21e7d6fe683fd7688db66bc108a49371a28e6ffdd7f2879afb30ad561eb33",
     "outputs": [
       "../godot/assets/audio/race/buoy_bell.wav",
       "../godot/assets/audio/race/buoy_miss.wav"
@@ -170,7 +170,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/race/countdown": {
-    "fingerprint": "c1a5d638e2cd2b4e0e2c753c7de4aef0adc6eb258fece515dcceb7290c16848f",
+    "fingerprint": "8f594db9b33c452cace4123f387f68207e5c4d8766c1d030186262e683d55bda",
     "outputs": [
       "../godot/assets/audio/race/countdown_beep.wav",
       "../godot/assets/audio/race/countdown_go.wav"
@@ -182,7 +182,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/race/fanfare": {
-    "fingerprint": "7973a6664d7bb501985fbc2c26d27c1cac967cd9ffc669107715b59ddb828356",
+    "fingerprint": "69b13fe04f2576e945a778f6593c0ea096375af2aaf5923c8283570416ebb1aa",
     "outputs": [
       "../godot/assets/audio/race/fanfare.wav"
     ],
@@ -192,7 +192,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/race/ring": {
-    "fingerprint": "31b18cd0c2d64581e7d723f4521386f451caa7f1713f77e48cfd82604e6e97af",
+    "fingerprint": "85afb4cd813c24dfff1892004a544652f2355eb07d3afc51825fb65d965564fe",
     "outputs": [
       "../godot/assets/audio/race/ring.wav"
     ],
@@ -202,7 +202,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/water/hull": {
-    "fingerprint": "ccdf17102837e683909b2521b56d8518a10335f1fead59175b7a3b5dae8f4b2d",
+    "fingerprint": "112fab92346be74c36b66478371eb2d8d10ffc639e1d06159822c860edb8431f",
     "outputs": [
       "../godot/assets/audio/water/hull_wash.wav",
       "../godot/assets/audio/water/hull_rush.wav",
@@ -216,7 +216,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/water/slaps": {
-    "fingerprint": "be196830164e89ab3a59fde1fca07880f9fc3a2a1c1b7d68e06aa77f303b3b04",
+    "fingerprint": "baf2889cda5bd3b1b83bd8fadfb933e2e1d3b94eb0f324bdfb6a7db4c5a427b4",
     "outputs": [
       "../godot/assets/audio/water/slaps_1.wav",
       "../godot/assets/audio/water/slaps_2.wav",
@@ -232,7 +232,7 @@
     "tools": "numpy 2.5.4, scipy 1.18.1, ffmpeg version n9.0.2"
   },
   "audio/water/splashes": {
-    "fingerprint": "bbaaf238ac466651c3f9726e2c8d978d43ec6defcb125effb69e33ec39063a16",
+    "fingerprint": "c6d95933d7ef37a067073114d29f158349418c87693afdec941768127aab8847",
     "outputs": [
       "../godot/assets/audio/water/splashes_hop_1.wav",
       "../godot/assets/audio/water/splashes_land_1.wav",
@@ -259,7 +259,7 @@
   },
   "models/course/buoy": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "79ecdf47816d1783d6c451cb4b3af64cd787ea86427a137c5d0ede7a24143c29",
+    "fingerprint": "8d4e67905f7a6dd3d69788530d0b5eb9fc408244ea4fc6f70dd88deae28b2f80",
     "outputs": [
       "../godot/assets/models/course/buoy.glb"
     ],
@@ -272,7 +272,7 @@
   },
   "models/course/ramp": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "1b4a8f51887304300edd10966b484524bce3c887657264e284946175fa3ac306",
+    "fingerprint": "084f97264d645721ea49c52748e87ab25c66f9f7d7f73e3fe4aa30294076d4d8",
     "outputs": [
       "../godot/assets/models/course/ramp.glb"
     ],
@@ -285,7 +285,7 @@
   },
   "models/course/start_gate": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "d77adcd1d06df3b8c96f8a8a029f235c76b2d5c00b92b9a3a720d9eaebe06291",
+    "fingerprint": "998a6ab9877ca528716ffc93545e56e01657e0434028eb9bf89ec67acb0028ae",
     "outputs": [
       "../godot/assets/models/course/start_gate.glb"
     ],
@@ -298,7 +298,7 @@
   },
   "models/craft/petrel": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "f46c1359f81c8125042aba5978e51d4a30a95df848d77c926cd30e565096b2f2",
+    "fingerprint": "b83671eff1e29b23a43ac8a2d6e13f71a828491b8787a1a2a747dda8984f5177",
     "outputs": [
       "../godot/assets/models/craft/petrel.glb"
     ],
@@ -311,7 +311,7 @@
   },
   "models/craft/skipjack": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "d4ef6736db1bf906083dd35a955c6123db7fb68079fec76cc9b83d5df3a97b50",
+    "fingerprint": "706b3a0af0a828ba1ac8d692f76749cf20dd24ae94f5e68888f2b5b0c5ebf5c7",
     "outputs": [
       "../godot/assets/models/craft/skipjack.glb"
     ],
@@ -324,7 +324,7 @@
   },
   "models/craft/swordfish": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "d76d3d13bde2e78b481d4fbec5a5665b4ea2fd1ce0a558dcce7fcb1a2311fa72",
+    "fingerprint": "41b562b42d97d6ab87ef2f56f684d72320aadd611cd0ce3c85ae3fe7f17e4b48",
     "outputs": [
       "../godot/assets/models/craft/swordfish.glb"
     ],
@@ -337,7 +337,7 @@
   },
   "models/craft/tradewind": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "c3c5ea70ab0996cf1522621c1b3232bd9cd721388619315efd51c0be3d99e767",
+    "fingerprint": "e4d0bf71d08f69f1e0494acccb44f282893064a112489a33388f383334d1673f",
     "outputs": [
       "../godot/assets/models/craft/tradewind.glb"
     ],
@@ -350,7 +350,7 @@
   },
   "models/harbor/boathouse": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "5ca9f46df59ed5119f4816973f59aa8648dbc497341ae12f8a16abf4ddb37ff1",
+    "fingerprint": "300e16e5333e256c1cbc99e91e384798edd9a1d76699b7156403c017e0a69136",
     "outputs": [
       "../godot/assets/models/harbor/boathouse.glb"
     ],
@@ -363,7 +363,7 @@
   },
   "models/harbor/house_square": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "c4ef3fafc20d66071945714cb466768465c61e78a438b4c940d7abdcf7e1ea20",
+    "fingerprint": "b47c976157bc57c440dc1b4c1fc3da0a727270ee50ba68b243f1ceba89cd1397",
     "outputs": [
       "../godot/assets/models/harbor/house_square.glb"
     ],
@@ -376,7 +376,7 @@
   },
   "models/harbor/house_tall": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "d309506493d1a3733cf60aaf3fbfe486dbefcb9b6cfdad20b0030588ef38246d",
+    "fingerprint": "da648dffd35d0ec23ef807c02dd90de4faf45c47b5d12377cd9ddc46ff9b5328",
     "outputs": [
       "../godot/assets/models/harbor/house_tall.glb"
     ],
@@ -389,7 +389,7 @@
   },
   "models/harbor/lamp_post": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "410e04368fc568ceadc357413a8c796a4a9d071a96414ca6cc84666e4e26442d",
+    "fingerprint": "28c367f050ad8a1c98ca739d260c17600cafcc6a9ff62dad60c2257d7c6b98a1",
     "outputs": [
       "../godot/assets/models/harbor/lamp_post.glb"
     ],
@@ -402,7 +402,7 @@
   },
   "models/harbor/office": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "915865c821a30d8cdfe83088b592f22eff3834b50eb6c00b35462e249004b720",
+    "fingerprint": "80b1bd0bca625fb9cd2b79443ace3045e0c76629c758bb228b469eb23c1e6fbe",
     "outputs": [
       "../godot/assets/models/harbor/office.glb"
     ],
@@ -415,7 +415,7 @@
   },
   "models/harbor/pier": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "4dc3e370395c7d21c58d7a9f1e1c29522c041a94a47407144e1f7fe85bc3d2e9",
+    "fingerprint": "91281dd38a6c6a4db574c5a4a2af91add0ab48ef6fce6dd72ca4b4269c82c85c",
     "outputs": [
       "../godot/assets/models/harbor/pier.glb"
     ],
@@ -428,7 +428,7 @@
   },
   "models/harbor/shed": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "33f72c8768f2f6242281f3b646d3d5a47549135203f786c2d952b245e5c216cc",
+    "fingerprint": "209cc91ecdbf45395df2a8412f153d3f068aed48dd4c50062322954fbdcf64eb",
     "outputs": [
       "../godot/assets/models/harbor/shed.glb"
     ],
@@ -441,7 +441,7 @@
   },
   "models/harbor/warehouse": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "7ba051db4a5f21f0ca73c82fa295611fe20d05b1a4eacc7c8dcbac6be559d2b5",
+    "fingerprint": "cd2a2954e50c5f5f4e54fd599d9698dc00d3de884c9b8f417d1bcb3127643a2a",
     "outputs": [
       "../godot/assets/models/harbor/warehouse.glb"
     ],
@@ -454,7 +454,7 @@
   },
   "models/plants/palm_a": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "9fa48f7c18d2f9a36c35e5cf4ecd168a53166fe6542c6a87c18ab334629b19f1",
+    "fingerprint": "28d507767a6bc7cb43e1772188dd36fe595020323a55b997c4b60b29f8d0fc74",
     "outputs": [
       "../godot/assets/models/plants/palm_a.glb"
     ],
@@ -467,7 +467,7 @@
   },
   "models/plants/palm_b": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "c74309180e8395f34b9541a91b5ec595d3529e0fa69d5cf9c90021ef26bfa2fd",
+    "fingerprint": "dc076f728bb0907cf425804637390138621cbaa0b778815ab9f3a9689da9cbd7",
     "outputs": [
       "../godot/assets/models/plants/palm_b.glb"
     ],
@@ -480,7 +480,7 @@
   },
   "models/plants/palm_c": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "a291b6a7f7cab888c7858d30b920eccb050e9788f7d2fd37b104d965ffaba5f4",
+    "fingerprint": "5d2625a7e731f711e771866646bce485c8c0758815b9b00be078ad729851d0b3",
     "outputs": [
       "../godot/assets/models/plants/palm_c.glb"
     ],
@@ -493,7 +493,7 @@
   },
   "models/props/crate": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "9560a83a57cfc0793edc79cd2679fc1eef17536e9da19a36b9487998b48bc4b8",
+    "fingerprint": "056080a7f1d60c1ba8a863d73aa136e936e971e5375a1842d4e3d64147abc64c",
     "outputs": [
       "../godot/assets/models/props/crate.glb"
     ],
@@ -506,7 +506,7 @@
   },
   "models/riders/dax": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "844e46e613daa26af68552dd96e29544c4199efdb87c1914d04ca698b84a881e",
+    "fingerprint": "21f7da446b695eb8d7ba09e59821328317b762b924980313c64d56105eb7fb78",
     "outputs": [
       "../godot/assets/models/riders/dax.glb"
     ],
@@ -519,7 +519,7 @@
   },
   "models/riders/ines": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "516b13bf435c1ca9297a5004389252e4b340cf0d8de0608d466da256cea6bd77",
+    "fingerprint": "e8883dc8bb990a524623726ce676e4aa54c1888b04f3624bec1dcb800e616e39",
     "outputs": [
       "../godot/assets/models/riders/ines.glb"
     ],
@@ -532,7 +532,7 @@
   },
   "models/riders/koa": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "1b98896f2ba5b46d4b7666c4eba1eb6eb289585f670c374d3bd050bd4c9e5486",
+    "fingerprint": "587d252db9b58f0a4addde1252271f9dbb55a13b4641328c729a66adfc601102",
     "outputs": [
       "../godot/assets/models/riders/koa.glb"
     ],
@@ -545,7 +545,7 @@
   },
   "models/riders/marina": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "87f374ec53a7ffa5709491045036f4c37574b5050788599cf683ee96aa5dd9f6",
+    "fingerprint": "f90812a270ffe82f9540aa57aefedb7e00b2612081fba3379d4b1ce484f7201b",
     "outputs": [
       "../godot/assets/models/riders/marina.glb"
     ],
@@ -558,7 +558,7 @@
   },
   "models/rocks/boulder_a": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "fd29b2653a3bd24e79fdf20328ee2812ddc8a3439949062d817ac2ba9636b928",
+    "fingerprint": "bb61df30866a9a3f168137cd0d6385bbb084a09e5589b53100a49d893424b10e",
     "outputs": [
       "../godot/assets/models/rocks/boulder_a.glb"
     ],
@@ -571,7 +571,7 @@
   },
   "models/rocks/boulder_b": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "1fcd3f74aac8e39b736d9ec0e72b61ba1082bdf0f2baea0ef462333066eb54cd",
+    "fingerprint": "ec095ae1b15051f5d8f0dd0c71470fdd05e17521c8fda8a5f99fedc8b0286ea8",
     "outputs": [
       "../godot/assets/models/rocks/boulder_b.glb"
     ],
@@ -584,7 +584,7 @@
   },
   "models/rocks/pillar_a": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "cdfcdffff12672954c792631e9776567e13402019fca544211216b1f905b6ab3",
+    "fingerprint": "81b33d324e289db40dd8f2725bb87275e8f290b71209e51b6b05ed61f3561c74",
     "outputs": [
       "../godot/assets/models/rocks/pillar_a.glb"
     ],
@@ -597,7 +597,7 @@
   },
   "models/rocks/pillar_b": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "7a1fa0494afb3c10bac00fe7124aae4bbd9766b126f0f2f3eb0a790d2f019649",
+    "fingerprint": "ac7018ed6018a2c4867a58a725c647193511133f7a09f2f212103ab1adb0d539",
     "outputs": [
       "../godot/assets/models/rocks/pillar_b.glb"
     ],
@@ -610,7 +610,7 @@
   },
   "models/rocks/slab_a": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "71066a944afdf2483ff0ac431aafa11919f352697674433719e801808ba8648f",
+    "fingerprint": "353cfff712bcf6038fbad46cc863e7f3e27d1dac2e330161348af3a33cee5a9a",
     "outputs": [
       "../godot/assets/models/rocks/slab_a.glb"
     ],
@@ -623,7 +623,7 @@
   },
   "models/rocks/slab_b": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "22f450233be9e60565994171624e4efd24f80647b05ea6b9728b2c0e3be334d4",
+    "fingerprint": "3b79b4e092c0f0154a93ca88d25f9e7c27ed986b60a3fb26997d896669bd7ee3",
     "outputs": [
       "../godot/assets/models/rocks/slab_b.glb"
     ],
@@ -636,35 +636,36 @@
   },
   "textures/grass": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "7bef7c9d604f68515735b574dc61af86912e94e56ac09ef4cd8acef4a0d127e6",
+    "fingerprint": "179d127cc1ed42a9ab6879e99438516bf0a56ef790f915633f25541a628ca4d8",
     "maps": [
       "albedo",
-      "normal",
-      "roughness"
+      "normal"
     ],
     "outputs": [
       "../godot/assets/textures/grass_albedo.png",
-      "../godot/assets/textures/grass_normal.png",
-      "../godot/assets/textures/grass_roughness.png"
+      "../godot/assets/textures/grass_normal.png"
     ],
     "size": [
       1024,
       1024
     ],
-    "tile": 4.0
+    "tile": 4.0,
+    "values": {
+      "roughness": 0.9
+    }
   },
   "textures/rock": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "1855059a28ed515e670287132f2b400a2a545198673c73498be5ef3b74e3a97b",
+    "fingerprint": "487c90a9bc5cbcc083c3a52b7cde49d0cf80d80f1f7ec75e5bbd0c163948c960",
     "maps": [
       "albedo",
       "normal",
-      "roughness"
+      "orm"
     ],
     "outputs": [
       "../godot/assets/textures/rock_albedo.png",
       "../godot/assets/textures/rock_normal.png",
-      "../godot/assets/textures/rock_roughness.png"
+      "../godot/assets/textures/rock_orm.png"
     ],
     "size": [
       1024,
@@ -674,16 +675,16 @@
   },
   "textures/sand": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "1242ebf356560da1afce1b8848ed7e5f80f4e8e5e41c7fc7f053847a213ac750",
+    "fingerprint": "42a5182c5c47113f291198e19015f094e010485095181e97fbb6dca177e0fa54",
     "maps": [
       "albedo",
       "normal",
-      "roughness"
+      "orm"
     ],
     "outputs": [
       "../godot/assets/textures/sand_albedo.png",
       "../godot/assets/textures/sand_normal.png",
-      "../godot/assets/textures/sand_roughness.png"
+      "../godot/assets/textures/sand_orm.png"
     ],
     "size": [
       1024,
@@ -693,16 +694,16 @@
   },
   "textures/wood": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "5b7dd8679a8b2d6c46dcefabd323205447d8578818de6d4012e99c7b389e4027",
+    "fingerprint": "9e2edac88a79ca415584d6fa4e6edc2425b3e6da51a2f54ad4cec2f112b0b5e8",
     "maps": [
       "albedo",
       "normal",
-      "roughness"
+      "orm"
     ],
     "outputs": [
       "../godot/assets/textures/wood_albedo.png",
       "../godot/assets/textures/wood_normal.png",
-      "../godot/assets/textures/wood_roughness.png"
+      "../godot/assets/textures/wood_orm.png"
     ],
     "size": [
       1024,
