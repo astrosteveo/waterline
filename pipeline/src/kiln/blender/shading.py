@@ -6,6 +6,10 @@ dimensions, so the left edge meets the right and the top meets the bottom, and s
 bands come in whole numbers per tile. Scales are per metre of the game's surface (the
 recipe's `tile` says how many metres one tile covers).
 
+A value can also be baked partway through (`TextureKit.bake`), and masks that look at the
+pixels round each one worked out from it (`kiln.masks`): blurred, ridges, hollows and
+ambient occlusion, which the rest of the graph uses as values.
+
 Values and colours are nodes; arithmetic on them adds nodes:
 
     grains = t.noise(scale=30, detail=4)
@@ -21,7 +25,9 @@ import zlib
 from typing import Sequence
 
 import bpy
+import numpy as np
 
+from kiln import masks
 from kiln.blender.kit import parse_color
 
 # The noise types Blender's Noise texture offers, by the names recipes use.
@@ -133,12 +139,25 @@ class Color:
         return self.kit._mix_colors(self, other, 1.0, "ADD")
 
 
+class Baked:
+    """A value baked into a tile's pixels partway through a recipe (`TextureKit.bake`): what
+    the masks are worked out from."""
+
+    def __init__(self, pixels: np.ndarray) -> None:
+        # Rows bottom to top, a value per pixel.
+        self.pixels = pixels
+
+
 class TextureKit:
     """Builds a texture's material in the current Blender scene. `output` says which values
-    become which maps; kiln then bakes them."""
+    become which maps; kiln then bakes them. `size` is the maps' pixels a side, `relief` the
+    metres between height 0 and 1, and `bake` bakes a value into pixels (see `bake`)."""
 
-    def __init__(self, tile: float) -> None:
+    def __init__(self, tile: float, size: int = 1024, relief: float = 0.0, bake=None) -> None:
         self.tile = tile
+        self.size = size
+        self.relief = relief
+        self._bake = bake
         self.material = bpy.data.materials.new("KilnTexture")
         self.tree = self.material.node_tree
         for node in list(self.tree.nodes):
@@ -147,6 +166,7 @@ class TextureKit:
         coords = self._node("ShaderNodeTexCoord")
         uv = self._node("ShaderNodeSeparateXYZ")
         self.tree.links.new(coords.outputs["UV"], uv.inputs[0])
+        self._uv = coords.outputs["UV"]
         # Across the tile, 0 to 1: u left to right, v bottom to top.
         self.u = Value(self, uv.outputs["X"])
         self.v = Value(self, uv.outputs["Y"])
@@ -224,6 +244,55 @@ class TextureKit:
         self._link(self._as_value(value) + _seed_offset(seed), node.inputs["W"])
         return Value(self, node.outputs["Value"])
 
+    # --- Masks -------------------------------------------------------------------------
+
+    def bake(self, value) -> Baked:
+        """Bakes `value` (usually the height) into the tile's pixels now, so the masks below
+        can be worked out from it. Each bake takes as long as a map's."""
+        if self._bake is None:
+            raise RuntimeError("this texture kit can't bake")
+        return Baked(self._bake(self._as_value(value)))
+
+    def blurred(self, baked: Baked, radius: float) -> Value:
+        """`baked` blurred over about `radius` metres."""
+        return self._mask(masks.blurred(baked.pixels, self._pixels(radius)))
+
+    def ridges(self, baked: Baked, radius: float) -> Value:
+        """How far each point of `baked` (a height) stands above the height within about
+        `radius` metres, 0 to 1: edges and crests, where a surface wears and lightens."""
+        return self._mask(masks.ridges(baked.pixels, self._pixels(radius)))
+
+    def hollows(self, baked: Baked, radius: float) -> Value:
+        """How far each point of `baked` (a height) lies below the height within about
+        `radius` metres, 0 to 1: cracks, pits and gaps, where dirt gathers."""
+        return self._mask(masks.hollows(baked.pixels, self._pixels(radius)))
+
+    def occlusion(self, baked: Baked, radius: float, relief: float | None = None) -> Value:
+        """Ambient occlusion from `baked` (a height, `relief` metres between 0 and 1, the
+        texture's own by default), looking about `radius` metres round each point: 1 open
+        to the sky, toward 0 deep in a hollow. Darken the albedo with it, or output it as the
+        occlusion map."""
+        depth = (self.relief if relief is None else relief) / (self.tile / self.size)
+        return self._mask(masks.occlusion(baked.pixels, self._pixels(radius), depth))
+
+    def _pixels(self, metres: float) -> float:
+        return metres / self.tile * self.size
+
+    def _mask(self, pixels: np.ndarray) -> Value:
+        """A value read from `pixels` (the tile's, rows bottom to top), each pixel as it is."""
+        image = bpy.data.images.new("KilnMask", pixels.shape[1], pixels.shape[0], float_buffer=True, is_data=True)
+        rgba = np.repeat(pixels[:, :, None], 4, axis=2)
+        rgba[:, :, 3] = 1.0
+        image.pixels.foreach_set(rgba.astype(np.float32).ravel())
+        node = self._node("ShaderNodeTexImage")
+        node.image = image
+        node.interpolation = "Closest"
+        node.extension = "REPEAT"
+        self.tree.links.new(self._uv, node.inputs["Vector"])
+        split = self._node("ShaderNodeSeparateColor")
+        self.tree.links.new(node.outputs["Color"], split.inputs[0])
+        return Value(self, split.outputs[0])
+
     # --- Colours -----------------------------------------------------------------------
 
     def color(self, color) -> Color:
@@ -260,10 +329,12 @@ class TextureKit:
 
     # --- Output ------------------------------------------------------------------------
 
-    def output(self, albedo=None, roughness=None, height=None) -> None:
-        """Which colour is the albedo and which values the roughness and height (0 to 1).
-        Numbers and "#rrggbb" colours are flat. The normal map is worked out from the height."""
-        for name, given in (("albedo", albedo), ("roughness", roughness), ("height", height)):
+    def output(self, albedo=None, roughness=None, height=None, occlusion=None) -> None:
+        """Which colour is the albedo and which values the roughness, height and occlusion (0
+        to 1). Numbers and "#rrggbb" colours are flat. The normal map is worked out from the
+        height."""
+        for name, given in (("albedo", albedo), ("roughness", roughness), ("height", height),
+                            ("occlusion", occlusion)):
             if given is None:
                 continue
             self.outputs[name] = self._as_color(given) if name == "albedo" else self._as_value(given)
