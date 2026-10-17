@@ -43,17 +43,27 @@ class Kit:
 
     def __init__(self) -> None:
         self.collection = bpy.context.scene.collection
-        self._materials: dict[str, bpy.types.Material] = {}
+        # Each material made, by name, with the settings it was made with.
+        self._materials: dict[str, tuple[bpy.types.Material, dict]] = {}
 
     # --- Materials ---------------------------------------------------------------------
 
     def material(self, name: str, color, roughness: float = 0.5, metallic: float = 0.0,
                  double_sided: bool = False) -> bpy.types.Material:
-        """A material with a flat colour, made once per name. In the game it imports as a
-        StandardMaterial3D with that colour, roughness and metallic. Only its front faces are
-        drawn, as kiln's meshes are closed; `double_sided` draws both, for an open mesh."""
+        """A material with a flat colour, made once per name: asked for again with the same
+        settings it is the same material, and with others it fails, since the game finds a
+        material by its name. In the game it imports as a StandardMaterial3D with that
+        colour, roughness and metallic. Only its front faces are drawn, as kiln's meshes are
+        closed; `double_sided` draws both, for an open mesh."""
+        settings = {"color": color, "roughness": roughness, "metallic": metallic, "double_sided": double_sided}
         if name in self._materials:
-            return self._materials[name]
+            made, before = self._materials[name]
+            if before != settings:
+                changed = ", ".join(f"{key} {before[key]!r}, now {settings[key]!r}"
+                                    for key in settings if before[key] != settings[key])
+                raise ValueError(f"the material {name!r} was made with other settings ({changed}); "
+                                 "give a different material its own name")
+            return made
         material = bpy.data.materials.new(name)
         material.use_backface_culling = not double_sided
         bsdf = material.node_tree.nodes["Principled BSDF"]
@@ -62,7 +72,7 @@ class Kit:
         bsdf.inputs["Roughness"].default_value = roughness
         bsdf.inputs["Metallic"].default_value = metallic
         material.diffuse_color = rgba  # what the preview sheet shows
-        self._materials[name] = material
+        self._materials[name] = (material, settings)
         return material
 
     # --- Meshes ------------------------------------------------------------------------

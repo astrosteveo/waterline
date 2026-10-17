@@ -259,7 +259,7 @@
   },
   "models/course/buoy": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "81b756d865271258449edffe218b07d75dfc6c34d0baa1e7649e875389c46794",
+    "fingerprint": "c2a22bbb1b8e2a9e45b17f79a378dd4eedfec9576aeba56b8081e9d614fbace0",
     "outputs": [
       "../godot/assets/models/course/buoy.glb"
     ],
@@ -272,7 +272,7 @@
   },
   "models/course/ramp": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "b7b0fb7cbd2c421618c766eb161a28a7a64b1bfcb577a0f86da5efbbba3d0c75",
+    "fingerprint": "0e68c35243e111b4dd22af834cffad556e08fc1c4f80357178560cf6f045e5a8",
     "outputs": [
       "../godot/assets/models/course/ramp.glb"
     ],
@@ -285,7 +285,7 @@
   },
   "models/course/start_gate": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "48247724cead26d45fba8199aabe5817ecff1ee66f01b14d491d0707baf4f1a3",
+    "fingerprint": "8fe29cbf9944954b3c221fae3c90d47dc182eb5a5c6ca86eb1fa69cb67a58383",
     "outputs": [
       "../godot/assets/models/course/start_gate.glb"
     ],
@@ -298,7 +298,7 @@
   },
   "models/craft/petrel": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "5a56ce617c27c879a2ced748916a4c4df09682a6a5acf52555a4e234cd65cc76",
+    "fingerprint": "a1d5334356e229a6b10e0dfe5db6c6275f11dff60e6dc48610c5017674c4b997",
     "outputs": [
       "../godot/assets/models/craft/petrel.glb"
     ],
@@ -311,7 +311,7 @@
   },
   "models/craft/skipjack": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "c47e382fa1367df7915e5f646cd689f771a9ac83be8404d5f07fa7e12700204d",
+    "fingerprint": "85f67743ed742ea0c189c9ea28fcbff9d76e245961cd871434da967c58e1ef13",
     "outputs": [
       "../godot/assets/models/craft/skipjack.glb"
     ],
@@ -324,7 +324,7 @@
   },
   "models/craft/swordfish": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "2d22d9338a6c0511e79f282718738fa3cb43951df7f80e7a385fdd654acd164f",
+    "fingerprint": "a280c5a060d6b7a486d7fc202d79d07d61e209c4d678b81dc5ca186199fdc92a",
     "outputs": [
       "../godot/assets/models/craft/swordfish.glb"
     ],
@@ -337,7 +337,7 @@
   },
   "models/craft/tradewind": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "78e32b13fee0ade2d107a28896faca306486ff04db94f29acf6933fc2d313221",
+    "fingerprint": "09c0b9825abcdfe89c5a151027d4f52667020525d0a274f8e093572e56b9f0e0",
     "outputs": [
       "../godot/assets/models/craft/tradewind.glb"
     ],
@@ -350,7 +350,7 @@
   },
   "models/harbor/boathouse": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "32517cf0e58f28a0d413752835441420180b67b50aab6923e3c841492fc939c9",
+    "fingerprint": "88909667ad04a60d350ce67d30ef402a62d7eb2ada7daa1c10b0513b4342528b",
     "outputs": [
       "../godot/assets/models/harbor/boathouse.glb"
     ],
@@ -363,7 +363,7 @@
   },
   "models/harbor/house_square": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "fcf86f73b86f9c05c1063d9781789312c509126dfe9256cfd866cfcda0237a28",
+    "fingerprint": "903a89351d13ed275778c0f31bd7341181a50ca2775bb60c49dbbb4832fa4f51",
     "outputs": [
       "../godot/assets/models/harbor/house_square.glb"
     ],
@@ -376,7 +376,7 @@
   },
   "models/harbor/house_tall": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "ad3eaf7d7002d1a62bfcd510481f0e2ac90c6465c75d9e1745c8b666b82ec800",
+    "fingerprint": "9a5de54822a29f4322b7c7de4a25dd6974dbaf6a2389f25fbbc411c01ee58e93",
     "outputs": [
       "../godot/assets/models/harbor/house_tall.glb"
     ],
@@ -389,7 +389,7 @@
   },
   "models/harbor/lamp_post": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "2c683b898b52595930bed9562f764d4d527505a8accc0f1adc65b6cf04263b29",
+    "fingerprint": "4cee695b9d428a5ed11011f025435808cf261b24987dc233c9af24afd5ed4eb5",
     "outputs": [
       "../godot/assets/models/harbor/lamp_post.glb"
     ],
@@ -402,7 +402,7 @@
   },
   "models/harbor/office": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "782bb8f14aa1971c766b9ec53f94a9c283d8d087dbbcee47541b9fe4cc220d83",
+    "fingerprint": "40004f06994f147411d41fa99a2da2d7d93acadc29aaf688ada33c655c54a268",
     "outputs": [
       "../godot/assets/models/harbor/office.glb"
     ],
@@ -415,7 +415,7 @@
   },
   "models/harbor/pier": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "0b907e1b3651bb2ecd8ef89475143a0aea06a0e7a0b10526c9e1dd1a83087509",
+    "fingerprint": "44772cb554ae8f1e0768a6b546babb194d8ae0865c0734fb70d7deb62959a715",
     "outputs": [
       "../godot/assets/models/harbor/pier.glb"
     ],
@@ -428,7 +428,7 @@
   },
   "models/harbor/shed": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "762683f32ab08d9bb539719f7ec2da6f12cb4bd030f59c9de7bb61147868be63",
+    "fingerprint": "a025d6d711cf7dbab6ee47449e57e282204099273a968d329fcb1d8f4fbaa1fb",
     "outputs": [
       "../godot/assets/models/harbor/shed.glb"
     ],
@@ -441,7 +441,7 @@
   },
   "models/harbor/warehouse": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "f7b53a071d989e00876a82443654e201bee60e3f324f473e5a150053b97aa143",
+    "fingerprint": "f7d2d81f521968db68d8fc23c0c22477bcfdd9d59d6ab5242ba9ee60a67c7627",
     "outputs": [
       "../godot/assets/models/harbor/warehouse.glb"
     ],
@@ -454,7 +454,7 @@
   },
   "models/plants/palm_a": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "14bcddc48e478def4a7807c33b5c6e417137830e89e2558181dd009fa1c6afd3",
+    "fingerprint": "085ff314e42abcf0c98daa227b6557f22c6bc5020baeaf00b26c526d9ea2f475",
     "outputs": [
       "../godot/assets/models/plants/palm_a.glb"
     ],
@@ -467,7 +467,7 @@
   },
   "models/plants/palm_b": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "354a5ffee5334f4d753ef05673afe47f1e61c431b9f71f2a7204d09472e70890",
+    "fingerprint": "104137af39847101f83fc9684b0dd787c39c1e9e8d73b22775b3d6f98211c616",
     "outputs": [
       "../godot/assets/models/plants/palm_b.glb"
     ],
@@ -480,7 +480,7 @@
   },
   "models/plants/palm_c": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "a213185cb2a655659b49363f5e5f46ce481621794a473d00396240794a3276e5",
+    "fingerprint": "d634a0be0344672f209bf2423c52bf3abbdaeec0bac246798dfe4a98d72ec461",
     "outputs": [
       "../godot/assets/models/plants/palm_c.glb"
     ],
@@ -493,7 +493,7 @@
   },
   "models/props/crate": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "c09503ca563f3828ecd34fface3629dda2a0cc2ab9852c31dcd4b7a98b84a26c",
+    "fingerprint": "f36ea15699088d60038f3633d5bc97f28ca3a5c1b6223d124cac1bd7ae8a25d5",
     "outputs": [
       "../godot/assets/models/props/crate.glb"
     ],
@@ -506,7 +506,7 @@
   },
   "models/riders/dax": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "13197d5a87f5393e5f8851b26e1f698eaf550bd04496e7eded31bf47f5df65b6",
+    "fingerprint": "d6308ea953276fa282ceb5ea137b94c5b7330eaa61bf5a48dc97d93813222287",
     "outputs": [
       "../godot/assets/models/riders/dax.glb"
     ],
@@ -519,7 +519,7 @@
   },
   "models/riders/ines": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "492bfb304ae2d78bb8225115fc8cfc73fd7819a8500a5c7ba80ed653bf801ee8",
+    "fingerprint": "f850af8442d22d01cc6f25ff6e12c370df276b8e97af59174be0b614bfd4401f",
     "outputs": [
       "../godot/assets/models/riders/ines.glb"
     ],
@@ -532,7 +532,7 @@
   },
   "models/riders/koa": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "751e6a16a1ca3e266e17947d3ab963d85530d8e00a716d4302dbb0f903f9e849",
+    "fingerprint": "9a000c0499f39a1a866f46d6dfa0ab6f0107897c5b1510f8ac4ec5cf6d417a41",
     "outputs": [
       "../godot/assets/models/riders/koa.glb"
     ],
@@ -545,7 +545,7 @@
   },
   "models/riders/marina": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "7f02a5d4ff08c9fdff62ceec23910e55b036902038577ea1ce4858eb7548a986",
+    "fingerprint": "06652991164eb6fdec349379b9a3e81f1054d3b94dc03b30b12401a4247d75a5",
     "outputs": [
       "../godot/assets/models/riders/marina.glb"
     ],
@@ -558,7 +558,7 @@
   },
   "models/rocks/boulder_a": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "16ff117e35515b7fbb1d8895eb01f715bc9daef0d97c55594af3dee9cac4096d",
+    "fingerprint": "c2cc8f9f52a7ddd045f6aba1594695c9de8de9942a6e7e6a94e25caeaa6cb35c",
     "outputs": [
       "../godot/assets/models/rocks/boulder_a.glb"
     ],
@@ -571,7 +571,7 @@
   },
   "models/rocks/boulder_b": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "41a1fab9f982260a76082341b5490475a96fd96ee56d68fc70790bd2884fe86f",
+    "fingerprint": "0c5fc9a8d35c4d6f1f5c1d054b9393ea94faf9f28ac453239e459c126b3f5195",
     "outputs": [
       "../godot/assets/models/rocks/boulder_b.glb"
     ],
@@ -584,7 +584,7 @@
   },
   "models/rocks/pillar_a": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "551a21eaf454ec0768a862cd36e32a819751d1a493b76024531a76d3d0998cfb",
+    "fingerprint": "b09cfafa561cd0b04607dadce56d4e7e03fc41c3fbef095fcb23e6f10290cb25",
     "outputs": [
       "../godot/assets/models/rocks/pillar_a.glb"
     ],
@@ -597,7 +597,7 @@
   },
   "models/rocks/pillar_b": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "19223fe1b1fcf812156b3b6f40fef02b2d003f8177429c6805993657d5b012c7",
+    "fingerprint": "ba3475a8e0f0367a6f9634100623d8f2d825dbf44e36fd02c9a096e54f731926",
     "outputs": [
       "../godot/assets/models/rocks/pillar_b.glb"
     ],
@@ -610,7 +610,7 @@
   },
   "models/rocks/slab_a": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "055ce2b99c9fae491d9f4df112369cbb95eb946c6e2854d0a87ee974104c019a",
+    "fingerprint": "37d3efbae79103ec30438a010a201e311e7f46747e47b99e3e18d9c7ed6faaff",
     "outputs": [
       "../godot/assets/models/rocks/slab_a.glb"
     ],
@@ -623,7 +623,7 @@
   },
   "models/rocks/slab_b": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "bf6a4dfcd5be507ab5e2acfdc05782cb6c306acece726a628214fdaa7a1965bb",
+    "fingerprint": "de0ea8269a3f6498a2e8fb0abc21c81e3be62a26f6b00073d7557ddf02ca4ed8",
     "outputs": [
       "../godot/assets/models/rocks/slab_b.glb"
     ],
@@ -636,7 +636,7 @@
   },
   "textures/grass": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "b0088928ef01eed5fb00b3f0ef1cd514c2deaaa04381425e87ce137c3cac3bf6",
+    "fingerprint": "9d7506765901642d326deacc8a2d85e1c8bcf138ab7bc0487f374abe765d7411",
     "maps": [
       "albedo",
       "normal",
@@ -655,7 +655,7 @@
   },
   "textures/rock": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "b5cc151b4ec34690cdeb4716df3740f5c99561891908e6c941505c15c343316c",
+    "fingerprint": "c8426afc5b719815e09bc2187444943d7042ec13b2af216f946701f1f43c2c6a",
     "maps": [
       "albedo",
       "normal",
@@ -674,7 +674,7 @@
   },
   "textures/sand": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "5669af7895f95229361c947d4a95238905c1e72eca361146a14ac9f99d1f360f",
+    "fingerprint": "ead3209e427581d1ee94bcda7286617d6b9fd1746a5e060a220aa1a181c08608",
     "maps": [
       "albedo",
       "normal",
@@ -693,7 +693,7 @@
   },
   "textures/wood": {
     "blender": "Blender 5.2.2 LTS",
-    "fingerprint": "b4bce33eb35f4d56965649ba4b035db1968cead99e99c42b10af2d36ec5b47b0",
+    "fingerprint": "d4048a6fc9dc7e0e1a6e84501403db085325d7249d7dfdfa8ad12f7b9660e107",
     "maps": [
       "albedo",
       "normal",

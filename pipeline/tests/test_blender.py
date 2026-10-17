@@ -81,6 +81,14 @@ def build(k):
     box.vertex_groups.new(name="Arm").add([0, 1, 2, 3], 1.0, "REPLACE")
     box.modifiers.new("Armature", "ARMATURE").object = bones
 ''',
+    "two_paints": '''
+from kiln import model
+@model()
+def build(k):
+    k.box("Hull", (1, 1, 1), material=k.material("Paint", "#ff0000", roughness=0.4))
+    k.box("Hood", (1, 1, 1), center=(2, 0, 0), material=k.material("Paint", "#ff0000", roughness=0.4))
+    k.box("Deck", (1, 1, 1), center=(4, 0, 0), material=k.material("Paint", "#0000ff", roughness=0.4))
+''',
     "raises": '''
 from kiln import model
 @model()
@@ -258,6 +266,8 @@ def test_broken_recipes_fail_with_reasons(project, capsys):
     assert "cut through each other" in sections["crossed"]
     assert "6 faces whose UVs cover no area" in sections["flat_uvs"]
     assert "no wood left" in sections["raises"]
+    # Asked for again with the same settings it is the same material; with others, it fails.
+    assert "the material 'Paint' was made with other settings (color '#ff0000', now '#0000ff')" in sections["two_paints"]
     assert "an object named 'Seat' already exists" in sections["same_name"]
     assert "has no weight on any bone" in sections["no_weight"]
     assert "Box: 4 vertices whose weights on the bones don't add up to 1" in sections["half_weighted"]
