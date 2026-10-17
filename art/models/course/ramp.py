@@ -46,7 +46,7 @@ def build(k):
     slots = list(wedge.slots())
     for band in range(STRIPES):
         slots[band * 4 + 1] = 0 if band % 2 == 0 else 1
-    wedge = geometry.Mesh(wedge.vertices, wedge.faces, tuple(slots))
+    wedge = wedge.with_materials(slots)
     k.mesh("Wedge", wedge, material=[stripe_a, stripe_b, side, end])
     # A white trim along the lip, lying on the slope so it doesn't stick up into a craft's way.
     angle = math.degrees(math.atan2(TOP - BOTTOM, LENGTH))

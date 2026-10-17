@@ -5,6 +5,7 @@ import bmesh
 import bpy
 from mathutils.bvhtree import BVHTree
 
+from kiln.blender.kit import MIN_UV_AREA, uv_area
 from kiln.blender.space import to_game
 from kiln.recipe import ModelSpec
 
@@ -34,6 +35,9 @@ def measure() -> dict:
                 highs[axis] = max(highs[axis], p[axis])
         tris = sum(len(face.verts) - 2 for face in bm.faces)
         triangles += tris
+        uv = bm.loops.layers.uv.active
+        areas = [face.calc_area() for face in bm.faces]
+        uv_areas = [uv_area([loop[uv].uv for loop in face.loops]) for face in bm.faces] if uv else []
         meshes[obj.name] = {
             "triangles": tris,
             "open_edges": sum(1 for edge in bm.edges if len(edge.link_faces) != 2),
@@ -41,8 +45,15 @@ def measure() -> dict:
             "flipped_edges": sum(1 for edge in bm.edges
                                  if len(edge.link_faces) == 2 and not edge.is_contiguous),
             "volume": round(bm.calc_volume(signed=True), 6),
-            "degenerate_faces": sum(1 for face in bm.faces if face.calc_area() < MIN_FACE_AREA),
+            "degenerate_faces": sum(1 for area in areas if area < MIN_FACE_AREA),
             "self_intersections": _self_intersections(bm),
+            "uvs": uv is not None,
+            # The surface's area and its UVs' (m²): equal when the UVs are in metres throughout.
+            "area": round(sum(areas), 6),
+            "uv_area": round(sum(uv_areas), 6),
+            # Faces with area whose UVs have none: a texture would smear across them.
+            "flat_uv_faces": sum(1 for area, flat in zip(areas, uv_areas)
+                                 if area >= MIN_FACE_AREA and flat < MIN_UV_AREA),
         }
         bm.free()
     size = [round(highs[i] - lows[i], 5) if highs[i] >= lows[i] else 0.0 for i in range(3)]
@@ -93,6 +104,9 @@ def problems(spec: ModelSpec, measured: dict) -> list[str]:
             found.append(f"{name}: inside out (its faces point inward)")
         if mesh["degenerate_faces"]:
             found.append(f"{name}: {mesh['degenerate_faces']} faces with no area")
+        if mesh["flat_uv_faces"]:
+            found.append(f"{name}: {mesh['flat_uv_faces']} faces whose UVs cover no area (a texture would smear "
+                         "across them)")
         if not spec.allow_self_intersections and mesh["self_intersections"]:
             found.append(f"{name}: {mesh['self_intersections']} pairs of faces cut through each other")
     return found
