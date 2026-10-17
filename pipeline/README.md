@@ -138,8 +138,10 @@ def build(t):
 A texture recipe builds a material from Blender's procedural textures, and kiln bakes it in
 Cycles (on the CPU, with a fixed seed, so every build gives the same pixels) into
 `<output>/<id>_<map>.png`: `albedo` (sRGB), `normal` (tangent space, OpenGL convention: green
-points up the image, as Godot expects), `roughness`, `height` (16-bit) and `occlusion`. The
-normal map is worked out from the height, `relief` metres between height 0 and 1. Every map
+points up the image, as Godot expects), `roughness`, `height` (16-bit), `occlusion`,
+`metallic`, and `orm`: occlusion, roughness and metallic packed in red, green and blue, as
+Godot's ORMMaterial3D reads them (no occlusion counts as 1, no metallic as 0). The normal map
+is worked out from the height, `relief` metres between height 0 and 1. Every map
 tiles: noise and Voronoi are sampled on a torus in four dimensions, so the left edge meets
 the right and the top the bottom, and stripes and bands come in whole numbers per tile.
 Scales are per metre of the game's surface, `tile` metres to a tile.
@@ -164,7 +166,7 @@ and each other through `+ - * / **`:
 | `t.bake(value)` | the value baked into the tile's pixels now (usually the height), for the masks below |
 | `t.blurred(baked, radius)`, `t.ridges(baked, radius)`, `t.hollows(baked, radius)` | values worked out from a baked height, looking `radius` metres round each point: it blurred; how far each point stands above the height round it (crests, where a surface wears) or below it (cracks and gaps, where dirt gathers), 0 to 1 |
 | `t.occlusion(baked, radius, relief)` | ambient occlusion from a baked height: 1 open to the sky, toward 0 deep in a hollow |
-| `t.output(albedo, roughness, height, occlusion)` | which colour and values become the maps |
+| `t.output(albedo, roughness, height, occlusion, metallic)` | which colour and values become the maps. A value given as a number isn't baked, and `kiln.lock.json` keeps it (the texture's `values`), so a recipe can leave its map out and the material take the number |
 
 ## A sound recipe
 
@@ -234,6 +236,8 @@ the two match where the UVs are in metres.
 
 A texture always gets two checks: every map tiles (its wrap-round edges differ no more than
 neighbouring pixels do inside it, within 1.5 times), and every value lies between 0 and 1.
+A map of one value (within an 8-bit step) gets a note in the build's output: the material
+could take the number instead.
 
 Every sound is checked too:
 

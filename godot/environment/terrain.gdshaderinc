@@ -3,17 +3,19 @@
 // ground there is made of: red sand, green grass, blue rock, and alpha how deep the seabed
 // lies (0 at the surface, 1 at 20 m), which darkens it; between vertices they blend. The
 // textures are kiln's (art/textures), mapped in world space: sand and grass from straight
-// above, rock from all three sides, so cliffs don't smear.
+// above, rock from all three sides, so cliffs don't smear. Sand and rock have ORM maps
+// (occlusion, roughness and metallic in red, green and blue); grass is equally rough all over,
+// a number its recipe gives (kiln.lock.json's "values").
 
 uniform sampler2D sand_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D sand_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D sand_roughness : hint_roughness_r, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D sand_orm : filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D grass_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D grass_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D grass_roughness : hint_roughness_r, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform float grass_roughness : hint_range(0.0, 1.0) = 1.0;
 uniform sampler2D rock_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D rock_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D rock_roughness : hint_roughness_r, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D rock_orm : filter_linear_mipmap_anisotropic, repeat_enable;
 // Metres one tile of each texture covers (as its kiln recipe's tile).
 uniform float sand_tile = 4.0;
 uniform float grass_tile = 4.0;
@@ -55,18 +57,22 @@ void fragment() {
 
 	vec3 albedo = vec3(0.0);
 	float roughness = 0.0;
+	float occlusion = 0.0;
 	vec3 bent = n;
 	if (sand > 0.0) {
 		vec2 uv = uv_top / sand_tile;
 		albedo += texture(sand_albedo, uv).rgb * sand;
-		roughness += texture(sand_roughness, uv).r * sand;
+		vec2 orm = texture(sand_orm, uv).rg;
+		occlusion += orm.r * sand;
+		roughness += orm.g * sand;
 		vec2 t = tilt(sand_normal, uv);
 		bent += vec3(t.x, 0.0, t.y) * sand;
 	}
 	if (grass > 0.0) {
 		vec2 uv = uv_top / grass_tile;
 		albedo += texture(grass_albedo, uv).rgb * grass;
-		roughness += texture(grass_roughness, uv).r * grass;
+		occlusion += grass;
+		roughness += grass_roughness * grass;
 		vec2 t = tilt(grass_normal, uv);
 		bent += vec3(t.x, 0.0, t.y) * grass;
 	}
@@ -76,14 +82,15 @@ void fragment() {
 		vec2 uz = uv_z / rock_tile;
 		vec3 colour = texture(rock_albedo, ux).rgb * sides.x + texture(rock_albedo, uy).rgb * sides.y
 				+ texture(rock_albedo, uz).rgb * sides.z;
-		float rough = texture(rock_roughness, ux).r * sides.x + texture(rock_roughness, uy).r * sides.y
-				+ texture(rock_roughness, uz).r * sides.z;
+		vec2 orm = texture(rock_orm, ux).rg * sides.x + texture(rock_orm, uy).rg * sides.y
+				+ texture(rock_orm, uz).rg * sides.z;
 		vec2 tx = tilt(rock_normal, ux);
 		vec2 ty = tilt(rock_normal, uy);
 		vec2 tz = tilt(rock_normal, uz);
 		vec3 t = vec3(0.0, tx.y, tx.x) * sides.x + vec3(ty.x, 0.0, ty.y) * sides.y + vec3(tz.x, tz.y, 0.0) * sides.z;
 		albedo += colour * rock;
-		roughness += rough * rock;
+		occlusion += orm.r * rock;
+		roughness += orm.g * rock;
 		bent += t * rock;
 	}
 	// Each texture's smallest mipmap is its average, so the wobble averages 1.
@@ -95,5 +102,6 @@ void fragment() {
 
 	ALBEDO = albedo;
 	ROUGHNESS = roughness;
+	AO = occlusion;
 	NORMAL = normalize((VIEW_MATRIX * vec4(normalize(bent), 0.0)).xyz);
 }

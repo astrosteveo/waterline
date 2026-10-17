@@ -3,7 +3,7 @@ along the grain, with grime down in the grain's grooves."""
 from kiln import texture
 
 
-@texture(size=1024, tile=2.0, relief=0.004, maps=("albedo", "normal", "roughness"))
+@texture(size=1024, tile=2.0, relief=0.004, maps=("albedo", "normal", "orm"))
 def build(t):
     warp = t.noise(scale=1.0, detail=3, stretch=(8, 1), seed=1)
     knot = t.noise(scale=2.5, detail=1, stretch=(2.5, 1), seed=3).smoothstep(0.7, 0.76)
@@ -15,7 +15,8 @@ def build(t):
     timber = t.ramp(rings * 0.45 + grain * 0.55, [(0.3, "#6a482c"), (0.72, "#9c7550")])
     timber = t.mix(timber, "#a89f8f", bleach * 0.55)
     timber = t.mix(timber, "#3b2718", knot * 0.85)
-    # Grime gathers in the grain's grooves, found from the height as baked.
-    grooves = t.hollows(t.bake(height), 0.006)
+    # Grime gathers in the grain's grooves, found from the height as baked, and they shade.
+    baked = t.bake(height)
+    grooves = t.hollows(baked, 0.006)
     timber = t.mix(timber, "#2a1c12", grooves * 0.3)
-    t.output(albedo=timber, roughness=0.86 - grain * 0.1, height=height)
+    t.output(albedo=timber, roughness=0.86 - grain * 0.1, height=height, occlusion=t.occlusion(baked, 0.02))

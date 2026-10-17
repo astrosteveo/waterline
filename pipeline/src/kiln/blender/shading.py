@@ -163,6 +163,8 @@ class TextureKit:
         for node in list(self.tree.nodes):
             self.tree.nodes.remove(node)
         self.outputs: dict[str, Value | Color] = {}
+        # The outputs given as plain numbers, the same over the whole tile.
+        self.numbers: dict[str, float] = {}
         coords = self._node("ShaderNodeTexCoord")
         uv = self._node("ShaderNodeSeparateXYZ")
         self.tree.links.new(coords.outputs["UV"], uv.inputs[0])
@@ -329,14 +331,17 @@ class TextureKit:
 
     # --- Output ------------------------------------------------------------------------
 
-    def output(self, albedo=None, roughness=None, height=None, occlusion=None) -> None:
-        """Which colour is the albedo and which values the roughness, height and occlusion (0
-        to 1). Numbers and "#rrggbb" colours are flat. The normal map is worked out from the
-        height."""
+    def output(self, albedo=None, roughness=None, height=None, occlusion=None, metallic=None) -> None:
+        """Which colour is the albedo and which values the roughness, height, occlusion and
+        metallic (0 to 1). Numbers and "#rrggbb" colours are flat. The normal map is worked
+        out from the height. A value given as a number is recorded in kiln.lock.json (as the
+        texture's `values`), so a map of it can be left out and the material given the number."""
         for name, given in (("albedo", albedo), ("roughness", roughness), ("height", height),
-                            ("occlusion", occlusion)):
+                            ("occlusion", occlusion), ("metallic", metallic)):
             if given is None:
                 continue
+            if name != "albedo" and isinstance(given, (int, float)):
+                self.numbers[name] = float(given)
             self.outputs[name] = self._as_color(given) if name == "albedo" else self._as_value(given)
 
     # --- Wiring ------------------------------------------------------------------------

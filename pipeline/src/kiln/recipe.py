@@ -72,6 +72,8 @@ TEXTURE_MAPS = {
     "roughness": "roughness, 0 to 1",
     "height": "the height, 0 to 1 (16-bit)",
     "occlusion": "ambient occlusion, 0 to 1: 1 open to the sky, toward 0 where the surface hides itself",
+    "metallic": "metallic, 0 to 1",
+    "orm": "occlusion, roughness and metallic in red, green and blue, as Godot's ORMMaterial3D reads them",
 }
 
 

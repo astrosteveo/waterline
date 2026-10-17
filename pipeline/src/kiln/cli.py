@@ -107,8 +107,11 @@ def build_assets(project: Project, blender: str, assets: list[Asset], force: boo
                     entry["triangles"] = report["triangles"]
                 else:
                     entry["maps"] = report["maps"]
-                    # The metres a tile covers, which the game's materials must draw it at.
+                    # The metres a tile covers, which the game's materials must draw it at, and
+                    # the outputs given as numbers, which a material can take in place of a map.
                     entry["tile"] = report["tile"]
+                    if report.get("values"):
+                        entry["values"] = report["values"]
             lock[asset.id] = entry
     project.write_lock(lock)
     return code
@@ -165,6 +168,8 @@ def run(project: Project, blender: str, assets: list[Asset], export: bool, previ
             print(f"FAILED       {asset.id}")
             for problem in report["problems"]:
                 print("    " + problem.replace("\n", "\n    ").rstrip())
+        for note in report.get("notes", []):
+            print(f"             note: {note}")
         if report.get("preview"):
             print(f"             preview: {os.path.relpath(report['preview'])}")
     return (1 if failed else 0), results

@@ -32,21 +32,34 @@ def build_texture(recipe, stem: str, export: bool, report_dir: str | None) -> di
     kit = TextureKit(spec.tile, spec.size, spec.relief, bake=lambda value: _bake(kit, value, spec)[:, :, 0])
     recipe.build(kit)
     problems = []
-    needed = {"albedo": "albedo", "roughness": "roughness", "height": "height", "normal": "height",
-              "occlusion": "occlusion"}
-    missing = sorted({needed[m] for m in spec.maps if needed[m] not in kit.outputs})
+    # The outputs each map is made from; an ORM map needs a roughness, and takes no occlusion
+    # as 1 and no metallic as 0.
+    needed = {"albedo": ("albedo",), "roughness": ("roughness",), "height": ("height",), "normal": ("height",),
+              "occlusion": ("occlusion",), "metallic": ("metallic",), "orm": ("roughness",)}
+    missing = sorted({output for m in spec.maps for output in needed[m] if output not in kit.outputs})
     if missing:
         return {"kind": "texture", "problems": [f"the recipe gave no {', '.join(missing)} (t.output)"]}
-    baked = {name: _bake(kit, value, spec) for name, value in kit.outputs.items()
-             if name in {needed[m] for m in spec.maps}}
+    used = {output for m in spec.maps for output in needed[m]} | ({"occlusion", "metallic"} if "orm" in spec.maps else set())
+    # An output given as a number is the same everywhere: no need to bake it.
+    baked = {name: (np.full((spec.size, spec.size, 4), kit.numbers[name]) if name in kit.numbers
+                    else _bake(kit, value, spec))
+             for name, value in kit.outputs.items() if name in used}
     maps = {}
     for name in spec.maps:
         if name == "albedo":
             maps[name] = _to_srgb(baked["albedo"][:, :, :3])
         elif name == "normal":
             maps[name] = normals_from_height(baked["height"][:, :, 0], spec.relief, spec.tile / spec.size) * 0.5 + 0.5
+        elif name == "orm":
+            shape = (spec.size, spec.size)
+            occlusion = baked["occlusion"][:, :, 0] if "occlusion" in baked else np.ones(shape)
+            metallic = baked["metallic"][:, :, 0] if "metallic" in baked else np.zeros(shape)
+            maps[name] = np.stack([occlusion, baked["roughness"][:, :, 0], metallic], axis=-1)
         else:
             maps[name] = baked[name][:, :, :1]
+    # A map of one value (within an 8-bit step) is better given to the material as a number.
+    notes = [f"{name} holds one value ({float(pixels.mean()):.3f}): give the material that number instead"
+             for name, pixels in maps.items() if pixels.shape[2] == 1 and float(np.ptp(pixels)) < 1 / 255]
     seams = {}
     for name, pixels in maps.items():
         edge, inside = seam(pixels)
@@ -58,7 +71,7 @@ def build_texture(recipe, stem: str, export: bool, report_dir: str | None) -> di
         if low < -0.001 or high > 1.001:
             problems.append(f"{name} runs from {low:.3f} to {high:.3f}, outside 0 to 1")
     report = {"kind": "texture", "size": [spec.size, spec.size], "tile": spec.tile, "maps": list(spec.maps),
-              "seams": seams, "problems": problems}
+              "values": dict(kit.numbers), "seams": seams, "notes": notes, "problems": problems}
     if problems:
         return report
     outputs = [f"{stem}_{name}.png" for name in spec.maps]

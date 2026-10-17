@@ -1,24 +1,23 @@
-[gd_resource type="ShaderMaterial" load_steps=11 format=3]
+[gd_resource type="ShaderMaterial" load_steps=10 format=3]
 
 [ext_resource type="Shader" path="res://environment/terrain.gdshader" id="1"]
 [ext_resource type="Texture2D" uid="uid://ia08qf0mn8gf" path="res://assets/textures/sand_albedo.png" id="2"]
 [ext_resource type="Texture2D" uid="uid://brtvmthhih702" path="res://assets/textures/sand_normal.png" id="3"]
-[ext_resource type="Texture2D" uid="uid://bctjemdm8q5s6" path="res://assets/textures/sand_roughness.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://bbpcjg87ckc3f" path="res://assets/textures/sand_orm.png" id="4"]
 [ext_resource type="Texture2D" uid="uid://ch5fg5d46luek" path="res://assets/textures/grass_albedo.png" id="5"]
 [ext_resource type="Texture2D" uid="uid://47lek82lldnk" path="res://assets/textures/grass_normal.png" id="6"]
-[ext_resource type="Texture2D" uid="uid://xf5mgm2ador2" path="res://assets/textures/grass_roughness.png" id="7"]
 [ext_resource type="Texture2D" uid="uid://caxde8e2c70fx" path="res://assets/textures/rock_albedo.png" id="8"]
 [ext_resource type="Texture2D" uid="uid://rjcvitpxd1tv" path="res://assets/textures/rock_normal.png" id="9"]
-[ext_resource type="Texture2D" uid="uid://dhspk7ttww0th" path="res://assets/textures/rock_roughness.png" id="10"]
+[ext_resource type="Texture2D" uid="uid://dpybjjam3w3ug" path="res://assets/textures/rock_orm.png" id="10"]
 
 [resource]
 shader = ExtResource("1")
 shader_parameter/sand_albedo = ExtResource("2")
 shader_parameter/sand_normal = ExtResource("3")
-shader_parameter/sand_roughness = ExtResource("4")
+shader_parameter/sand_orm = ExtResource("4")
 shader_parameter/grass_albedo = ExtResource("5")
 shader_parameter/grass_normal = ExtResource("6")
-shader_parameter/grass_roughness = ExtResource("7")
+shader_parameter/grass_roughness = 0.9
 shader_parameter/rock_albedo = ExtResource("8")
 shader_parameter/rock_normal = ExtResource("9")
-shader_parameter/rock_roughness = ExtResource("10")
+shader_parameter/rock_orm = ExtResource("10")

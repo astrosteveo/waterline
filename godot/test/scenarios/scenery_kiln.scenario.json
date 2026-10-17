@@ -101,6 +101,16 @@
       "name": "every material draws its texture at the tile kiln built it for (art/kiln.lock.json)"
     },
     {
+      "expect": "course.get_node('Terrain').mesh.surface_get_material(0).get_shader_parameter('grass_roughness') - kiln_value('grass', 'roughness')",
+      "approx": 0,
+      "name": "the terrain's grass is as rough as the number its recipe gives in place of a map"
+    },
+    {
+      "expect": "[ResourceLoader.load('res://environment/materials/rock.tres').get_class(), ResourceLoader.load('res://environment/materials/rock.tres').orm_texture.resource_path, ResourceLoader.load('res://environment/materials/wood.tres').orm_texture.resource_path, course.get_node('Terrain').mesh.surface_get_material(0).get_shader_parameter('rock_orm').resource_path]",
+      "equals": ["ORMMaterial3D", "res://assets/textures/rock_orm.png", "res://assets/textures/wood_orm.png", "res://assets/textures/rock_orm.png"],
+      "name": "rock and wood take kiln's ORM maps, with their occlusion"
+    },
+    {
       "expect": "[ResourceLoader.load('res://assets/models/course/start_gate.glb').instantiate().get_node('PylonRight').position.y - course.get_node('StartGate').get_script().get_script_constant_map()['PYLON_BOTTOM'], ResourceLoader.load('res://assets/models/course/start_gate.glb').instantiate().get_node('PylonRight').get_aabb().size.x - course.get_node('StartGate').get_script().get_script_constant_map()['PYLON_WIDTH']]",
       "approx": [0, 0],
       "name": "the start gate's model has its pylons' feet and width where the collision boxes are (StartGate.PYLON_BOTTOM, PYLON_WIDTH)"
