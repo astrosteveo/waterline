@@ -60,7 +60,8 @@ class ModelSpec:
     bones: Sequence[str] = field(default_factory=tuple)
     # True: every mesh must be closed (each edge shared by exactly two faces).
     closed: bool = True
-    # False: no mesh may cut through itself. Separate objects may still overlap.
+    # False: no connected part of a mesh may cut through itself. Separate parts of a mesh, and
+    # separate objects, may still overlap.
     allow_self_intersections: bool = False
 
 

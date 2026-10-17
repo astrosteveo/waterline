@@ -210,7 +210,7 @@ the start, and what `arrange` places past the end comes in again at the start.
 | `materials` | each material is on at least one face (for those the game finds by name) |
 | `bones` | a bone with each name exists (and no bone has an object's name: glTF makes a node of each) |
 | `closed` (default True) | every mesh is closed: each edge shared by exactly two faces |
-| `allow_self_intersections` (default False) | no mesh cuts through itself (separate objects may overlap) |
+| `allow_self_intersections` (default False) | no connected part of a mesh cuts through itself (separate parts and objects may overlap) |
 
 Faces with no area always fail, and so do a skinned mesh's vertices whose weights on the
 bones don't add up to 1 (posed, they would be left behind), and faces whose UVs cover no area (a texture would smear
