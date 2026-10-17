@@ -65,6 +65,22 @@ def build(k):
     k.box("Seat", (1, 1, 1))
     k.marker("Seat", (0, 1, 0))
 ''',
+    "no_weight": '''
+from kiln import model, geometry
+@model()
+def build(k):
+    bones = k.armature("Skeleton", {"Arm": ((0, 0, 0), (0, 1, 0))})
+    k.skin(k.mesh("Box", geometry.box((1, 1, 1))), bones, lambda p: {"Arm": 1.0} if p[1] > 0 else {})
+''',
+    "half_weighted": '''
+from kiln import model, geometry
+@model(bones=["Arm", "Leg"])
+def build(k):
+    bones = k.armature("Skeleton", {"Arm": ((0, 0, 0), (0, 1, 0)), "Box": ((0, 0, 0), (1, 0, 0))})
+    box = k.mesh("Box", geometry.box((1, 1, 1)))
+    box.vertex_groups.new(name="Arm").add([0, 1, 2, 3], 1.0, "REPLACE")
+    box.modifiers.new("Armature", "ARMATURE").object = bones
+''',
     "raises": '''
 from kiln import model
 @model()
@@ -111,6 +127,22 @@ def build(k):
     k.collection.objects.link(ball)
     ball.scale = (2, 1, 1)
     k.unwrap(ball)
+'''
+
+# An arm of two bones: the upper part blends onto the lower bone toward the elbow, and the
+# lower part and the cap on it are wholly on the lower bone.
+ARM = '''
+from kiln import geometry, model
+@model(bones=["UpperBone", "LowerBone"], markers=["Elbow"])
+def build(k):
+    bones = k.armature("Skeleton", {"UpperBone": ((0, 0, 0), (0.5, 0, 0)), "LowerBone": ((0.5, 0, 0), (1.0, 0, 0))})
+    upper = k.mesh("Upper", geometry.box((0.5, 0.1, 0.1), (0.25, 0, 0)))
+    lower = k.mesh("Lower", geometry.box((0.5, 0.08, 0.08)), position=(0.75, 0, 0))
+    cap = k.mesh("Cap", geometry.box((0.05, 0.05, 0.05)), parent=lower, position=(1.0, 0, 0))
+    k.skin(upper, bones, lambda p: {"UpperBone": 1.0, "LowerBone": max(0.0, (p[0] - 0.4) / 0.2)})
+    k.skin(lower, bones, "LowerBone")
+    k.skin(cap, bones, "LowerBone")
+    k.marker("Elbow", (0.5, 0, 0))
 '''
 
 HANDLEBAR = '''
@@ -227,6 +259,10 @@ def test_broken_recipes_fail_with_reasons(project, capsys):
     assert "6 faces whose UVs cover no area" in sections["flat_uvs"]
     assert "no wood left" in sections["raises"]
     assert "an object named 'Seat' already exists" in sections["same_name"]
+    assert "has no weight on any bone" in sections["no_weight"]
+    assert "Box: 4 vertices whose weights on the bones don't add up to 1" in sections["half_weighted"]
+    assert "no bone named Leg" in sections["half_weighted"]
+    assert "the bone Box has an object's name" in sections["half_weighted"]
     for name in BROKEN:
         assert not (project / "out" / "models" / "broken" / f"{name}.glb").exists()
     lock = json.loads((project / "kiln.lock.json").read_text())
@@ -268,6 +304,28 @@ def test_every_mesh_has_uvs_in_metres(project):
     first = (project / "out" / "models" / "unwrapped.glb").read_bytes()
     assert kiln(project, "build", "--force", "--no-preview", "models/unwrapped") == 0
     assert (project / "out" / "models" / "unwrapped.glb").read_bytes() == first
+
+
+def test_skinned_meshes_export_with_their_skeleton(project):
+    (project / "models" / "arm.py").write_text(ARM)
+    assert kiln(project, "build", "models/arm") == 0
+    gltf = read_gltf(project / "out" / "models" / "arm.glb")
+    names = [node["name"] for node in gltf["nodes"]]
+    [skin] = gltf["skins"]
+    assert sorted(names[i] for i in skin["joints"]) == ["LowerBone", "UpperBone"]
+    skinned = [node for node in gltf["nodes"] if "skin" in node]
+    assert sorted(node["name"] for node in skinned) == ["Cap", "Lower", "Upper"]
+    for node in skinned:
+        attributes = gltf["meshes"][node["mesh"]]["primitives"][0]["attributes"]
+        assert "JOINTS_0" in attributes and "WEIGHTS_0" in attributes
+    report = json.loads((project / "reports" / "models" / "arm" / "report.json").read_text())
+    assert report["bones"] == ["LowerBone", "UpperBone"]
+    assert all(mesh["skinned"] and mesh["unweighted_vertices"] == 0 for mesh in report["meshes"].values())
+    # Skinned at rest, the parts stay where they were built.
+    assert report["size"] == pytest.approx([1.025, 0.1, 0.1], abs=1e-4)
+    first = (project / "out" / "models" / "arm.glb").read_bytes()
+    assert kiln(project, "build", "--force", "--no-preview", "models/arm") == 0
+    assert (project / "out" / "models" / "arm.glb").read_bytes() == first
 
 
 def read_gltf(path: Path) -> dict:

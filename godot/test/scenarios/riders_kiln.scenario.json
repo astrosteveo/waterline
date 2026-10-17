@@ -17,7 +17,7 @@
       "name": "each rider wears their own kiln-built body and gear"
     },
     {
-      "expect": "[get_node('Rider1/Rider/Torso').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Koa').suit_color), get_node('Rider1/Rider/Torso/Vest').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Koa').vest_color), get_node('Rider1/Rider/Head/Helmet').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Koa').helmet_color)]",
+      "expect": "[get_node('Rider1/Rider/Skeleton/TorsoMesh').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Koa').suit_color), get_node('Rider1/Rider/Skeleton/Vest').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Koa').vest_color), get_node('Rider1/Rider/Skeleton/Helmet').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Koa').helmet_color)]",
       "equals": [
         true,
         true,
@@ -26,11 +26,11 @@
       "name": "Koa's suit, vest and helmet are painted in Koa's colours"
     },
     {
-      "expect": "get_node('Rider1/Rider/ShinLeft').get_surface_override_material(0).albedo_color.v < Game.rider_named('Koa').suit_color.v * 0.85",
+      "expect": "get_node('Rider1/Rider/Skeleton/ShinLeftMesh').get_surface_override_material(0).albedo_color.v < Game.rider_named('Koa').suit_color.v * 0.85",
       "name": "the light grey of the shins paints a darker shade of the suit"
     },
     {
-      "expect": "[get_node('Rider3/Rider/ForearmLeft').get_surface_override_material(0).resource_name, get_node('Rider3/Rider/ShinRight').get_surface_override_material(0).resource_name, get_node('Rider3/Rider/BootRight').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Dax').suit_color)]",
+      "expect": "[get_node('Rider3/Rider/Skeleton/ForearmLeftMesh').get_surface_override_material(0).resource_name, get_node('Rider3/Rider/Skeleton/ShinRightMesh').get_surface_override_material(0).resource_name, get_node('Rider3/Rider/Skeleton/BootRightMesh').get_surface_override_material(0).albedo_color.is_equal_approx(Game.rider_named('Dax').suit_color)]",
       "equals": [
         "Skin",
         "Skin",
@@ -39,7 +39,7 @@
       "name": "Dax's shorty leaves the forearms and shins bare, and the boots keep their own colour"
     },
     {
-      "expect": "[has_node('Rider2/Rider/Head/Ponytail'), has_node('Rider2/Rider/Head/Goggles'), has_node('Rider1/Rider/Head/Ponytail'), has_node('Rider1/Rider/Head/Visor'), has_node('Rider3/Rider/Head/Peak')]",
+      "expect": "[has_node('Rider2/Rider/Skeleton/Ponytail'), has_node('Rider2/Rider/Skeleton/Goggles'), has_node('Rider1/Rider/Skeleton/Ponytail'), has_node('Rider1/Rider/Skeleton/Visor'), has_node('Rider3/Rider/Skeleton/Peak')]",
       "equals": [
         true,
         true,
@@ -67,7 +67,7 @@
       "name": "on the Tradewind with the controls centred, every rider sits as their recipe built them: art/models/riders/_rider.py follows JetSkiModel._riding_joints(), and the craft scene's Seat is the hull's"
     },
     {
-      "expect": "[get_node('Rider0/Rider/BootLeft').global_transform.basis.y.dot(Vector3(0, 1, 0)), get_node('Turn/Rider/BootRight').global_transform.basis.y.dot(Vector3(0, 1, 0))]",
+      "expect": "[get_node('Rider0').rider_part('BootLeft').basis.y.dot(Vector3(0, 1, 0)), get_node('Turn').rider_part('BootRight').basis.y.dot(Vector3(0, 1, 0))]",
       "approx": [
         1.0,
         1.0

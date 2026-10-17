@@ -25,7 +25,7 @@
       "name": "the ghost's hull and handlebar are see-through and drawn after the water"
     },
     {
-      "expect": "[get_node('GhostHull/Hull/Hull').cast_shadow, get_node('GhostHull/Hull/Handlebar/Bar').cast_shadow, get_node('GhostHull/Rider/Torso').cast_shadow]",
+      "expect": "[get_node('GhostHull/Hull/Hull').cast_shadow, get_node('GhostHull/Hull/Handlebar/Bar').cast_shadow, get_node('GhostHull/Rider/Skeleton/TorsoMesh').cast_shadow]",
       "equals": [
         0,
         0,
@@ -34,7 +34,7 @@
       "name": "no part of the ghost casts a shadow"
     },
     {
-      "expect": "[get_node('GhostHull/Rider/Torso').get_surface_override_material(0).transparency, get_node('GhostHull/Rider/Torso').get_surface_override_material(0).render_priority, get_node('KilnHull/Rider/Torso').get_surface_override_material(0).transparency]",
+      "expect": "[get_node('GhostHull/Rider/Skeleton/TorsoMesh').get_surface_override_material(0).transparency, get_node('GhostHull/Rider/Skeleton/TorsoMesh').get_surface_override_material(0).render_priority, get_node('KilnHull/Rider/Skeleton/TorsoMesh').get_surface_override_material(0).transparency]",
       "equals": [
         1,
         1,
