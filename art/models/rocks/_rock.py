@@ -14,6 +14,9 @@ from dataclasses import dataclass
 
 from kiln import geometry
 
+# The game draws the Rock material in its rock texture.
+MATERIALS = ["Rock"]
+
 
 @dataclass(frozen=True)
 class Rock:

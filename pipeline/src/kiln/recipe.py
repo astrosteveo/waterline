@@ -53,6 +53,9 @@ class ModelSpec:
     size_tolerance: float = 0.02
     # Marker names that must exist (empties the game finds by name).
     markers: Sequence[str] = field(default_factory=tuple)
+    # Material names that must each be on at least one face: those the game finds by name, to
+    # paint them, light them or swap them for its own.
+    materials: Sequence[str] = field(default_factory=tuple)
     # True: every mesh must be closed (each edge shared by exactly two faces).
     closed: bool = True
     # False: no mesh may cut through itself. Separate objects may still overlap.

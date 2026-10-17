@@ -40,9 +40,10 @@ def build(k):
 ''',
     "over_budget": '''
 from kiln import model
-@model(max_triangles=10, size=(2, 1, 1), markers=["Seat"])
+@model(max_triangles=10, size=(2, 1, 1), markers=["Seat"], materials=["Paint", "Unused"])
 def build(k):
-    k.box("Box", (1, 1, 1))
+    k.box("Box", (1, 1, 1), material=k.material("Paint", "#ffffff"))
+    k.material("Unused", "#000000")
 ''',
     "crossed": '''
 from kiln import model, geometry
@@ -137,6 +138,8 @@ def test_builds_the_examples_once_and_identically(project, capsys):
     assert (project / "reports" / "models" / "crate" / "preview.png").is_file()
     lock = json.loads((project / "kiln.lock.json").read_text())
     assert lock["models/crate"]["triangles"] > 0
+    report = json.loads((project / "reports" / "models" / "crate" / "report.json").read_text())
+    assert report["materials"] == ["Iron", "Wood"]
     # The meshes are closed, so the materials draw only their front faces.
     materials = read_gltf(crate)["materials"]
     assert [m["name"] for m in materials] == ["Wood", "Iron"]
@@ -210,6 +213,8 @@ def test_broken_recipes_fail_with_reasons(project, capsys):
     assert "over the budget of 10" in sections["over_budget"]
     assert "x size 1.000 m, expected 2.000 m" in sections["over_budget"]
     assert "no marker named Seat" in sections["over_budget"]
+    assert "no face has the material Unused" in sections["over_budget"]
+    assert "material Paint" not in sections["over_budget"]
     assert "cut through each other" in sections["crossed"]
     assert "6 faces whose UVs cover no area" in sections["flat_uvs"]
     assert "no wood left" in sections["raises"]

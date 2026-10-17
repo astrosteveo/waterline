@@ -20,7 +20,7 @@ PILE_ROWS = 8
 
 
 @model(max_triangles=5000, size=(WIDTH + 0.2, DECK_TOP + 0.45 - PILE_DEPTH, LENGTH),
-       allow_self_intersections=True)
+       allow_self_intersections=True, materials=["Wood", "WoodDark"])
 def build(k):
     wood = k.material("Wood", "#9a7350", roughness=0.85)
     dark = k.material("WoodDark", "#4e3a2a", roughness=0.9)

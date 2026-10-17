@@ -15,7 +15,7 @@ HEIGHT = 2.3
 RADIUS = 0.75
 
 
-@model(max_triangles=1500, size=(1.62, 3.16, 1.62), markers=["Lamp"])
+@model(max_triangles=1500, size=(1.62, 3.16, 1.62), markers=["Lamp"], materials=["Paint", "Lamp"])
 def build(k):
     paint = k.material("Paint", "#f4f4f4", roughness=0.45)
     stripe = k.material("Stripe", "#f7f7f2", roughness=0.4)
