@@ -6,7 +6,7 @@ from models.harbor._building import MATERIALS, Building, build as build_building
 BUILDING = Building(8, 8, 8, floors=3, seed=4)
 
 
-@model(max_triangles=4000, size=(BUILDING.outer_width, None, None), allow_self_intersections=True,
+@model(max_triangles=4000, size=(BUILDING.outer_width, None, None),
        materials=MATERIALS)
 def build(k):
     build_building(k, BUILDING)

@@ -90,16 +90,39 @@ def _unweighted_vertices(obj: bpy.types.Object) -> int | None:
 
 
 def _self_intersections(bm: bmesh.types.BMesh) -> int:
-    """Pairs of faces that cut through each other. The tree also reports faces that only
-    meet at a shared vertex or edge (a flat fan round a pole), so those pairs don't count."""
+    """Pairs of faces of one connected part (faces joined through shared vertices) that cut
+    through each other. Separate parts may overlap: recipes merge parts into one mesh to
+    draw them at once, a box sunk into another. The tree also reports faces that only meet
+    at a shared vertex or edge (a flat fan round a pole), so those pairs don't count."""
     tree = BVHTree.FromBMesh(bm)
     bm.faces.ensure_lookup_table()
+    part = _connected_parts(bm)
     count = 0
     for a, b in tree.overlap(tree):
+        if part[a] != part[b]:
+            continue
         shared = {v.index for v in bm.faces[a].verts} & {v.index for v in bm.faces[b].verts}
         if not shared:
             count += 1
     return count
+
+
+def _connected_parts(bm: bmesh.types.BMesh) -> list[int]:
+    """For each face, a number shared by the faces of its connected part."""
+    bm.verts.ensure_lookup_table()
+    root = list(range(len(bm.verts)))
+
+    def find(i: int) -> int:
+        while root[i] != i:
+            root[i] = root[root[i]]
+            i = root[i]
+        return i
+
+    for face in bm.faces:
+        first = find(face.verts[0].index)
+        for vert in face.verts[1:]:
+            root[find(vert.index)] = first
+    return [find(face.verts[0].index) for face in bm.faces]
 
 
 def problems(spec: ModelSpec, measured: dict) -> list[str]:

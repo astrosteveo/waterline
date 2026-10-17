@@ -49,7 +49,13 @@ def build(k):
 from kiln import model, geometry
 @model()
 def build(k):
-    k.mesh("Two", geometry.box((1, 1, 1)).merged(geometry.box((1, 1, 1), center=(0.5, 0.2, 0.1))))
+    # A box with one corner pulled through the far side, and two boxes merged into one mesh
+    # that overlap: only the first cuts through itself.
+    box = geometry.box((1, 1, 1))
+    vertices = list(box.vertices)
+    vertices[7] = (-0.9, 0.0, 0.0)
+    k.mesh("Folded", geometry.Mesh(tuple(vertices), box.faces))
+    k.mesh("Two", geometry.box((1, 1, 1)).merged(geometry.box((1, 1, 1), center=(0.5, 0.2, 0.1))), position=(3, 0, 0))
 ''',
     "flat_uvs": '''
 from kiln import model, geometry
@@ -263,7 +269,8 @@ def test_broken_recipes_fail_with_reasons(project, capsys):
     assert "no marker named Seat" in sections["over_budget"]
     assert "no face has the material Unused" in sections["over_budget"]
     assert "material Paint" not in sections["over_budget"]
-    assert "cut through each other" in sections["crossed"]
+    assert "Folded: " in sections["crossed"] and "cut through each other" in sections["crossed"]
+    assert "Two:" not in sections["crossed"]
     assert "6 faces whose UVs cover no area" in sections["flat_uvs"]
     assert "no wood left" in sections["raises"]
     # Asked for again with the same settings it is the same material; with others, it fails.
