@@ -49,13 +49,23 @@ class Kit:
     # --- Materials ---------------------------------------------------------------------
 
     def material(self, name: str, color, roughness: float = 0.5, metallic: float = 0.0,
-                 double_sided: bool = False) -> bpy.types.Material:
+                 double_sided: bool = False, emission=None, emission_strength: float = 1.0,
+                 alpha: float = 1.0) -> bpy.types.Material:
         """A material with a flat colour, made once per name: asked for again with the same
         settings it is the same material, and with others it fails, since the game finds a
         material by its name. In the game it imports as a StandardMaterial3D with that
         colour, roughness and metallic. Only its front faces are drawn, as kiln's meshes are
-        closed; `double_sided` draws both, for an open mesh."""
-        settings = {"color": color, "roughness": roughness, "metallic": metallic, "double_sided": double_sided}
+        closed; `double_sided` draws both, for an open mesh.
+
+        With `emission` (a colour) it glows in that colour, `emission_strength` times as
+        bright (a lamp's glass: 2 to 5). With `alpha` below 1 it is see-through, blended over
+        what is behind it (glass, a visor)."""
+        if not 0.0 < alpha <= 1.0:
+            raise ValueError(f"the material {name!r} has alpha {alpha}: give 1 for opaque, down to above 0")
+        if emission_strength < 0.0:
+            raise ValueError(f"the material {name!r} has a negative emission_strength")
+        settings = {"color": color, "roughness": roughness, "metallic": metallic, "double_sided": double_sided,
+                    "emission": emission, "emission_strength": emission_strength, "alpha": alpha}
         if name in self._materials:
             made, before = self._materials[name]
             if before != settings:
@@ -71,7 +81,18 @@ class Kit:
         bsdf.inputs["Base Color"].default_value = rgba
         bsdf.inputs["Roughness"].default_value = roughness
         bsdf.inputs["Metallic"].default_value = metallic
-        material.diffuse_color = rgba  # what the preview sheet shows
+        if emission is not None:
+            # The glTF exporter writes a strength over 1 as KHR_materials_emissive_strength,
+            # which Godot imports as the emission's energy.
+            bsdf.inputs["Emission Color"].default_value = parse_color(emission)
+            bsdf.inputs["Emission Strength"].default_value = emission_strength
+        if alpha < 1.0:
+            # Exported with glTF's alphaMode BLEND.
+            bsdf.inputs["Alpha"].default_value = alpha
+            material.surface_render_method = "BLENDED"
+        # What the preview sheet shows: a glowing material in its glow, at its alpha.
+        rgba = (*parse_color(emission)[:3], 1.0) if emission is not None else rgba
+        material.diffuse_color = (*rgba[:3], alpha)
         self._materials[name] = (material, settings)
         return material
 

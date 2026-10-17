@@ -72,7 +72,7 @@ at (0, 0.8, 0.4) is at (0, 0.8, 0.4) in the game.
 
 | Call | Makes |
 |---|---|
-| `k.material(name, color, roughness, metallic, double_sided)` | a flat-colour material (`"#rrggbb"` or sRGB floats); imports as a StandardMaterial3D that draws only front faces, unless `double_sided` |
+| `k.material(name, color, roughness, metallic, double_sided, emission, emission_strength, alpha)` | a flat-colour material (`"#rrggbb"` or sRGB floats); imports as a StandardMaterial3D that draws only front faces, unless `double_sided`. With `emission` it glows in that colour (`emission_strength` times as bright); with `alpha` below 1 it is see-through, blended |
 | `k.box(name, size, center, bevel, bevel_segments, material, parent)` | a box, its edges rounded by `bevel` metres |
 | `k.loft(name, sections, caps, material, parent, smooth_angle, bands, cap_slot)` | a surface through rings of points (hulls, tubes); `bands` gives each strip round the rings a material slot |
 | `k.lathe(name, profile, segments, material, parent, smooth_angle)` | a solid of revolution about Y from (radius, height) points |
