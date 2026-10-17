@@ -2,8 +2,8 @@
 class_name JetSkiModel
 extends Node3D
 ## A jet ski and its rider: a hull, and a rider whose body leans with the controls. The rider
-## is a scene of rigid parts ([member rider_scene], built by kiln) that this script poses from
-## code every frame. The hull is built from code (a flat-shaded low-poly hull, a seat and
+## is a skinned scene ([member rider_scene], built by kiln) whose skeleton this script poses
+## from code every frame. The hull is built from code (a flat-shaded low-poly hull, a seat and
 ## handlebars) unless [member hull_scene] gives a model to draw instead.
 ##
 ## [JetSki] calls [method set_pose] and [method set_rider] every frame, and sets [member seat]
@@ -31,10 +31,11 @@ extends Node3D
 		hull_scene = value
 		_queue_build()
 
-## The rider's body and gear: a scene of rigid parts that this model poses between joints,
-## built by kiln from [code]art/models/riders/[/code]. [RiderProfile] sets each rider's own.
-## Each part is a node found by name anywhere under the scene's root, and everything under a
-## part moves with it:
+## The rider's body and gear: a scene with a [Skeleton3D] that this model poses between joints,
+## its meshes skinned to the skeleton's bones, built by kiln from
+## [code]art/models/riders/[/code]. [RiderProfile] sets each rider's own. The skeleton has a bone
+## for each part, named as the part, and moves the part's meshes; how far a mesh follows each
+## bone is in its skin weights, so a part can bend smoothly into the next:
 ## [br]- [code]Torso[/code] and [code]Head[/code] turn with the spine.
 ## [br]- [code]ThighLeft[/code], [code]ShinLeft[/code], [code]UpperArmLeft[/code] and
 ## [code]ForearmLeft[/code] (and Right) each run from one joint to the next: hip to knee, knee
@@ -42,6 +43,11 @@ extends Node3D
 ## end up further apart than built (a short rider reaching a far handlebar).
 ## [br]- [code]BootLeft[/code] and [code]GloveLeft[/code] (and Right) sit at the foot and the
 ## hand: the boot flat on the footrest, the glove round the grip.
+## [br]- [code]KneeBendLeft[/code] and [code]ElbowBendLeft[/code] (and Right) sit at the knee
+## and the elbow, turned halfway between the limbs meeting there; the skin round the joint
+## follows them, so it bends evenly and keeps its width.
+## [br]The skeleton and its meshes go under the rider's node as [code]Rider/Skeleton[/code].
+## [method rider_part] gives where a part has been moved to.
 ## [br]Markers named [code]Pelvis[/code], [code]HipLeft[/code], [code]KneeLeft[/code],
 ## [code]FootLeft[/code], [code]ShoulderLeft[/code], [code]ElbowLeft[/code] and
 ## [code]HandLeft[/code] (and Right) mark where the joints were when the scene was built, in the
@@ -143,6 +149,9 @@ enum PartKind {
 	FOOT,
 	## At a hand, turned with the handlebar while holding it.
 	HAND,
+	## At a knee or an elbow, turned halfway between the limbs meeting there, so the skin round
+	## the joint bends evenly: blended straight from one limb to the other, it would narrow.
+	BEND,
 }
 
 ## [member seat] until [JetSki] sets it: the Seat marker of jetski.tscn.
@@ -161,6 +170,10 @@ const RIDER_PARTS: Array[Array] = [
 	[&"ForearmLeft", PartKind.BONE, "elbow_l", "hand_l"], [&"ForearmRight", PartKind.BONE, "elbow_r", "hand_r"],
 	[&"BootLeft", PartKind.FOOT, "foot_l", "knee_l"], [&"BootRight", PartKind.FOOT, "foot_r", "knee_r"],
 	[&"GloveLeft", PartKind.HAND, "hand_l"], [&"GloveRight", PartKind.HAND, "hand_r"],
+	[&"KneeBendLeft", PartKind.BEND, "knee_l", "foot_l", "hip_l"],
+	[&"KneeBendRight", PartKind.BEND, "knee_r", "foot_r", "hip_r"],
+	[&"ElbowBendLeft", PartKind.BEND, "elbow_l", "hand_l", "shoulder_l"],
+	[&"ElbowBendRight", PartKind.BEND, "elbow_r", "hand_r", "shoulder_r"],
 ]
 ## The rider scene's joint markers, by the pose's names for them; and where each joint is when
 ## a scene lacks its marker (the base rider on the base craft, relative to the pelvis).
@@ -223,6 +236,7 @@ var _hull_materials: Array[Material] = []
 # Every material [member fade] changes.
 var _fading: Array[Material] = []
 var _rider_root: Node3D
+var _rider_skeleton: Skeleton3D
 var _rider_parts: Array[RiderPart] = []
 # The rider scene's joints as built, in its own space (see [member rider_scene]).
 var _rest: Dictionary[String, Vector3] = {}
@@ -289,6 +303,18 @@ func rider_joint(joint: String) -> Vector3:
 	return _rider_root.global_transform * (_joints[joint] as Vector3)
 
 
+## How the rider's part [param part] (a bone of [member rider_scene], such as
+## [code]BootLeft[/code]) has been moved from where it was built: the transform from the rider
+## scene's space, as built, to the world. A part built flat and still flat has its basis's Y
+## up. Identity if the rider has no such part.
+func rider_part(part: StringName) -> Transform3D:
+	for each in _rider_parts:
+		if each.name == part:
+			var pose := _rider_skeleton.get_bone_global_pose(each.bone)
+			return _rider_root.global_transform * pose * each.rest_in_scene.affine_inverse()
+	return Transform3D.IDENTITY
+
+
 ## Places the rider. ABOARD seats the rider on the craft. Otherwise [param pelvis] is the
 ## rider's pelvis in world space (its -Z the way the rider faces, +Y toward the head), and
 ## for MOUNTING [param blend] goes from 0 (in the water at [param pelvis]) to 1 (seated).
@@ -332,6 +358,7 @@ func _build() -> void:
 	_hull_materials.clear()
 	_fading.clear()
 	_rider_parts.clear()
+	_rider_skeleton = null
 	_handlebar = null
 	_bar_rest = Transform3D(Basis.IDENTITY, HANDLEBAR_PIVOT)
 	_bar_in_model = _bar_rest
@@ -518,8 +545,8 @@ static func _channel(channel: BaseMaterial3D.TextureChannel) -> Vector4:
 	return Vector4(1, 0, 0, 0)
 
 
-## The rider: the parts of [member rider_scene] under their own node, placed every frame by
-## _apply_pose().
+## The rider: the skeleton of [member rider_scene] and its meshes under their own node, the
+## bones posed every frame by _apply_pose().
 func _build_rider() -> void:
 	_rider_root = Node3D.new()
 	_rider_root.name = "Rider"
@@ -533,16 +560,26 @@ func _build_rider() -> void:
 	_read_build(scene)
 	if scene == null:
 		return
+	var found := scene.find_children("*", "Skeleton3D", true, false)
+	if found.is_empty():
+		push_error("JetSkiModel: the rider scene %s has no Skeleton3D." % rider_scene.resource_path)
+		scene.free()
+		return
+	var skeleton := found[0] as Skeleton3D
+	# Bone poses are set in the skeleton's space, which becomes the rider node's.
+	var skeleton_in_scene := _in_model_space(skeleton, scene)
 	for spec in RIDER_PARTS:
-		var node := scene.find_child(String(spec[0]), true, false) as Node3D
-		if node == null:
-			push_warning("JetSkiModel: the rider scene %s has no %s." % [rider_scene.resource_path, spec[0]])
+		var bone := skeleton.find_bone(String(spec[0]))
+		if bone < 0:
+			push_warning("JetSkiModel: the rider scene %s has no %s bone." % [rider_scene.resource_path, spec[0]])
 			continue
 		var part := RiderPart.new()
-		part.node = node
+		part.name = spec[0]
+		part.bone = bone
 		part.kind = spec[1]
 		part.from = spec[2] if spec.size() > 2 else "pelvis"
 		part.to = spec[3] if spec.size() > 3 else ""
+		part.before = spec[4] if spec.size() > 4 else ""
 		var joint := _rest[part.from]
 		var rest := Transform3D(Basis.IDENTITY, joint)
 		if part.kind == PartKind.BONE:
@@ -550,12 +587,18 @@ func _build_rider() -> void:
 			rest.basis = _bone_basis(_rest[part.to] - joint, Basis.IDENTITY)
 		elif part.kind == PartKind.FOOT:
 			part.shin_rest = _bone_basis(joint - _rest[part.to], Basis.IDENTITY).inverse()
-		part.offset = rest.affine_inverse() * _in_model_space(node, scene)
-		node.get_parent().remove_child(node)
-		_disown(node)
-		_rider_root.add_child(node)
-		_dress_rider(node)
+		elif part.kind == PartKind.BEND:
+			rest.basis = _bend_basis(_rest[part.before], joint, _rest[part.to], Basis.IDENTITY)
+		part.rest_in_scene = skeleton_in_scene * skeleton.get_bone_global_rest(bone)
+		part.offset = rest.affine_inverse() * part.rest_in_scene
 		_rider_parts.append(part)
+	skeleton.get_parent().remove_child(skeleton)
+	_disown(skeleton)
+	skeleton.name = "Skeleton"
+	skeleton.transform = Transform3D.IDENTITY
+	_rider_root.add_child(skeleton)
+	_rider_skeleton = skeleton
+	_dress_rider(skeleton)
 	scene.free()
 
 
@@ -598,8 +641,8 @@ func _read_build(scene: Node3D) -> void:
 	_upright = Basis(Vector3.RIGHT, atan2(-back.z, back.y))
 
 
-## Puts a rider part's meshes on the moving-things layer, paints them in the rider's colours
-## (see [member rider_scene]) and gives them the fade or ghost look.
+## Puts the rider's meshes under [param node] on the moving-things layer, paints them in the
+## rider's colours (see [member rider_scene]) and gives them the fade or ghost look.
 func _dress_rider(node: Node) -> void:
 	for child in node.get_children():
 		_dress_rider(child)
@@ -797,7 +840,7 @@ func _blend_joints(from: Dictionary, to: Dictionary, t: float) -> Dictionary:
 	return out
 
 
-## Places every rider part from a set of joints.
+## Poses every rider part's bone from a set of joints.
 func _pose_from(joints: Dictionary) -> void:
 	_joints = joints
 	var spine: Basis = joints["spine"]
@@ -817,7 +860,9 @@ func _pose_from(joints: Dictionary) -> void:
 					frame.basis = _bone_basis(at - knee, spine) * part.shin_rest
 			PartKind.HAND:
 				frame = Transform3D(joints["hand_basis"], at)
-		part.node.transform = frame * part.offset
+			PartKind.BEND:
+				frame = Transform3D(_bend_basis(joints[part.before], at, joints[part.to], spine), at)
+		_rider_skeleton.set_bone_global_pose(part.bone, frame * part.offset)
 
 
 ## A frame along a limb pointing [param direction]: Y along it, X as close as it can be to the
@@ -829,6 +874,12 @@ static func _bone_basis(direction: Vector3, spine: Basis) -> Basis:
 		x = y.cross(spine.z)
 	x = x.normalized()
 	return Basis(x, y, x.cross(y))
+
+
+## The frame at a knee or elbow [param at] halfway between the limb coming in from
+## [param before] and the one going out to [param after] (see [method _bone_basis]).
+static func _bend_basis(before: Vector3, at: Vector3, after: Vector3, spine: Basis) -> Basis:
+	return _bone_basis(at - before, spine).slerp(_bone_basis(after - at, spine), 0.5).orthonormalized()
 
 
 func _add_part(part: StringName, node: MeshInstance3D, parent: Node = self) -> void:
@@ -962,14 +1013,20 @@ func _add_triangle(vertices: PackedVector3Array, normals: PackedVector3Array, co
 
 ## A rider part and how it follows the joints.
 class RiderPart:
-	## The part's node, under the rider node.
-	var node: Node3D
+	## The part's name, and its bone in the rider's skeleton.
+	var name: StringName
+	var bone: int
 	var kind: PartKind
-	## The joint it hangs from, and for a bone the joint it runs to (for a foot, the knee).
+	## The joint it hangs from, and for a bone the joint it runs to (for a foot, the knee; for a
+	## bend, the joint the limb goes on to, and [member before] the one it comes from).
 	var from: String
 	var to: String
-	## The part's transform relative to its joints, as built.
+	var before: String
+	## The bone's rest relative to the part's joints, as built: its pose is the joints' frame
+	## times this.
 	var offset: Transform3D
+	## The bone's rest in the rider scene's space.
+	var rest_in_scene: Transform3D
 	## A bone's length as built.
 	var length := 1.0
 	## For a foot: the inverse of the shin's direction as built.

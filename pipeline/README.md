@@ -79,6 +79,8 @@ at (0, 0.8, 0.4) is at (0, 0.8, 0.4) in the game.
 | `k.mesh(name, mesh, material, parent, smooth_angle, position)` | an object from any `kiln.geometry.Mesh`, its origin at `position`; `material` is one material or a list, one per slot |
 | `k.marker(name, position, rotation, parent)` | a named empty; the game finds it by name (imports as a Node3D) |
 | `k.parent(child, parent)` | makes `child` move with `parent`, where it is now |
+| `k.armature(name, bones)` | a skeleton of bones from `{name: (head, tail)}`, none parented to another; imports as a Skeleton3D |
+| `k.skin(obj, armature, weights)` | fixes `obj` to the armature's bones: wholly to one (a bone's name), or by a function from a vertex's position to `{bone: weight}`; `obj` becomes the armature's child |
 | `k.bevel(obj, width, segments, angle)` | rounds an object's sharp edges, and projects its UVs afresh (`project_uvs`) |
 | `k.project_uvs(obj)` | UVs projected onto each face from the axis it faces most (box mapping) |
 | `k.unwrap(obj, angle)` | UVs for an object made with `bpy`, by Blender's Smart UV Project, scaled to metres |
@@ -206,10 +208,12 @@ the start, and what `arrange` places past the end comes in again at the start.
 | `size`, `size_tolerance` | the bounding box (x, y, z; None skips an axis) is within the tolerance (2%) |
 | `markers` | an object with each name exists |
 | `materials` | each material is on at least one face (for those the game finds by name) |
+| `bones` | a bone with each name exists (and no bone has an object's name: glTF makes a node of each) |
 | `closed` (default True) | every mesh is closed: each edge shared by exactly two faces |
 | `allow_self_intersections` (default False) | no mesh cuts through itself (separate objects may overlap) |
 
-Faces with no area always fail, and so do faces whose UVs cover no area (a texture would smear
+Faces with no area always fail, and so do a skinned mesh's vertices whose weights on the
+bones don't add up to 1 (posed, they would be left behind), and faces whose UVs cover no area (a texture would smear
 across them). `report.json` gives each mesh's surface area and its UVs' (`area`, `uv_area`):
 the two match where the UVs are in metres.
 

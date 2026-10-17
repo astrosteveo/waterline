@@ -204,10 +204,58 @@ class Kit:
         """Makes `child` move with `parent`, keeping it where it is now."""
         # The child's own transform holds the offset from the parent (no parent inverse), so
         # the game sees the same transforms Blender shows.
-        bpy.context.view_layer.update()  # brings parent.matrix_world up to date
+        bpy.context.view_layer.update()  # brings the matrix_world of both up to date
+        where = child.matrix_world.copy()
         child.parent = parent
         child.matrix_parent_inverse = Matrix.Identity(4)
-        child.matrix_basis = parent.matrix_world.inverted() @ child.matrix_basis
+        child.matrix_basis = parent.matrix_world.inverted() @ where
+
+    # --- Skeletons ---------------------------------------------------------------------
+
+    def armature(self, name: str, bones: dict) -> bpy.types.Object:
+        """A skeleton: a bone for each name in `bones`, from its head to its tail (game-space
+        points, as {name: (head, tail)}), none the parent of another. `skin` fixes meshes to
+        its bones; the game imports it as a Skeleton3D and moves the meshes by posing it."""
+        data = bpy.data.armatures.new(name)
+        obj = self._new_object(name, data)
+        self.collection.objects.link(obj)
+        view_layer = bpy.context.view_layer
+        for other in view_layer.objects:
+            other.select_set(other is obj)
+        view_layer.objects.active = obj
+        bpy.ops.object.mode_set(mode="EDIT")
+        for bone_name, (head, tail) in bones.items():
+            bone = data.edit_bones.new(bone_name)
+            bone.head = to_blender(head)
+            bone.tail = to_blender(tail)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        return obj
+
+    def skin(self, obj: bpy.types.Object, armature: bpy.types.Object, weights) -> None:
+        """Fixes `obj`'s vertices to `armature`'s bones, so they move as the bones are posed.
+        `weights` is a bone's name, for every vertex wholly on that bone, or a function from a
+        vertex's game-space position to {bone: weight}; each vertex's weights are scaled to
+        add up to 1. `obj` becomes the armature's child, where it is now."""
+        bpy.context.view_layer.update()
+        world = obj.matrix_world
+        groups: dict = {}
+        for vertex in obj.data.vertices:
+            amounts = {weights: 1.0} if isinstance(weights, str) else weights(to_game(world @ vertex.co))
+            total = sum(amount for amount in amounts.values() if amount > 0)
+            if total <= 0:
+                at = ", ".join(f"{c:.3f}" for c in to_game(world @ vertex.co))
+                raise ValueError(f"{obj.name}: the vertex at ({at}) has no weight on any bone")
+            for bone, amount in amounts.items():
+                if amount <= 0:
+                    continue
+                if bone not in armature.data.bones:
+                    raise ValueError(f"{obj.name}: {armature.name} has no bone {bone!r}")
+                if bone not in groups:
+                    groups[bone] = obj.vertex_groups.new(name=bone)
+                groups[bone].add([vertex.index], amount / total, "REPLACE")
+        modifier = obj.modifiers.new("Armature", "ARMATURE")
+        modifier.object = armature
+        self.parent(obj, armature)
 
 
 def uv_area(points) -> float:

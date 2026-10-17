@@ -37,6 +37,7 @@ def measure() -> dict:
         tris = sum(len(face.verts) - 2 for face in bm.faces)
         triangles += tris
         uv = bm.loops.layers.uv.active
+        unweighted = _unweighted_vertices(obj)
         slots = [slot.material.name if slot.material else None for slot in obj.material_slots]
         materials.update(slots[face.material_index] for face in bm.faces if face.material_index < len(slots))
         areas = [face.calc_area() for face in bm.faces]
@@ -51,6 +52,10 @@ def measure() -> dict:
             "degenerate_faces": sum(1 for area in areas if area < MIN_FACE_AREA),
             "self_intersections": _self_intersections(bm),
             "uvs": uv is not None,
+            # Skinned: fixed to an armature's bones. Its vertices whose weights on them don't
+            # add up to 1 would be left behind, or pulled toward the origin, when it's posed.
+            "skinned": unweighted is not None,
+            "unweighted_vertices": unweighted or 0,
             # The surface's area and its UVs' (m²): equal when the UVs are in metres throughout.
             "area": round(sum(areas), 6),
             "uv_area": round(sum(uv_areas), 6),
@@ -65,10 +70,23 @@ def measure() -> dict:
         "size": size,
         "bounds": [[round(v, 5) for v in lows], [round(v, 5) for v in highs]] if meshes else None,
         "objects": sorted(o.name for o in bpy.context.scene.objects),
-        # The materials on at least one face.
+        # The materials on at least one face, and the bones of every armature.
         "materials": sorted(name for name in materials if name),
+        "bones": sorted(bone.name for o in bpy.context.scene.objects if o.type == "ARMATURE" for bone in o.data.bones),
         "meshes": meshes,
     }
+
+
+def _unweighted_vertices(obj: bpy.types.Object) -> int | None:
+    """How many of `obj`'s vertices don't have weights adding up to 1 on the bones of the
+    armature it is skinned to, or None if it isn't skinned."""
+    armatures = [m.object for m in obj.modifiers if m.type == "ARMATURE" and m.object is not None]
+    if not armatures:
+        return None
+    bones = {bone.name for armature in armatures for bone in armature.data.bones}
+    deform = {group.index for group in obj.vertex_groups if group.name in bones}
+    return sum(1 for vertex in obj.data.vertices
+               if abs(sum(g.weight for g in vertex.groups if g.group in deform) - 1.0) > 1e-3)
 
 
 def _self_intersections(bm: bmesh.types.BMesh) -> int:
@@ -102,6 +120,12 @@ def problems(spec: ModelSpec, measured: dict) -> list[str]:
     for name in spec.materials:
         if name not in measured["materials"]:
             found.append(f"no face has the material {name}")
+    for name in spec.bones:
+        if name not in measured["bones"]:
+            found.append(f"no bone named {name}")
+    for name in sorted(set(measured["bones"]) & set(measured["objects"])):
+        found.append(f"the bone {name} has an object's name: glTF makes a node of each, and an importer "
+                     "renames one of two nodes with one name")
     for name, mesh in measured["meshes"].items():
         if spec.closed and mesh["open_edges"]:
             found.append(f"{name}: {mesh['open_edges']} edges not shared by exactly two faces "
@@ -112,6 +136,8 @@ def problems(spec: ModelSpec, measured: dict) -> list[str]:
             found.append(f"{name}: inside out (its faces point inward)")
         if mesh["degenerate_faces"]:
             found.append(f"{name}: {mesh['degenerate_faces']} faces with no area")
+        if mesh["unweighted_vertices"]:
+            found.append(f"{name}: {mesh['unweighted_vertices']} vertices whose weights on the bones don't add up to 1")
         if mesh["flat_uv_faces"]:
             found.append(f"{name}: {mesh['flat_uv_faces']} faces whose UVs cover no area (a texture would smear "
                          "across them)")

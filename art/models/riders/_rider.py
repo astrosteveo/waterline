@@ -1,8 +1,11 @@
 """The rider every rider is built from: one figure with the build and gear as parameters.
 
-The game poses a rider by moving rigid parts between joints (godot/jetski/model/jetski_model.gd),
-so a rider is a set of parts, each a named object the game finds by name. Everything parented
-to a part moves with it:
+The game poses a rider by turning the bones of its skeleton between joints
+(godot/jetski/model/jetski_model.gd). The rider is built as a set of parts, each a named
+object with the objects built under it, and a part's meshes are skinned to the bone of the
+same name (Rider.bones), which the game finds by name; a limb's skin blends into the next
+part's bone toward each joint (Rider.skin_weights), so the suit bends round the joint. The
+part's own mesh is named for it, with Mesh after (TorsoMesh):
 
 - Torso: the suit from the seat to the neck, the life vest and its straps. Turns with the spine.
 - Head: the neck and head, the helmet and visor, goggles and hair. Turns with the spine.
@@ -47,6 +50,12 @@ FOREARM = 0.33
 KNEE_OUT = (0.12, 0.0, -0.24)
 ELBOW_OUT = (0.12, -0.06, 0.06)
 
+# How far either side of a joint a limb's skin blends from its bone into the next part's, in
+# metres: the suit bends round the joint instead of folding at a seam. Half on each bone at
+# the joint, all on its own a blend's width away. The neck needs none: the head turns with
+# the spine, as the torso does.
+BLEND = {"hip": 0.06, "knee": 0.07, "ankle": 0.03, "shoulder": 0.05, "elbow": 0.06, "wrist": 0.03}
+
 # Gear colours. Painted parts are white or light grey; the game multiplies in the rider's
 # suit, vest or helmet colour.
 PAINT = "#ffffff"
@@ -64,6 +73,10 @@ JOINTS = ["Pelvis"] + [f"{joint}{side}" for side, _ in SIDES
 # The materials the game paints in the rider's suit, vest and helmet colours (it matches the
 # start of a name, so SuitShade is painted too).
 PAINTED = ["Suit", "Vest", "Helmet"]
+# The bones at the knees and elbows that the game turns halfway between the limbs meeting
+# there. The skin round the joint follows them, so a straightened knee keeps its width:
+# blended straight from the thigh to the shin, it would narrow (by cos 45° for a 90° turn).
+BENDS = [f"{joint}Bend{side}" for side, _ in SIDES for joint in ("Knee", "Elbow")]
 # The parts the game poses; each recipe's build must make all of them.
 PARTS = ["Torso", "Head"] + [f"{part}{side}" for side, _ in SIDES
                              for part in ("Thigh", "Shin", "Boot", "UpperArm", "Forearm", "Glove")]
@@ -117,6 +130,54 @@ class Rider:
                                            _mul(ELBOW_OUT, (s, 1, 1)))
             joints[f"Hand{side}"] = hand
         return joints
+
+    def bones(self) -> dict[str, tuple[Vec3, Vec3]]:
+        """A bone for each part, from the joint it hangs from toward the next, named as the
+        part: the torso from the pelvis to the chest, the head from the neck to the head's
+        centre, each limb from joint to joint, a boot forward from the foot and a glove out
+        from the hand; and a bend bone at each knee and elbow (BENDS), pointing between the
+        limbs meeting there."""
+        joints = self.joints()
+        bones = {"Torso": (joints["Pelvis"], _scale(CHEST, self.back)),
+                 "Head": (_scale(self.spine_axis(), 0.6 * self.back), self.head())}
+        for side, s in SIDES:
+            hip, knee, foot = joints[f"Hip{side}"], joints[f"Knee{side}"], joints[f"Foot{side}"]
+            shoulder, elbow, hand = joints[f"Shoulder{side}"], joints[f"Elbow{side}"], joints[f"Hand{side}"]
+            bones[f"Thigh{side}"] = (hip, knee)
+            bones[f"Shin{side}"] = (knee, foot)
+            bones[f"Boot{side}"] = (foot, _add(foot, (0.0, 0.0, -0.15)))
+            bones[f"UpperArm{side}"] = (shoulder, elbow)
+            bones[f"Forearm{side}"] = (elbow, hand)
+            bones[f"Glove{side}"] = (hand, _add(hand, (0.08 * s, 0.0, 0.0)))
+            for joint, before, after in (("Knee", hip, foot), ("Elbow", shoulder, hand)):
+                at = joints[f"{joint}{side}"]
+                between = _normalized(_add(_normalized(_sub(at, before)), _normalized(_sub(after, at))))
+                bones[f"{joint}Bend{side}"] = (at, _add(at, _scale(between, 0.08)))
+        return bones
+
+    def skin_weights(self) -> dict:
+        """How each part's meshes follow the bones, for `Kit.skin`: a limb's from its own
+        bone into the next part's toward each end (see BLEND), through the bend bone at a
+        knee or elbow; the torso, head, boots and gloves wholly on their own."""
+        joints = self.joints()
+        weights: dict = {part: part for part in ("Torso", "Head")}
+        for side, _ in SIDES:
+            hip, knee, foot = joints[f"Hip{side}"], joints[f"Knee{side}"], joints[f"Foot{side}"]
+            shoulder, elbow, hand = joints[f"Shoulder{side}"], joints[f"Elbow{side}"], joints[f"Hand{side}"]
+            knee_bend, elbow_bend = f"KneeBend{side}", f"ElbowBend{side}"
+            weights[f"Thigh{side}"] = _blended(f"Thigh{side}", hip, knee, ("Torso", None, BLEND["hip"]),
+                                               (f"Shin{side}", knee_bend, BLEND["knee"]))
+            weights[f"Shin{side}"] = _blended(f"Shin{side}", knee, foot, (f"Thigh{side}", knee_bend, BLEND["knee"]),
+                                              (f"Boot{side}", None, BLEND["ankle"]))
+            weights[f"UpperArm{side}"] = _blended(f"UpperArm{side}", shoulder, elbow,
+                                                  ("Torso", None, BLEND["shoulder"]),
+                                                  (f"Forearm{side}", elbow_bend, BLEND["elbow"]))
+            weights[f"Forearm{side}"] = _blended(f"Forearm{side}", elbow, hand,
+                                                 (f"UpperArm{side}", elbow_bend, BLEND["elbow"]),
+                                                 (f"Glove{side}", None, BLEND["wrist"]))
+            weights[f"Boot{side}"] = f"Boot{side}"
+            weights[f"Glove{side}"] = f"Glove{side}"
+        return weights
 
     def head(self) -> Vec3:
         """The centre of the head, which the head and helmet are built round."""
@@ -231,6 +292,18 @@ def build(k, rider: Rider) -> None:
                        parent=f"UpperArm{side}")
         _boot(k, f"Boot{side}", foot, g, boot, sole)
         _glove(k, f"Glove{side}", hand, s, g, glove)
+
+    # --- Skeleton -----------------------------------------------------------------------
+    skeleton = k.armature("Skeleton", rider.bones())
+    weights = rider.skin_weights()
+    for part in PARTS:
+        root = k.collection.objects[part]
+        # The bone has the part's name. A glTF bone is a node too, and the game's importer
+        # renames one of two nodes with one name, so the part's own mesh takes another.
+        root.name = part + "Mesh"
+        for obj in [root, *root.children_recursive]:
+            if obj.type == "MESH":
+                k.skin(obj, skeleton, weights[part])
 
 
 # --- Parts ------------------------------------------------------------------------------
@@ -412,6 +485,38 @@ def _bend(a, b, length_a, length_b, pole):
 
 
 # --- Vectors ----------------------------------------------------------------------------
+
+def _blended(bone: str, start: Vec3, end: Vec3, before: tuple, after: tuple):
+    """Skin weights for a limb's bone running from `start` to `end`. `before` and `after` say
+    how its skin blends at each end, measured along the limb: (the next part's bone, the
+    bend bone at the joint or None, the blend's width). Without a bend bone the skin is half
+    on each bone at the joint; with one it is wholly on the bend bone there, and blends from
+    it into each limb's own over the width."""
+    axis = _normalized(_sub(end, start))
+
+    def weights(p: Vec3) -> dict[str, float]:
+        amounts = {bone: 1.0}
+        for joint, outward, (other, bend, width) in ((start, -1.0, before), (end, 1.0, after)):
+            # How far past the joint, toward the other part.
+            past = outward * _dot(_sub(p, joint), axis)
+            if bend is None:
+                share = _smoothstep(-width, width, past)
+                amounts[other] = amounts.get(other, 0.0) + share
+            else:
+                share = _smoothstep(-width, 0.0, past)
+                beyond = _smoothstep(0.0, width, past)
+                amounts[other] = amounts.get(other, 0.0) + beyond
+                amounts[bend] = amounts.get(bend, 0.0) + share - beyond
+            amounts[bone] -= share
+        return {name: max(0.0, amount) for name, amount in amounts.items()}
+
+    return weights
+
+
+def _smoothstep(low: float, high: float, x: float) -> float:
+    t = min(max((x - low) / (high - low), 0.0), 1.0)
+    return t * t * (3 - 2 * t)
+
 
 def _add(a, b):
     return (a[0] + b[0], a[1] + b[1], a[2] + b[2])

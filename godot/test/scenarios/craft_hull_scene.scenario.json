@@ -49,9 +49,9 @@
       "name": "the feet are on the FootLeft and FootRight markers"
     },
     {
-      "expect": "max(player.craft.get_node('Model/Rider/GloveLeft').global_position.distance_to(player.craft.get_node('Model').rider_joint('hand_l')), player.craft.get_node('Model/Rider/BootRight').global_position.distance_to(player.craft.get_node('Model').rider_joint('foot_r')))",
+      "expect": "max((player.craft.get_node('Model/Rider/Skeleton').global_transform * player.craft.get_node('Model/Rider/Skeleton').get_bone_global_pose(player.craft.get_node('Model/Rider/Skeleton').find_bone('GloveLeft')).origin).distance_to(player.craft.get_node('Model').rider_joint('hand_l')), (player.craft.get_node('Model/Rider/Skeleton').global_transform * player.craft.get_node('Model/Rider/Skeleton').get_bone_global_pose(player.craft.get_node('Model/Rider/Skeleton').find_bone('BootRight')).origin).distance_to(player.craft.get_node('Model').rider_joint('foot_r')))",
       "approx": 0.0,
-      "name": "the gloves and boots are drawn at the hands and feet"
+      "name": "the glove's and boot's bones are at the hands and feet"
     },
     {
       "expect": "[player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).shader.resource_path, player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('hull_color') == Game.rider_named('koa').hull_color, player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('trim_color') == Game.rider_named('koa').trim_color, player.craft.get_node('Model/Hull/Hull').get_surface_override_material(0).get_shader_parameter('bottom_color') == Game.rider_named('koa').bottom_color]",
