@@ -107,6 +107,8 @@ def build_assets(project: Project, blender: str, assets: list[Asset], force: boo
                     entry["triangles"] = report["triangles"]
                 else:
                     entry["maps"] = report["maps"]
+                    # The metres a tile covers, which the game's materials must draw it at.
+                    entry["tile"] = report["tile"]
             lock[asset.id] = entry
     project.write_lock(lock)
     return code

@@ -46,8 +46,10 @@ Recipes import shared code by its path from the project folder
 built from changes: its recipe, the shared code it imports (and what that imports), the parts
 of kiln that build its kind, and the Blender version (for a sound, numpy's and scipy's).
 Kiln finds the imports by reading the code, so import shared code with `import` or `from`,
-not `importlib`. `kiln.lock.json` keeps the fingerprint of each build and the files it made.
-Builds are deterministic: the same inputs give the same files.
+not `importlib`. `kiln.lock.json` keeps the fingerprint of each build, the files it made, and
+what a game using them may check against: a model's size and triangles, a texture's size,
+maps and `tile`, a sound's lengths. Builds are deterministic: the same inputs give the same
+files.
 
 ## A model recipe
 
@@ -80,6 +82,9 @@ at (0, 0.8, 0.4) is at (0, 0.8, 0.4) in the game.
 | `k.bevel(obj, width, segments, angle)` | rounds an object's sharp edges, and projects its UVs afresh (`project_uvs`) |
 | `k.project_uvs(obj)` | UVs projected onto each face from the axis it faces most (box mapping) |
 | `k.unwrap(obj, angle)` | UVs for an object made with `bpy`, by Blender's Smart UV Project, scaled to metres |
+
+Every object needs a name of its own: the game finds parts and markers by name, so where Blender
+would rename a second `Seat` to `Seat.001`, kiln fails the build.
 
 Recipes can also use `bpy` directly for anything the kit lacks. `kiln.geometry` builds meshes
 as plain data (`box`, `loft`, `lathe`, `ring`, `mirrored_ring`), moves them (`translated`,

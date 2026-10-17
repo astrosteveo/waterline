@@ -39,12 +39,6 @@ extends StaticBody3D
 ## Friction of the slope. Low, so a craft keeps its speed up the ramp.
 @export_range(0.0, 1.0, 0.01) var friction: float = 0.05
 
-## The model's slope as built: its width and length, and its front edge and lip heights.
-const MODEL_WIDTH := 7.0
-const MODEL_LENGTH := 12.0
-const MODEL_BOTTOM := -2.0
-const MODEL_TOP := 1.8
-
 var _build_queued := false
 
 
@@ -101,10 +95,14 @@ func _build() -> void:
 	shape.shape = hull
 	_add_part(shape)
 	if model != null:
-		# Stretched so the model's slope runs from this ramp's front edge to its lip.
+		# Stretched so the model's slope runs from this ramp's front edge to its lip. The slope as
+		# built runs between the right-hand ends of its front edge and lip, its markers.
 		var drawn := SceneryModel.add(self, model, &"ramp_part")
-		var stretch := Vector3(width / MODEL_WIDTH, (top - bottom) / (MODEL_TOP - MODEL_BOTTOM), length / MODEL_LENGTH)
-		drawn.transform = Transform3D(Basis.from_scale(stretch), Vector3(0.0, bottom - MODEL_BOTTOM * stretch.y, 0.0))
+		var front := SceneryModel.point(drawn, "SlopeFront")
+		var lip := SceneryModel.point(drawn, "SlopeLip")
+		var stretch := Vector3(width / (front.x * 2.0), (top - bottom) / (lip.y - front.y), length / (front.z - lip.z))
+		drawn.transform = Transform3D(Basis.from_scale(stretch),
+				Vector3(0.0, bottom - front.y * stretch.y, length * 0.5 - front.z * stretch.z))
 
 
 func _add_part(node: Node3D) -> void:

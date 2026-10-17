@@ -27,13 +27,11 @@ extends Node3D
 		model = value
 		_queue_build()
 
-## The model as built: the span, the banner's top and the pylons' feet.
-const MODEL_SPAN := 46.0
-const MODEL_HEIGHT := 13.0
+## The pylons' feet, below the water, and their width: their collision boxes', where the
+## model's pylons stand and how wide they are built (the scenery_kiln scenario checks the
+## model agrees).
 const PYLON_BOTTOM := -4.0
-## The pylons' width and the banner's height.
 const PYLON_WIDTH := 1.6
-const BANNER_HEIGHT := 2.4
 
 var _build_queued := false
 
@@ -67,15 +65,21 @@ func _build() -> void:
 		shape.position = Vector3(0.0, PYLON_BOTTOM + pylon_height * 0.5, 0.0)
 		body.add_child(shape)
 		_add_part(body)
+	# The name goes across the middle of the banner; with no model, just under the top.
+	var banner_middle := height
 	if model != null:
 		var drawn := SceneryModel.add(self, model, &"gate_part")
 		for side in [-1.0, 1.0]:
-			var pylon := drawn.get_node("PylonLeft" if side < 0.0 else "PylonRight") as Node3D
+			# Each pylon's origin is its foot; stretched up from there to the banner's top.
+			var pylon := drawn.get_node("PylonLeft" if side < 0.0 else "PylonRight") as MeshInstance3D
 			pylon.position = Vector3(side * span * 0.5, PYLON_BOTTOM, 0.0)
-			pylon.scale = Vector3(1.0, pylon_height / (MODEL_HEIGHT - PYLON_BOTTOM), 1.0)
-		var banner := drawn.get_node("Banner") as Node3D
-		banner.position = Vector3(0.0, height - BANNER_HEIGHT * 0.5, 0.0)
-		banner.scale = Vector3(span / MODEL_SPAN, 1.0, 1.0)
+			pylon.scale = Vector3(1.0, pylon_height / pylon.get_aabb().end.y, 1.0)
+		# The banner's origin is its middle; at the top, stretched across the span.
+		var banner := drawn.get_node("Banner") as MeshInstance3D
+		var board := banner.get_aabb()
+		banner_middle = height - board.end.y
+		banner.position = Vector3(0.0, banner_middle, 0.0)
+		banner.scale = Vector3(span / board.size.x, 1.0, 1.0)
 	for facing in [0.0, PI]:
 		var label := Label3D.new()
 		label.text = banner_text
@@ -86,7 +90,7 @@ func _build() -> void:
 		label.double_sided = false
 		label.shaded = false
 		label.rotation = Vector3(0.0, facing, 0.0)
-		label.position = Vector3(0.0, height - BANNER_HEIGHT * 0.5, 0.0) \
+		label.position = Vector3(0.0, banner_middle, 0.0) \
 				+ Basis(Vector3.UP, facing) * Vector3(0.0, 0.0, 0.2)
 		_add_part(label)
 

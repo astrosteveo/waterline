@@ -96,6 +96,16 @@
       "name": "the terrain is drawn in kiln's sand, grass and rock textures"
     },
     {
+      "expect": "[texture_tiles().size(), mismatched_tiles()]",
+      "equals": [6, []],
+      "name": "every material draws its texture at the tile kiln built it for (art/kiln.lock.json)"
+    },
+    {
+      "expect": "[ResourceLoader.load('res://assets/models/course/start_gate.glb').instantiate().get_node('PylonRight').position.y - course.get_node('StartGate').get_script().get_script_constant_map()['PYLON_BOTTOM'], ResourceLoader.load('res://assets/models/course/start_gate.glb').instantiate().get_node('PylonRight').get_aabb().size.x - course.get_node('StartGate').get_script().get_script_constant_map()['PYLON_WIDTH']]",
+      "approx": [0, 0],
+      "name": "the start gate's model has its pylons' feet and width where the collision boxes are (StartGate.PYLON_BOTTOM, PYLON_WIDTH)"
+    },
+    {
       "expect": "course.get_node('Terrain/Palms0').multimesh.instance_count + course.get_node('Terrain/Palms1').multimesh.instance_count + course.get_node('Terrain/Palms2').multimesh.instance_count > 40",
       "name": "palm trees grow on Gull Cove's islands"
     },

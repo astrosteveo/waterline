@@ -89,7 +89,7 @@ class Kit:
         for slot_material in (material if isinstance(material, (list, tuple)) else [material]):
             if slot_material is not None:
                 data.materials.append(slot_material)
-        obj = bpy.data.objects.new(name, data)
+        obj = self._new_object(name, data)
         obj.location = to_blender(position)
         self.collection.objects.link(obj)
         if parent is not None:
@@ -183,7 +183,7 @@ class Kit:
                parent=None) -> bpy.types.Object:
         """A named point the game finds by name (an empty, imported as a Node3D). `rotation`
         is in degrees, applied as Godot does (Z, then X, then Y)."""
-        empty = bpy.data.objects.new(name, None)
+        empty = self._new_object(name, None)
         empty.empty_display_type = "ARROWS"
         empty.empty_display_size = 0.1
         empty.matrix_world = Matrix.Translation(to_blender(position)) @ rotation_to_blender(rotation).to_4x4()
@@ -191,6 +191,14 @@ class Kit:
         if parent is not None:
             self.parent(empty, parent)
         return empty
+
+    def _new_object(self, name: str, data) -> bpy.types.Object:
+        """A new object called `name`. Blender would rename a second object of a name
+        (`Seat.001`), and the game finds parts and markers by name, so a taken name fails."""
+        if name in bpy.data.objects:
+            raise ValueError(f"an object named {name!r} already exists; the game finds parts and markers by "
+                             "name, so each needs its own")
+        return bpy.data.objects.new(name, data)
 
     def parent(self, child: bpy.types.Object, parent: bpy.types.Object) -> None:
         """Makes `child` move with `parent`, keeping it where it is now."""

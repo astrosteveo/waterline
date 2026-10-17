@@ -3,7 +3,9 @@ down to the seabed, cross bracing, kerbs along both edges and iron bollards.
 
 Built as environment/pier.gd's defaults: 30 m long and 4 m wide, the deck's top 1.75 m above
 the water (deck height 1.6 plus half the deck), from the landward end at the origin along
--Z. The game stretches it to other sizes. Piles stand 4.3 m apart and reach 6 m down.
+-Z. Piles stand 4.3 m apart and reach 6 m down. The game stretches it to other sizes,
+measuring it as built from the DeckEnd marker (the far right corner of the deck's top) and
+the PileFoot marker (the foot of a pile).
 """
 import math
 import random
@@ -20,7 +22,7 @@ PILE_ROWS = 8
 
 
 @model(max_triangles=5000, size=(WIDTH + 0.2, DECK_TOP + 0.45 - PILE_DEPTH, LENGTH),
-       allow_self_intersections=True, materials=["Wood", "WoodDark"])
+       markers=["DeckEnd", "PileFoot"], allow_self_intersections=True, materials=["Wood", "WoodDark"])
 def build(k):
     wood = k.material("Wood", "#9a7350", roughness=0.85)
     dark = k.material("WoodDark", "#4e3a2a", roughness=0.9)
@@ -63,3 +65,5 @@ def build(k):
         for x in (-WIDTH / 2 + 0.3, WIDTH / 2 - 0.3):
             bollards = bollards.merged(post.translated((x, DECK_TOP, z)))
     k.mesh("Bollards", bollards, material=iron)
+    k.marker("DeckEnd", (WIDTH / 2, DECK_TOP, -LENGTH))
+    k.marker("PileFoot", (-WIDTH / 2 + 0.15, PILE_DEPTH, -0.2))

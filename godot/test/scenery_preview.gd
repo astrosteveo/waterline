@@ -22,6 +22,40 @@ func _ready() -> void:
 	show_course(id if id != "" else "gull_cove")
 
 
+## Each texture's tile, as kiln built it and as the game draws it, in metres: [built, drawn]
+## by the material that draws it. kiln records a texture recipe's tile in art/kiln.lock.json,
+## beside the project; the Rock, Wood and WoodDark materials repeat their texture every
+## 1 / uv1_scale metres, and the terrain shader its sand, grass and rock every *_tile metres.
+func texture_tiles() -> Dictionary:
+	var lock_path := ProjectSettings.globalize_path("res://").path_join("../art/kiln.lock.json")
+	var lock: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(lock_path))
+	var tiles := {}
+	for material: String in ["rock", "wood", "wood_dark"]:
+		var texture := "wood" if material == "wood_dark" else material
+		var scale := (load("res://environment/materials/%s.tres" % material) as BaseMaterial3D).uv1_scale
+		tiles[material] = [lock["textures/" + texture]["tile"], 1.0 / scale.x]
+	var terrain := load("res://environment/materials/terrain.tres") as ShaderMaterial
+	for texture: String in ["sand", "grass", "rock"]:
+		var parameter := texture + "_tile"
+		var drawn: Variant = terrain.get_shader_parameter(parameter)
+		if drawn == null:
+			drawn = RenderingServer.shader_get_parameter_default(terrain.shader.get_rid(), parameter)
+		tiles["terrain_" + texture] = [lock["textures/" + texture]["tile"], drawn]
+	return tiles
+
+
+## The materials in [method texture_tiles] that draw a texture at another size than kiln built
+## it, as text: empty when they all agree.
+func mismatched_tiles() -> Array[String]:
+	var found: Array[String] = []
+	var tiles := texture_tiles()
+	for material: String in tiles:
+		var pair: Array = tiles[material]
+		if not is_equal_approx(float(pair[0]), float(pair[1])):
+			found.append("%s: built %s m, drawn %s m" % [material, pair[0], pair[1]])
+	return found
+
+
 ## Shows the course [param id] in place of the one shown, with the camera behind its start line.
 func show_course(id: String) -> void:
 	if course != null:

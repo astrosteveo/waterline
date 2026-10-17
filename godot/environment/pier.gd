@@ -30,11 +30,11 @@ extends StaticBody3D
 		model = value
 		_queue_build()
 
-## The model as built: its length, width and deck height, and how far down its piles reach.
-const MODEL_LENGTH := 30.0
-const MODEL_WIDTH := 4.0
-const MODEL_DECK_HEIGHT := 1.6
+## How far down the piles reach, below the water's rest level: the collision box's foot, where
+## the model's piles' feet go.
 const PILE_DEPTH := 6.0
+## Half the deck's thickness: its top, the collision box's, is this far above [member deck_height].
+const DECK_HALF := 0.15
 
 var _build_queued := false
 
@@ -58,22 +58,27 @@ func _build() -> void:
 		if child.has_meta(&"pier_part"):
 			child.free()
 	if model != null:
+		# Stretched so the model's deck, as built (its DeckEnd marker, the far corner of the
+		# deck's top), is this pier's, and its piles' feet (its PileFoot marker) stay down at
+		# PILE_DEPTH.
 		var drawn := SceneryModel.add(self, model, &"pier_part")
-		var stretch := Vector3(width / MODEL_WIDTH, (deck_height + PILE_DEPTH) / (MODEL_DECK_HEIGHT + PILE_DEPTH),
-				length / MODEL_LENGTH)
-		drawn.transform = Transform3D(Basis.from_scale(stretch), Vector3(0.0, PILE_DEPTH * (stretch.y - 1.0), 0.0))
+		var deck_end := SceneryModel.point(drawn, "DeckEnd")
+		var pile_foot := SceneryModel.point(drawn, "PileFoot").y
+		var stretch := Vector3(width / (deck_end.x * 2.0),
+				(deck_height + DECK_HALF + PILE_DEPTH) / (deck_end.y - pile_foot), length / -deck_end.z)
+		drawn.transform = Transform3D(Basis.from_scale(stretch), Vector3(0.0, -PILE_DEPTH - pile_foot * stretch.y, 0.0))
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	box.size = Vector3(width, deck_height + PILE_DEPTH + 0.15, length)
+	box.size = Vector3(width, deck_height + DECK_HALF + PILE_DEPTH, length)
 	shape.shape = box
-	shape.position = Vector3(0.0, (deck_height + 0.15 - PILE_DEPTH) * 0.5, -length * 0.5)
+	shape.position = Vector3(0.0, (deck_height + DECK_HALF - PILE_DEPTH) * 0.5, -length * 0.5)
 	_add(shape)
 	if lamp_spacing > 0.0:
 		var count := maxi(int(length / lamp_spacing), 1)
 		for i in count:
 			var lamp := LampPost.new()
 			# Inside the kerbs along the edges.
-			lamp.position = Vector3((width * 0.5 - 0.45) * (1.0 if i % 2 == 0 else -1.0), deck_height + 0.15,
+			lamp.position = Vector3((width * 0.5 - 0.45) * (1.0 if i % 2 == 0 else -1.0), deck_height + DECK_HALF,
 					-lamp_spacing * (i + 0.5))
 			_add(lamp)
 

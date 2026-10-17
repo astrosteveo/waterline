@@ -13,8 +13,9 @@ The parts:
 - Handlebar: the bar and grips under the Handlebar marker, which the game turns with the
   steering; the steering column below it stays put.
 
-The craft's Seat marker is in its craft scene (godot/craft/<id>.tscn), not here, because the
-physics reads it: put it at `JetSki.seat_marker()`. Running this file prints it for each
+The craft's Seat marker is in its craft scene (godot/craft/<id>.tscn), because the physics
+reads it: put it at `JetSki.seat_marker()`. The model has a SeatMarker there, which the
+riders_kiln scenario checks the craft scene's against; running this file prints it for each
 craft (see the bottom of the file).
 """
 from __future__ import annotations
@@ -287,6 +288,8 @@ def build(k, ski: JetSki) -> None:
     chine_mid = ski.hull_section(0.4)[2][1]
     k.marker("BottomLine", (0.0, chine_mid + 0.03, 0.0))
     k.marker("TrimLine", (0.0, ski.deck(0.4) - 0.17, 0.0))
+    # Where the craft scene's Seat marker must be (the game reads that one, not this).
+    k.marker("SeatMarker", ski.seat_marker())
 
 
 def spec_size(ski: JetSki) -> tuple[float, None, float]:
@@ -295,7 +298,7 @@ def spec_size(ski: JetSki) -> tuple[float, None, float]:
     return (ski.beam, None, ski.length + NOZZLE_OUT)
 
 
-MARKERS = ["Handlebar", "FootLeft", "FootRight", "BottomLine", "TrimLine"]
+MARKERS = ["Handlebar", "FootLeft", "FootRight", "BottomLine", "TrimLine", "SeatMarker"]
 
 
 def _smooth(u: float) -> float:
