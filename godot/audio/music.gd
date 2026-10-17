@@ -73,8 +73,17 @@ func race_track(course_scene: String) -> AudioStream:
 	return RACES[0]
 
 
+func _exit_tree() -> void:
+	# Let go of the playbacks, so nothing is reported leaked when the game quits.
+	for player in _players:
+		player.stop()
+
+
 func _on_scene_changed() -> void:
 	var scene := get_tree().current_scene
+	if scene == null:
+		# No scene (a script run on its own, such as the project check): no music.
+		return
 	var race := scene as Race
 	if race == null:
 		play(MENU)
