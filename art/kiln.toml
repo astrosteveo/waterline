@@ -2,3 +2,17 @@
 # Run from the repository root: uv run --project pipeline kiln build
 output = "../godot/assets"
 reports = "../build/kiln"
+
+# How the preview sheets draw the materials the game textures or paints (see
+# pipeline/README.md): the textured ones in kiln's own textures, the painted ones in stand-in
+# colours, the game's defaults (Marina's gear, a red buoy, a building's walls and roof).
+[preview.materials]
+Rock = { texture = "textures/rock" }
+Wood = { texture = "textures/wood" }
+WoodDark = { texture = "textures/wood", color = "#8c8075" }
+"Suit*" = { color = "#d91f24" }
+"Vest*" = { color = "#ffdb1a" }
+"Helmet*" = { color = "#f2f5ff" }
+Paint = { color = "#ed2119" }
+Wall = { color = "#d9ccb3" }
+Roof = { color = "#8c3326" }

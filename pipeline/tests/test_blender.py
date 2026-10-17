@@ -429,6 +429,37 @@ def test_skinned_meshes_export_with_their_skeleton(project):
     assert (project / "out" / "models" / "arm.glb").read_bytes() == first
 
 
+def test_preview_sheets_draw_the_games_look_and_what_changed(project, capsys):
+    (project / "kiln.toml").write_text('''output = "out"
+reports = "reports"
+[preview.materials]
+Wood = { texture = "textures/planks" }
+Iron = { color = "#ff3030" }
+''')
+    assert kiln(project, "build", "textures") == 0
+    assert kiln(project, "build", "models/crate") == 0
+    report_dir = project / "reports" / "models" / "crate"
+    assert "changes" not in json.loads((report_dir / "report.json").read_text())
+    # Four rows of two 512-pixel views: the model as the game draws it twice, the UV
+    # checker, and the triangles.
+    assert png_size(report_dir / "preview.png") == (1024, 2048)
+    recipe = project / "models" / "crate.py"
+    recipe.write_text(recipe.read_text().replace("bevel=0.02", "bevel=0.04"))
+    capsys.readouterr()
+    assert kiln(project, "build", "models/crate") == 0
+    assert "changes: " in capsys.readouterr().out
+    changes = json.loads((report_dir / "report.json").read_text())["changes"]
+    assert 0 < changes["share"] < 0.2 and (report_dir / "changes.png").is_file()
+    # Built again the same, there are no changes, and the old picture of them goes.
+    assert kiln(project, "build", "--force", "models/crate") == 0
+    assert not (report_dir / "changes.png").exists()
+
+
+def png_size(path: Path) -> tuple[int, int]:
+    """A PNG's width and height, from its header."""
+    return struct.unpack(">II", path.read_bytes()[16:24])
+
+
 def read_gltf(path: Path) -> dict:
     """The JSON chunk of a binary glTF."""
     data = path.read_bytes()
